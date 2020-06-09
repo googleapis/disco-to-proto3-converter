@@ -2,7 +2,7 @@
 
 ## Quick Start
 
-## Requirements
+### Requirements
 To build and run this tool you will need the following tools:
 - JDK 8+
 - Maven 3.3.9+
