@@ -13,6 +13,12 @@ To build the standalone jar run the following command from the repository root:
 mvn package
 ```
 
+### Test
+To build the standalone jar run the following command from the repository root:
+```
+mvn test
+```
+
 ### Run
 After performing the build, to run the converter using `compute.v1.json` as a 
 sample input (included in this repository) run the following command from the 
