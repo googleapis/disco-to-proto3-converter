@@ -14,7 +14,7 @@ mvn package
 ```
 
 ### Test
-To build the standalone jar run the following command from the repository root:
+To run the unit tests execute the following command:
 ```
 mvn test
 ```
