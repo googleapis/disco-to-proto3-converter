@@ -260,8 +260,13 @@ public class DocumentToProtoConverter {
         // resourceField.getOptions().add(resourceRefOption);
         // input.getFields().add(resourceField);
 
-        for (Schema pathParams : method.pathParams().values()) {
-          input.getFields().add(schemaToField(pathParams));
+        String httpOptionPath = method.flatPath();
+        for (Schema pathParam : method.pathParams().values()) {
+          Field pathField = schemaToField(pathParam);
+          input.getFields().add(pathField);
+          httpOptionPath =
+              httpOptionPath.replace(
+                  "{" + pathParam.getIdentifier() + "}", "{" + pathField.getName() + "}");
         }
 
         for (Schema queryParam : method.queryParams().values()) {
@@ -274,7 +279,7 @@ public class DocumentToProtoConverter {
         Option methodHttpOption = new Option("google.api.http");
         methodHttpOption
             .getProperties()
-            .put(method.httpMethod().toLowerCase(), "/" + method.flatPath());
+            .put(method.httpMethod().toLowerCase(), "/" + httpOptionPath);
 
         if (method.request() != null) {
           Message request = allMessages.get(method.request().reference());
