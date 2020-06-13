@@ -36,10 +36,11 @@ public class DiscoToProto3ConverterAppTest {
 
     Path prefix = Paths.get("google", "cloud", "compute", "v1");
 
-    Path generatedFilePath =  Paths.get(outputDir.toString(), prefix.toString(), "compute.proto");
+    Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute.proto");
     String actualBody = readFile(generatedFilePath);
 
-    Path baselineFilePath =  Paths.get("src", "test", "resources", prefix.toString(), "compute.proto.baseline");
+    Path baselineFilePath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.proto.baseline");
     String baselineBody = readFile(baselineFilePath);
 
     assertEquals(baselineBody, actualBody);
