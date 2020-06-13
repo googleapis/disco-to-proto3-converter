@@ -1,0 +1,244 @@
+syntax = "proto3";
+
+package google.cloud.compute.v1;
+
+import "google/api/annotations.proto";
+import "google/api/resource.proto";
+
+option csharp_namespace = "Google.Cloud.Compute.V1";
+option go_package = "google.golang.org/genproto/googleapis/cloud/compute/v1;compute";
+option java_multiple_files = true;
+option java_package = "com.google.cloud.compute.v1";
+option php_namespace = "Google\\Cloud\\Compute\\V1";
+option ruby_package = "Google::Cloud::Compute::V1";
+
+//
+// File level resource definitions
+//
+option (google.api.resource_definition) = {
+  type: "google.cloud.compute.v1/ProjectRegionAddress"
+  pattern: "{project}/regions/{region}/addresses"
+};
+
+//
+// Messages
+//
+message Address {
+  enum AddressType {
+    EXTERNAL = 0;
+    INTERNAL = 1;
+    UNSPECIFIED_TYPE = 2;
+  }
+
+  enum IpVersion {
+    IPV4 = 0;
+    IPV6 = 1;
+    UNSPECIFIED_VERSION = 2;
+  }
+
+  enum NetworkTier {
+    PREMIUM = 0;
+    STANDARD = 1;
+  }
+
+  enum Purpose {
+    DNS_RESOLVER = 0;
+    GCE_ENDPOINT = 1;
+    NAT_AUTO = 2;
+    VPC_PEERING = 3;
+  }
+
+  enum Status {
+    IN_USE = 0;
+    RESERVED = 1;
+    RESERVING = 2;
+  }
+
+  string address = 1;
+  AddressType address_type = 2;
+  string creation_timestamp = 3;
+  string description = 4;
+  string id = 5;
+  IpVersion ip_version = 6;
+  string kind = 7;
+  string name = 8;
+  string network = 9;
+  NetworkTier network_tier = 10;
+  int32 prefix_length = 11;
+  Purpose purpose = 12;
+  string region = 13;
+  string self_link = 14;
+  Status status = 15;
+  string subnetwork = 16;
+  repeated string users = 17;
+}
+
+message Errors {
+  string code = 1;
+  string location = 2;
+  string message = 3;
+}
+
+message Error {
+  repeated Errors errors = 1;
+}
+
+message Data {
+  string key = 1;
+  string value = 2;
+}
+
+message Warnings {
+  enum Code {
+    CLEANUP_FAILED = 0;
+    DEPRECATED_RESOURCE_USED = 1;
+    DEPRECATED_TYPE_USED = 2;
+    DISK_SIZE_LARGER_THAN_IMAGE_SIZE = 3;
+    EXPERIMENTAL_TYPE_USED = 4;
+    EXTERNAL_API_WARNING = 5;
+    FIELD_VALUE_OVERRIDEN = 6;
+    INJECTED_KERNELS_DEPRECATED = 7;
+    MISSING_TYPE_DEPENDENCY = 8;
+    NEXT_HOP_ADDRESS_NOT_ASSIGNED = 9;
+    NEXT_HOP_CANNOT_IP_FORWARD = 10;
+    NEXT_HOP_INSTANCE_NOT_FOUND = 11;
+    NEXT_HOP_INSTANCE_NOT_ON_NETWORK = 12;
+    NEXT_HOP_NOT_RUNNING = 13;
+    NOT_CRITICAL_ERROR = 14;
+    NO_RESULTS_ON_PAGE = 15;
+    REQUIRED_TOS_AGREEMENT = 16;
+    RESOURCE_IN_USE_BY_OTHER_RESOURCE_WARNING = 17;
+    RESOURCE_NOT_DELETED = 18;
+    SCHEMA_VALIDATION_IGNORED = 19;
+    SINGLE_INSTANCE_PROPERTY_TEMPLATE = 20;
+    UNDECLARED_PROPERTIES = 21;
+    UNREACHABLE = 22;
+  }
+
+  Code code = 1;
+  repeated Data data = 2;
+  string message = 3;
+}
+
+message Operation {
+  enum Status {
+    DONE = 0;
+    PENDING = 1;
+    RUNNING = 2;
+  }
+
+  string client_operation_id = 1;
+  string creation_timestamp = 2;
+  string description = 3;
+  string end_time = 4;
+  Error error = 5;
+  string http_error_message = 6;
+  int32 http_error_status_code = 7;
+  string id = 8;
+  string insert_time = 9;
+  string kind = 10;
+  string name = 11;
+  string operation_type = 12;
+  int32 progress = 13;
+  string region = 14;
+  string self_link = 15;
+  string start_time = 16;
+  Status status = 17;
+  string status_message = 18;
+  string target_id = 19;
+  string target_link = 20;
+  string user = 21;
+  repeated Warnings warnings = 22;
+  string zone = 23;
+}
+
+message Warning {
+  enum Code {
+    CLEANUP_FAILED = 0;
+    DEPRECATED_RESOURCE_USED = 1;
+    DEPRECATED_TYPE_USED = 2;
+    DISK_SIZE_LARGER_THAN_IMAGE_SIZE = 3;
+    EXPERIMENTAL_TYPE_USED = 4;
+    EXTERNAL_API_WARNING = 5;
+    FIELD_VALUE_OVERRIDEN = 6;
+    INJECTED_KERNELS_DEPRECATED = 7;
+    MISSING_TYPE_DEPENDENCY = 8;
+    NEXT_HOP_ADDRESS_NOT_ASSIGNED = 9;
+    NEXT_HOP_CANNOT_IP_FORWARD = 10;
+    NEXT_HOP_INSTANCE_NOT_FOUND = 11;
+    NEXT_HOP_INSTANCE_NOT_ON_NETWORK = 12;
+    NEXT_HOP_NOT_RUNNING = 13;
+    NOT_CRITICAL_ERROR = 14;
+    NO_RESULTS_ON_PAGE = 15;
+    REQUIRED_TOS_AGREEMENT = 16;
+    RESOURCE_IN_USE_BY_OTHER_RESOURCE_WARNING = 17;
+    RESOURCE_NOT_DELETED = 18;
+    SCHEMA_VALIDATION_IGNORED = 19;
+    SINGLE_INSTANCE_PROPERTY_TEMPLATE = 20;
+    UNDECLARED_PROPERTIES = 21;
+    UNREACHABLE = 22;
+  }
+
+  Code code = 1;
+  repeated Data data = 2;
+  string message = 3;
+}
+
+message AddressList {
+  string id = 1;
+  repeated Address items = 2;
+  string kind = 3;
+  string next_page_token = 4;
+  string self_link = 5;
+  Warning warning = 6;
+}
+
+message InsertAddressRequest {
+  string resource_name = 1 [
+    (google.api.resource_reference) = {
+      type: "google.cloud.compute.v1/ProjectRegionAddress"
+    }
+  ];
+  string request_id = 2;
+  Address address_resource = 3;
+}
+
+message InsertAddressResponse {
+  Operation operation = 1;
+}
+
+message ListAddressesRequest {
+  string resource_name = 1 [
+    (google.api.resource_reference) = {
+      type: "google.cloud.compute.v1/ProjectRegionAddress"
+    }
+  ];
+  string filter = 2;
+  uint32 max_results = 3;
+  string order_by = 4;
+  string page_token = 5;
+}
+
+message ListAddressesResponse {
+  AddressList address_list = 1;
+}
+
+//
+// Services
+//
+service Addresses {
+  rpc Insert(InsertAddressRequest) returns (InsertAddressResponse) {
+    option (google.api.http) = {
+      post: "{project}/regions/{region}/addresses"
+      body: "address_resource"
+    };
+  }
+
+  rpc List(ListAddressesRequest) returns (ListAddressesResponse) {
+    option (google.api.http) = {
+      get: "{project}/regions/{region}/addresses"
+    };
+  }
+
+}
+

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.google.cloud.discotoproto3converter.proto3;
 
 import com.google.cloud.discotoproto3converter.disco.Document;
@@ -31,17 +30,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class DocumentToProtoConverter {
-  private final Document document;
   private final String packageName;
   private final Map<String, Message> allMessages = new LinkedHashMap<>();
   private final Map<String, GrpcService> allServices = new LinkedHashMap<>();
   private final Map<String, Option> allResourceOptions = new LinkedHashMap<>();
 
   public DocumentToProtoConverter(Document document) {
-    this.document = document;
     this.packageName = "google.cloud." + document.name() + "." + document.version();
-    readSchema();
-    readResources();
+    readSchema(document);
+    readResources(document);
     cleanupEnumNamingConflicts();
   }
 
@@ -61,7 +58,7 @@ public class DocumentToProtoConverter {
     return Collections.unmodifiableMap(allResourceOptions);
   }
 
-  private void readSchema() {
+  private void readSchema(Document document) {
     for (Map.Entry<String, Schema> entry : document.schemas().entrySet()) {
       schemaToField(entry.getValue());
     }
@@ -82,6 +79,8 @@ public class DocumentToProtoConverter {
     }
   }
 
+  // If there is a naming conflict between two or more enums in the same message, convert all
+  // enum types to strings (happens rarely, but happens).
   private void cleanupEnumNamingConflicts() {
     Message stringType = Field.PRIMITIVES.get("string");
     for (Message message : allMessages.values()) {
@@ -230,7 +229,7 @@ public class DocumentToProtoConverter {
     return messageName;
   }
 
-  private void readResources() {
+  private void readResources(Document document) {
     for (Map.Entry<String, List<Method>> entry : document.resources().entrySet()) {
       String grpcServiceName = Name.anyCamel(entry.getKey()).toUpperCamel();
       GrpcService service = new GrpcService(grpcServiceName);

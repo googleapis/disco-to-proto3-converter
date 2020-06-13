@@ -13,39 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.google.cloud.discotoproto3converter.proto3;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Proto3Writer {
-
   public void writeToFile(
-      String outputDir,
-      String fileName,
+      PrintWriter writer,
       String pkg,
       Collection<Message> messages,
       Collection<GrpcService> services,
       Collection<Option> resourceOptions) {
 
-    Path outputPath = Paths.get(outputDir, pkg.replace('.', File.separatorChar));
-    outputPath.toFile().mkdirs();
-    String outputFilePath = Paths.get(outputPath.toString(), fileName).toString();
-
-    try (PrintWriter writer = new PrintWriter(outputFilePath, "UTF-8")) {
       writer.println("syntax = \"proto3\";\n");
 
       writer.println("package " + pkg + ";\n");
 
       writer.println("import \"google/api/annotations.proto\";");
       writer.println("import \"google/api/resource.proto\";\n");
+      printOptions(pkg, writer);
 
       // File level options
       writer.println("//");
@@ -64,10 +55,25 @@ public class Proto3Writer {
       writer.println("// Services");
       writer.println("//");
       printServices(services, writer);
+  }
 
-    } catch (FileNotFoundException | UnsupportedEncodingException e) {
-      e.printStackTrace();
-    }
+  private void printOptions(String pkg, PrintWriter writer) {
+    String[] tokens = pkg.split("\\.");
+    List<String> capitalized = Arrays.stream(tokens).map(this::capitalize).collect(Collectors.toList());
+
+    writer.println("option csharp_namespace = \"" + String.join(".", capitalized) + "\";");
+    String goPkg1 = Arrays.stream(tokens).skip(1).collect(Collectors.joining("/"));
+    String goPkg2 = tokens[tokens.length - 2];
+    String goPkg = "google.golang.org/genproto/googleapis/" + goPkg1 + ";" + goPkg2;
+    writer.println("option go_package = \"" + goPkg + "\";");
+    writer.println("option java_multiple_files = true;");
+    writer.println("option java_package = \"" + "com." + pkg + "\";");
+    writer.println("option php_namespace = \"" + String.join("\\\\", capitalized) + "\";");
+    writer.println("option ruby_package = \"" + String.join("::", capitalized) + "\";\n");
+  }
+
+  private String capitalize(String name) {
+    return Character.toUpperCase(name.charAt(0)) + name.substring(1);
   }
 
   private void printServices(Collection<GrpcService> services, PrintWriter writer) {
@@ -106,9 +112,6 @@ public class Proto3Writer {
 
   private void printMessages(Collection<Message> messages, PrintWriter writer, String indent) {
     for (Message message : messages) {
-      if ("ListPeeringRoutesNetworksRequest".equals(message.getName())) {
-        int k = 0;
-      }
       writer.println(indent + (message.isEnum() ? "enum " : "message ") + message + " {");
 
       printMessages(message.getEnums(), writer, indent + "  ");
