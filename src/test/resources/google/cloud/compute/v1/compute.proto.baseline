@@ -15,10 +15,8 @@ option ruby_package = "Google::Cloud::Compute::V1";
 //
 // File level resource definitions
 //
-option (google.api.resource_definition) = {
-  type: "google.cloud.compute.v1/ProjectRegionAddress"
-  pattern: "{project}/regions/{region}/addresses"
-};
+
+// [Empty]
 
 //
 // Messages
@@ -194,13 +192,10 @@ message AddressList {
 }
 
 message InsertAddressRequest {
-  string resource_name = 1 [
-    (google.api.resource_reference) = {
-      type: "google.cloud.compute.v1/ProjectRegionAddress"
-    }
-  ];
-  string request_id = 2;
-  Address address_resource = 3;
+  string project = 1;
+  string region = 2;
+  string request_id = 3;
+  Address address_resource = 4;
 }
 
 message InsertAddressResponse {
@@ -208,15 +203,12 @@ message InsertAddressResponse {
 }
 
 message ListAddressesRequest {
-  string resource_name = 1 [
-    (google.api.resource_reference) = {
-      type: "google.cloud.compute.v1/ProjectRegionAddress"
-    }
-  ];
-  string filter = 2;
-  uint32 max_results = 3;
-  string order_by = 4;
-  string page_token = 5;
+  string project = 1;
+  string region = 2;
+  string filter = 3;
+  uint32 max_results = 4;
+  string order_by = 5;
+  string page_token = 6;
 }
 
 message ListAddressesResponse {
@@ -229,14 +221,14 @@ message ListAddressesResponse {
 service Addresses {
   rpc Insert(InsertAddressRequest) returns (InsertAddressResponse) {
     option (google.api.http) = {
-      post: "{project}/regions/{region}/addresses"
+      post: "/{project}/regions/{region}/addresses"
       body: "address_resource"
     };
   }
 
   rpc List(ListAddressesRequest) returns (ListAddressesResponse) {
     option (google.api.http) = {
-      get: "{project}/regions/{region}/addresses"
+      get: "/{project}/regions/{region}/addresses"
     };
   }
 

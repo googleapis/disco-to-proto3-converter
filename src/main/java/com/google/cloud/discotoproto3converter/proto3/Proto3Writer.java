@@ -101,6 +101,9 @@ public class Proto3Writer {
   }
 
   private void printFileLevelOptions(Collection<Option> resourceOptions, PrintWriter writer) {
+    if (resourceOptions.isEmpty()) {
+      writer.println("\n// [Empty]\n");
+    }
     for (Option resOption : resourceOptions) {
       writer.println("option (" + resOption + ") = {");
       for (Map.Entry<String, String> optProp : resOption.getProperties().entrySet()) {

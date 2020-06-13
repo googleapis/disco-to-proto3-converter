@@ -236,24 +236,33 @@ public class DocumentToProtoConverter {
 
       for (Method method : entry.getValue()) {
         // Resource name file level options
-        Option resourceOption = new Option("google.api.resource_definition");
-        String qualifiedResourceName =
-            getQualifiedResourceIdentifier(method.flatPath()).toUpperCamel();
-        String resourceNameType = this.packageName + "/" + qualifiedResourceName;
-        resourceOption.getProperties().put("type", resourceNameType);
-        resourceOption.getProperties().put("pattern", method.flatPath());
-        allResourceOptions.put(method.flatPath(), resourceOption);
+        // TODO: Determine if we really need resource names at all
+        //
+        // Option resourceOption = new Option("google.api.resource_definition");
+        // String qualifiedResourceName =
+        //     getQualifiedResourceIdentifier(method.flatPath()).toUpperCamel();
+        // String resourceNameType = this.packageName + "/" + qualifiedResourceName;
+        // resourceOption.getProperties().put("type", resourceNameType);
+        // resourceOption.getProperties().put("pattern", method.flatPath());
+        // allResourceOptions.put(method.flatPath(), resourceOption);
 
         // Request
         String requestName = getRpcMessageName(method, "request").toUpperCamel();
         Message input = new Message(requestName, false, false);
 
-        String resoruceName = Name.anyCamel("resource", "name").toLowerUnderscore();
-        Field resourceField = new Field(resoruceName, Field.PRIMITIVES.get("string"), false, null);
-        Option resourceRefOption = new Option("google.api.resource_reference");
-        resourceRefOption.getProperties().put("type", resourceNameType);
-        resourceField.getOptions().add(resourceRefOption);
-        input.getFields().add(resourceField);
+        // TODO: Determine if we really need resource names at all
+        //
+        // String resoruceName = Name.anyCamel("resource", "name").toLowerUnderscore();
+        // Field resourceField = new Field(resoruceName, Field.PRIMITIVES.get("string"), false,
+        // null);
+        // Option resourceRefOption = new Option("google.api.resource_reference");
+        // resourceRefOption.getProperties().put("type", resourceNameType);
+        // resourceField.getOptions().add(resourceRefOption);
+        // input.getFields().add(resourceField);
+
+        for (Schema pathParams : method.pathParams().values()) {
+          input.getFields().add(schemaToField(pathParams));
+        }
 
         for (Schema queryParam : method.queryParams().values()) {
           Field queryField = schemaToField(queryParam);
@@ -263,7 +272,9 @@ public class DocumentToProtoConverter {
           }
         }
         Option methodHttpOption = new Option("google.api.http");
-        methodHttpOption.getProperties().put(method.httpMethod().toLowerCase(), method.flatPath());
+        methodHttpOption
+            .getProperties()
+            .put(method.httpMethod().toLowerCase(), "/" + method.flatPath());
 
         if (method.request() != null) {
           Message request = allMessages.get(method.request().reference());
