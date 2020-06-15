@@ -291,15 +291,25 @@ public class DocumentToProtoConverter {
         allMessages.put(requestName, input);
 
         // Response
-        String responseName = getRpcMessageName(method, "response").toUpperCamel();
-        Message output = new Message(responseName, false, false);
-
+        Message output;
         if (method.response() != null) {
-          Message response = allMessages.get(method.response().reference());
-          String responseFieldName = Name.anyCamel(response.getName()).toLowerUnderscore();
-          output.getFields().add(new Field(responseFieldName, response, false, null));
+          output = allMessages.get(method.response().reference());
+        } else {
+          String responseName = getRpcMessageName(method, "response").toUpperCamel();
+          output = new Message(responseName, false, false);
+          allMessages.put(responseName, output);
         }
-        allMessages.put(responseName, output);
+
+        // String responseName = getRpcMessageName(method, "response").toUpperCamel();
+        // Message output = new Message(responseName, false, false);
+        // if (method.response() != null) {
+        //   Message response = allMessages.get(method.response().reference());
+        //   String responseFieldName = Name.anyCamel(response.getName()).toLowerUnderscore();
+        //   output.getFields().add(new Field(responseFieldName, response, false, null));
+        // } else {
+        //   int i = 0;
+        // }
+        // allMessages.put(responseName, output);
         String methodname = getRpcMethodName(method).toUpperCamel();
 
         // Method

@@ -198,10 +198,6 @@ message InsertAddressRequest {
   Address address_resource = 4;
 }
 
-message InsertAddressResponse {
-  Operation operation = 1;
-}
-
 message ListAddressesRequest {
   string project = 1;
   string region = 2;
@@ -211,22 +207,18 @@ message ListAddressesRequest {
   string page_token = 6;
 }
 
-message ListAddressesResponse {
-  AddressList address_list = 1;
-}
-
 //
 // Services
 //
 service Addresses {
-  rpc Insert(InsertAddressRequest) returns (InsertAddressResponse) {
+  rpc Insert(InsertAddressRequest) returns (Operation) {
     option (google.api.http) = {
       post: "/{project}/regions/{region}/addresses"
       body: "address_resource"
     };
   }
 
-  rpc List(ListAddressesRequest) returns (ListAddressesResponse) {
+  rpc List(ListAddressesRequest) returns (AddressList) {
     option (google.api.http) = {
       get: "/{project}/regions/{region}/addresses"
     };
