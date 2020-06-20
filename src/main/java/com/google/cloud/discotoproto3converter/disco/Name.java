@@ -50,83 +50,12 @@ public class Name {
   }
 
   /**
-   * Creates a Name from a String that is either a sequence of underscore strings or a sequence of
-   * camel strings. The first letter of the String must be lowercase.
-   *
-   * @throws IllegalArgumentException if any of the strings do not follow the camel format or
-   *     contain characters that are not underscores.
-   */
-  public static Name anyLower(String... pieces) {
-    Name name;
-    try {
-      name = Name.from(pieces);
-    } catch (IllegalArgumentException e) {
-      try {
-        name = Name.lowerCamel(pieces);
-      } catch (IllegalArgumentException ex) {
-        String msg = "[";
-        for (String p : pieces) {
-          msg += String.format("\"%s\", ", p);
-        }
-        msg += "]\n";
-        throw new IllegalArgumentException(
-            "Name: identifiers are not all either lower-underscore or lower-camel: " + msg);
-      }
-    }
-    return name;
-  }
-
-  /**
-   * Creates a Name from a sequence of upper-underscore strings.
-   *
-   * @throws IllegalArgumentException if any of the strings contain any characters that are not
-   *     upper case or underscores.
-   */
-  public static Name upperUnderscore(String... pieces) {
-    List<NamePiece> namePieces = new ArrayList<>();
-    for (String piece : pieces) {
-      if (Strings.isNullOrEmpty(piece)) {
-        continue;
-      }
-      validateUpperUnderscore(piece);
-      namePieces.add(new NamePiece(piece, CaseFormat.UPPER_UNDERSCORE));
-    }
-    return new Name(namePieces);
-  }
-
-  /**
    * Creates a Name from a sequence of camel strings.
    *
    * @throws IllegalArgumentException if any of the strings do not follow the camel format.
    */
   public static Name anyCamel(String... pieces) {
     return camelInternal(CheckCase.NO_CHECK, AcronymMode.CAMEL_CASE, pieces);
-  }
-
-  /**
-   * Creates a Name from a sequence of lower-camel strings.
-   *
-   * @throws IllegalArgumentException if any of the strings do not follow the lower-camel format.
-   */
-  public static Name lowerCamel(String... pieces) {
-    return camelInternal(CheckCase.LOWER, AcronymMode.CAMEL_CASE, pieces);
-  }
-
-  /**
-   * Creates a Name from a sequence of upper-camel strings.
-   *
-   * @throws IllegalArgumentException if any of the strings do not follow the upper-camel format.
-   */
-  public static Name upperCamel(String... pieces) {
-    return camelInternal(CheckCase.UPPER, AcronymMode.CAMEL_CASE, pieces);
-  }
-
-  public static Name anyCamelKeepUpperAcronyms(String... pieces) {
-    return camelInternal(CheckCase.NO_CHECK, AcronymMode.UPPER_CASE, pieces);
-  }
-
-  public static Name upperCamelKeepUpperAcronyms(String... pieces) {
-    return camelInternal(CheckCase.UPPER, AcronymMode.UPPER_CASE, pieces);
   }
 
   private static CaseFormat getCamelCaseFormat(String piece) {
@@ -163,23 +92,6 @@ public class Name {
       throw new IllegalArgumentException(
           "Name: identifier not in lower-underscore: '" + identifier + "'");
     }
-  }
-
-  private static void validateUpperUnderscore(String identifier) {
-    if (!isUpperUnderscore(identifier)) {
-      throw new IllegalArgumentException(
-          "Name: identifier not in upper-underscore: '" + identifier + "'");
-    }
-  }
-
-  private static boolean isUpperUnderscore(String identifier) {
-    Character underscore = Character.valueOf('_');
-    for (Character ch : identifier.toCharArray()) {
-      if (!Character.isUpperCase(ch) && !ch.equals(underscore) && !Character.isDigit(ch)) {
-        return false;
-      }
-    }
-    return true;
   }
 
   private static boolean isLowerUnderscore(String identifier) {
@@ -219,11 +131,6 @@ public class Name {
     this.namePieces = namePieces;
   }
 
-  /** Returns the identifier in upper-underscore format. */
-  public String toUpperUnderscore() {
-    return toUnderscore(CaseFormat.UPPER_UNDERSCORE);
-  }
-
   /** Returns the identifier in lower-underscore format. */
   public String toLowerUnderscore() {
     return toUnderscore(CaseFormat.LOWER_UNDERSCORE);
@@ -237,28 +144,9 @@ public class Name {
     return Joiner.on('_').join(newPieces);
   }
 
-  /** Returns the identifier in lower-camel format. */
-  public String toLowerCamel() {
-    return toCamel(CaseFormat.LOWER_CAMEL);
-  }
-
   /** Returns the identifier in upper-camel format. */
   public String toUpperCamel() {
     return toCamel(CaseFormat.UPPER_CAMEL);
-  }
-
-  public String toUpperCamelAndDigits() {
-    char[] upper = toUpperCamel().toCharArray();
-    boolean digit = false;
-    for (int i = 0; i < upper.length; i++) {
-      if (Character.isDigit(upper[i])) {
-        digit = true;
-      } else if (digit) {
-        upper[i] = Character.toUpperCase(upper[i]);
-        digit = false;
-      }
-    }
-    return new String(upper);
   }
 
   private String toCamel(CaseFormat caseFormat) {
@@ -277,48 +165,6 @@ public class Name {
       firstPiece = false;
     }
     return buffer.toString();
-  }
-
-  /** Returns the name in human readable form, useful in comments. */
-  public String toPhrase() {
-    return toLowerUnderscore().replace('_', ' ');
-  }
-
-  /** Returns the name in lower case, with a custom separator between components. */
-  public String toSeparatedString(String separator) {
-    return toLowerUnderscore().replace("_", separator);
-  }
-
-  /**
-   * Returns a new Name containing the pieces from this Name plus the given identifier added on the
-   * end.
-   */
-  public Name join(String identifier) {
-    validateLowerUnderscore(identifier);
-    List<NamePiece> newPieceList = new ArrayList<>();
-    newPieceList.addAll(namePieces);
-    newPieceList.add(new NamePiece(identifier, CaseFormat.LOWER_UNDERSCORE));
-    return new Name(newPieceList);
-  }
-
-  /**
-   * Returns a new Name containing the pieces from this Name plus the pieces of the given name added
-   * on the end.
-   */
-  public Name join(Name rhs) {
-    List<NamePiece> newPieceList = new ArrayList<>();
-    newPieceList.addAll(namePieces);
-    newPieceList.addAll(rhs.namePieces);
-    return new Name(newPieceList);
-  }
-
-  public String toOriginal() {
-    if (namePieces.size() != 1) {
-      throw new IllegalArgumentException(
-          "Name: toOriginal can only be called with a namePieces size of 1");
-    }
-
-    return namePieces.get(0).identifier;
   }
 
   @Override
@@ -360,7 +206,7 @@ public class Name {
     CAMEL_CASE(CasingMode.NORMAL),
     UPPER_CASE(CasingMode.UPPER_CAMEL_TO_SQUASHED_UPPERCASE);
 
-    private AcronymMode(CasingMode casingMode) {
+    AcronymMode(CasingMode casingMode) {
       this.casingMode = casingMode;
     }
 

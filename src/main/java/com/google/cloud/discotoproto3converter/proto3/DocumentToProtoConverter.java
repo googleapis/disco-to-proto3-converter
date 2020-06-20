@@ -235,31 +235,9 @@ public class DocumentToProtoConverter {
       GrpcService service = new GrpcService(grpcServiceName);
 
       for (Method method : entry.getValue()) {
-        // Resource name file level options
-        // TODO: Determine if we really need resource names at all
-        //
-        // Option resourceOption = new Option("google.api.resource_definition");
-        // String qualifiedResourceName =
-        //     getQualifiedResourceIdentifier(method.flatPath()).toUpperCamel();
-        // String resourceNameType = this.packageName + "/" + qualifiedResourceName;
-        // resourceOption.getProperties().put("type", resourceNameType);
-        // resourceOption.getProperties().put("pattern", method.flatPath());
-        // allResourceOptions.put(method.flatPath(), resourceOption);
-
         // Request
         String requestName = getRpcMessageName(method, "request").toUpperCamel();
         Message input = new Message(requestName, false, false);
-
-        // TODO: Determine if we really need resource names at all
-        //
-        // String resoruceName = Name.anyCamel("resource", "name").toLowerUnderscore();
-        // Field resourceField = new Field(resoruceName, Field.PRIMITIVES.get("string"), false,
-        // null);
-        // Option resourceRefOption = new Option("google.api.resource_reference");
-        // resourceRefOption.getProperties().put("type", resourceNameType);
-        // resourceField.getOptions().add(resourceRefOption);
-        // input.getFields().add(resourceField);
-
         String httpOptionPath = method.flatPath();
         for (Schema pathParam : method.pathParams().values()) {
           Field pathField = schemaToField(pathParam);
@@ -300,16 +278,6 @@ public class DocumentToProtoConverter {
           allMessages.put(responseName, output);
         }
 
-        // String responseName = getRpcMessageName(method, "response").toUpperCamel();
-        // Message output = new Message(responseName, false, false);
-        // if (method.response() != null) {
-        //   Message response = allMessages.get(method.response().reference());
-        //   String responseFieldName = Name.anyCamel(response.getName()).toLowerUnderscore();
-        //   output.getFields().add(new Field(responseFieldName, response, false, null));
-        // } else {
-        //   int i = 0;
-        // }
-        // allMessages.put(responseName, output);
         String methodname = getRpcMethodName(method).toUpperCamel();
 
         // Method
@@ -336,34 +304,5 @@ public class DocumentToProtoConverter {
     String[] pieces = method.id().split("\\.");
     String methodName = pieces[pieces.length - 1];
     return Name.anyCamel(methodName);
-  }
-
-  public static Name getQualifiedResourceIdentifier(String canonicalPath) {
-    String[] pieces = canonicalPath.split("/");
-
-    Name name = Name.from();
-    String previous = null;
-    for (String segment : pieces) {
-      String next = segment;
-      if (segment.contains("}")) {
-        next = segment.substring(1, segment.length() - 1);
-      }
-      next = Inflector.singularize(next);
-      if (!next.equals(previous)) {
-        // Only append to the name if this segment is not identical to the previous segment.
-        name = name.join(stringToResourceName(next));
-        previous = next;
-      }
-    }
-
-    return name;
-  }
-
-  public static Name stringToResourceName(String fieldName) {
-    if (fieldName.contains("_")) {
-      return Name.anyCamel(fieldName.split("_"));
-    } else {
-      return Name.anyCamel(fieldName);
-    }
   }
 }
