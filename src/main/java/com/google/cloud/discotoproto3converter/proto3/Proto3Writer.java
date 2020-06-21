@@ -35,6 +35,7 @@ public class Proto3Writer {
       writer.println("package " + pkg + ";\n");
 
       writer.println("import \"google/api/annotations.proto\";");
+      writer.println("import \"google/api/client.proto\";");
       writer.println("import \"google/api/resource.proto\";\n");
       printOptions(pkg, writer);
 
@@ -79,6 +80,23 @@ public class Proto3Writer {
   private void printServices(Collection<GrpcService> services, PrintWriter writer) {
     for (GrpcService service : services) {
       writer.println("service " + service + " {");
+
+      for (Option opt : service.getOptions()) {
+        // Support only scalar service-level options for now (there are not use-cases for vector
+        // ones).
+        String comaSeparatedScalar = opt.getProperties().get("");
+        if (comaSeparatedScalar == null) {
+          continue;
+        }
+        writer.println("  option (" + opt.getName() + ") =");
+
+        String[] comaSeparatedComponents = comaSeparatedScalar.split(",");
+        for (int i = 0; i < comaSeparatedComponents.length; i++) {
+          writer.print("    \"" + comaSeparatedComponents[i]);
+          writer.println(i >= comaSeparatedComponents.length - 1 ? "\";" : ",\"");
+        }
+        writer.println();
+      }
 
       for (GrpcMethod method : service.getMethods()) {
         writer.println("  " + method + " {");

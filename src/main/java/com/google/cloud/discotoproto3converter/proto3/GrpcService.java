@@ -21,6 +21,7 @@ import java.util.List;
 public class GrpcService {
   private final String name;
   private final List<GrpcMethod> methods = new ArrayList<>();
+  private final List<Option> options = new ArrayList<>();
 
   public GrpcService(String name) {
     this.name = name;
@@ -32,6 +33,10 @@ public class GrpcService {
 
   public List<GrpcMethod> getMethods() {
     return methods;
+  }
+
+  public List<Option> getOptions() {
+    return options;
   }
 
   @Override

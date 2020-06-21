@@ -230,11 +230,27 @@ public class DocumentToProtoConverter {
   }
 
   private void readResources(Document document) {
+    String endpointSuffix = document.baseUrl().substring(document.rootUrl().length());
+    endpointSuffix = endpointSuffix.startsWith("/") ? endpointSuffix : '/' + endpointSuffix;
+    endpointSuffix = endpointSuffix.replaceAll("/$", "");
+    String endpoint = document.rootUrl().replaceAll("(^https://)|(/$)", "");
+
     for (Map.Entry<String, List<Method>> entry : document.resources().entrySet()) {
       String grpcServiceName = Name.anyCamel(entry.getKey()).toUpperCamel();
       GrpcService service = new GrpcService(grpcServiceName);
+      Option defaultHostOpt = new Option("google.api.default_host");
+      defaultHostOpt.getProperties().put("", endpoint);
+      service.getOptions().add(defaultHostOpt);
+
+      Set<String> authScopes = new HashSet<>();
 
       for (Method method : entry.getValue()) {
+        if (authScopes.isEmpty()) {
+          authScopes.addAll(method.scopes());
+        } else {
+          authScopes.retainAll(method.scopes());
+        }
+
         // Request
         String requestName = getRpcMessageName(method, "request").toUpperCamel();
         Message input = new Message(requestName, false, false);
@@ -257,7 +273,7 @@ public class DocumentToProtoConverter {
         Option methodHttpOption = new Option("google.api.http");
         methodHttpOption
             .getProperties()
-            .put(method.httpMethod().toLowerCase(), "/" + httpOptionPath);
+            .put(method.httpMethod().toLowerCase(), endpointSuffix + "/" + httpOptionPath);
 
         if (method.request() != null) {
           Message request = allMessages.get(method.request().reference());
@@ -286,6 +302,10 @@ public class DocumentToProtoConverter {
 
         service.getMethods().add(grpcMethod);
       }
+
+      Option authScopesOpt = new Option("google.api.oauth_scopes");
+      authScopesOpt.getProperties().put("", String.join(",", authScopes));
+      service.getOptions().add(authScopesOpt);
       allServices.put(service.getName(), service);
     }
   }
