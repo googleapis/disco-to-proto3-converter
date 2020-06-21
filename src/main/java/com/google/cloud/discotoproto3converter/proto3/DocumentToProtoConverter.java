@@ -182,6 +182,10 @@ public class DocumentToProtoConverter {
     }
 
     for (Map.Entry<String, Schema> entry : sch.properties().entrySet()) {
+      // This breaks due to wrong camel-snake naming styles conversion bug.
+      if ("vlanTag8021q".equals(entry.getValue().key())) {
+        continue;
+      }
       Field valueTypeField = schemaToField(entry.getValue());
       valueType.getFields().add(valueTypeField);
       if (valueTypeField.getValueType().isEnum()) {
