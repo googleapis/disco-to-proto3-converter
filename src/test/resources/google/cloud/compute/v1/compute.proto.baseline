@@ -3,6 +3,7 @@ syntax = "proto3";
 package google.cloud.compute.v1;
 
 import "google/api/annotations.proto";
+import "google/api/client.proto";
 import "google/api/resource.proto";
 
 option csharp_namespace = "Google.Cloud.Compute.V1";
@@ -211,16 +212,23 @@ message ListAddressesRequest {
 // Services
 //
 service Addresses {
+  option (google.api.default_host) =
+    "compute.googleapis.com";
+
+  option (google.api.oauth_scopes) =
+    "https://www.googleapis.com/auth/compute,"
+    "https://www.googleapis.com/auth/cloud-platform";
+
   rpc Insert(InsertAddressRequest) returns (Operation) {
     option (google.api.http) = {
-      post: "/{project}/regions/{region}/addresses"
+      post: "/compute/v1/projects/{project}/regions/{region}/addresses"
       body: "address_resource"
     };
   }
 
   rpc List(ListAddressesRequest) returns (AddressList) {
     option (google.api.http) = {
-      get: "/{project}/regions/{region}/addresses"
+      get: "/compute/v1/projects/{project}/regions/{region}/addresses"
     };
   }
 
