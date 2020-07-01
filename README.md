@@ -9,13 +9,13 @@ To build and run this tool you will need the following tools:
 
 ### Build
 To build the standalone jar run the following command from the repository root:
-```
+```sh
 mvn package
 ```
 
 ### Test
 To run the unit tests execute the following command:
-```
+```sh
 mvn test
 ```
 
@@ -23,7 +23,7 @@ mvn test
 After performing the build, to run the converter using `compute.v1.json` as a 
 sample input (included in this repository) run the following command from the 
 repository root:
-```
+```sh
 java \
   -jar target/disco-to-proto3-converter-0.0.1-SNAPSHOT-jar-with-dependencies.jar \
   --discovery_doc_path=src/test/resources/compute.v1.json \
