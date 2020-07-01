@@ -159,7 +159,7 @@ public class DocumentToProtoConverter {
         }
         break;
       case STRING:
-        if (sch.isEnum()) {
+        if (sch.isEnum() && !"".equals(sch.getIdentifier())) {
           valueType = new Message(getMessageName(sch), false, true);
           for (String enumValue : sch.enumValues()) {
             valueType.getFields().add(new Field(enumValue, Field.PRIMITIVES.get(""), false, null));
