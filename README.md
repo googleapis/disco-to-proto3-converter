@@ -33,3 +33,5 @@ java \
 
 Check the `google/cloud/compute/v1` directory for the converted `compute.proto` 
 file.
+
+**This is not an officially supported Google Product**
