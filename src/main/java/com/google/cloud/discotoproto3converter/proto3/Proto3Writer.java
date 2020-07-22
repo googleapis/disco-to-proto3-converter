@@ -30,37 +30,39 @@ public class Proto3Writer {
       Collection<GrpcService> services,
       Collection<Option> resourceOptions) {
 
-      writer.println("syntax = \"proto3\";\n");
+    writer.println("syntax = \"proto3\";\n");
 
-      writer.println("package " + pkg + ";\n");
+    writer.println("package " + pkg + ";\n");
 
-      writer.println("import \"google/api/annotations.proto\";");
-      writer.println("import \"google/api/client.proto\";");
-      writer.println("import \"google/api/resource.proto\";\n");
-      printOptions(pkg, writer);
+    writer.println("import \"google/api/annotations.proto\";");
+    writer.println("import \"google/api/client.proto\";");
+    writer.println("import \"google/api/field_behavior.proto\";");
+    writer.println("import \"google/api/resource.proto\";\n");
+    printOptions(pkg, writer);
 
-      // File level options
-      writer.println("//");
-      writer.println("// File level resource definitions");
-      writer.println("//");
-      printFileLevelOptions(resourceOptions, writer);
+    // File level options
+    writer.println("//");
+    writer.println("// File level resource definitions");
+    writer.println("//");
+    printFileLevelOptions(resourceOptions, writer);
 
-      // Messages
-      writer.println("//");
-      writer.println("// Messages");
-      writer.println("//");
-      printMessages(messages, writer, "");
+    // Messages
+    writer.println("//");
+    writer.println("// Messages");
+    writer.println("//");
+    printMessages(messages, writer, "");
 
-      // Services
-      writer.println("//");
-      writer.println("// Services");
-      writer.println("//");
-      printServices(services, writer);
+    // Services
+    writer.println("//");
+    writer.println("// Services");
+    writer.println("//");
+    printServices(services, writer);
   }
 
   private void printOptions(String pkg, PrintWriter writer) {
     String[] tokens = pkg.split("\\.");
-    List<String> capitalized = Arrays.stream(tokens).map(this::capitalize).collect(Collectors.toList());
+    List<String> capitalized =
+        Arrays.stream(tokens).map(this::capitalize).collect(Collectors.toList());
 
     writer.println("option csharp_namespace = \"" + String.join(".", capitalized) + "\";");
     String goPkg1 = Arrays.stream(tokens).skip(1).collect(Collectors.joining("/"));
@@ -143,16 +145,22 @@ public class Proto3Writer {
 
         String options = ";";
         if (!field.getOptions().isEmpty()) {
-          StringBuilder optionsSb = new StringBuilder(" [\n");
+          StringBuilder optionsSb = new StringBuilder(" [");
           for (Option option : field.getOptions()) {
-            optionsSb.append(indent).append("    (").append(option).append(") = {\n");
-            for (Map.Entry<String, String> prop : option.getProperties().entrySet()) {
-              optionsSb.append(indent).append("      ").append(prop.getKey()).append(": ")
-                  .append('"').append(prop.getValue()).append("\"\n");
+
+            String scalarOptionValue = option.getProperties().get("");
+            if (option.getProperties().size() == 1 && scalarOptionValue != null) {
+              optionsSb.append("(").append(option).append(") = ").append(scalarOptionValue).append("];");
+            } else {
+              optionsSb.append(indent).append("    (").append(option).append(") = {\n");
+              for (Map.Entry<String, String> prop : option.getProperties().entrySet()) {
+                optionsSb.append(indent).append("      ").append(prop.getKey()).append(": ");
+                optionsSb.append('"').append(prop.getValue()).append("\"\n");
+              }
+              optionsSb.append(indent).append("    }");
+              optionsSb.append("\n").append(indent).append("  ];");
             }
-            optionsSb.append(indent).append("    }");
           }
-          optionsSb.append("\n").append(indent).append("  ];");
           options = optionsSb.toString();
         }
 
@@ -161,6 +169,4 @@ public class Proto3Writer {
       writer.println(indent + "}\n");
     }
   }
-
 }
-
