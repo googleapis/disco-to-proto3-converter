@@ -44,8 +44,7 @@ public class Option {
       return false;
     }
     Option option = (Option) o;
-    return Objects.equals(name, option.name) &&
-        Objects.equals(properties, option.properties);
+    return Objects.equals(name, option.name) && Objects.equals(properties, option.properties);
   }
 
   @Override
