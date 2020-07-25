@@ -4,6 +4,7 @@ package google.cloud.compute.v1;
 
 import "google/api/annotations.proto";
 import "google/api/client.proto";
+import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 
 option csharp_namespace = "Google.Cloud.Compute.V1";
@@ -193,15 +194,15 @@ message AddressList {
 }
 
 message InsertAddressRequest {
-  string project = 1;
-  string region = 2;
+  string project = 1 [(google.api.field_behavior) = REQUIRED];
+  string region = 2 [(google.api.field_behavior) = REQUIRED];
   string request_id = 3;
   Address address_resource = 4;
 }
 
 message ListAddressesRequest {
-  string project = 1;
-  string region = 2;
+  string project = 1 [(google.api.field_behavior) = REQUIRED];
+  string region = 2 [(google.api.field_behavior) = REQUIRED];
   string filter = 3;
   uint32 max_results = 4;
   string order_by = 5;

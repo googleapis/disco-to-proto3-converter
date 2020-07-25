@@ -261,6 +261,9 @@ public class DocumentToProtoConverter {
         String httpOptionPath = method.flatPath();
         for (Schema pathParam : method.pathParams().values()) {
           Field pathField = schemaToField(pathParam);
+          Option fieldBehaviorOption = new Option("google.api.field_behavior");
+          fieldBehaviorOption.getProperties().put("", "REQUIRED");
+          pathField.getOptions().add(fieldBehaviorOption);
           input.getFields().add(pathField);
           httpOptionPath =
               httpOptionPath.replace(
