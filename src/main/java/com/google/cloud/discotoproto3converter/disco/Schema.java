@@ -214,7 +214,6 @@ public abstract class Schema implements Node {
   public boolean isRepeated() {
     return type() == Type.ARRAY;
   }
-  ;
 
   /** @return the type. */
   public abstract Type type();
