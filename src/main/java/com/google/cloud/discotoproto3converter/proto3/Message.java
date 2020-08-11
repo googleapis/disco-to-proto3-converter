@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class Message {
+public class Message extends ProtoElement {
   private final String name;
   private final List<Field> fields = new ArrayList<>();
   private final boolean ref;
@@ -27,7 +27,8 @@ public class Message {
   private final List<Message> enums = new ArrayList<>();
   private boolean isEnum;
 
-  public Message(String name, boolean ref, boolean isEnum) {
+  public Message(String name, boolean ref, boolean isEnum, String description) {
+    super(description);
     this.name = name;
     this.ref = ref;
     this.isEnum = isEnum;
@@ -61,17 +62,20 @@ public class Message {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
+    if (!super.equals(o)) {
+      return false;
+    }
     Message message = (Message) o;
-    return ref == message.ref &&
-        isEnum == message.isEnum &&
-        name.equals(message.name) &&
-        Objects.equals(fields, message.fields) &&
-        Objects.equals(enums, message.enums);
+    return ref == message.ref
+        && isEnum == message.isEnum
+        && Objects.equals(name, message.name)
+        && Objects.equals(fields, message.fields)
+        && Objects.equals(enums, message.enums);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, fields, ref, enums, isEnum);
+    return Objects.hash(super.hashCode(), name, fields, ref, enums, isEnum);
   }
 
   @Override

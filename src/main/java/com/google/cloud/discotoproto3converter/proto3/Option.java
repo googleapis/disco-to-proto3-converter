@@ -19,11 +19,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class Option {
+public class Option extends ProtoElement {
   private final String name;
   private final Map<String, String> properties = new LinkedHashMap<>();
 
   public Option(String name) {
+    super(null);
     this.name = name;
   }
 
@@ -43,13 +44,16 @@ public class Option {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
+    if (!super.equals(o)) {
+      return false;
+    }
     Option option = (Option) o;
     return Objects.equals(name, option.name) && Objects.equals(properties, option.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, properties);
+    return Objects.hash(super.hashCode(), name, properties);
   }
 
   @Override

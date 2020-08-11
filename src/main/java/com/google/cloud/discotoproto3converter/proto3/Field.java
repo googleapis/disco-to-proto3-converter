@@ -21,21 +21,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class Field {
+public class Field extends ProtoElement {
   public static final Map<String, Message> PRIMITIVES = new HashMap<>();
 
   static {
-    PRIMITIVES.put("bool", new Message("bool", false, false));
-    PRIMITIVES.put("string", new Message("string", false, false));
-    PRIMITIVES.put("int32", new Message("int32", false, false));
-    PRIMITIVES.put("fixed32", new Message("fixed32", false, false));
-    PRIMITIVES.put("uint32", new Message("uint32", false, false));
-    PRIMITIVES.put("int64", new Message("int64", false, false));
-    PRIMITIVES.put("fixed64", new Message("fixed64", false, false));
-    PRIMITIVES.put("unit64", new Message("unit64", false, false));
-    PRIMITIVES.put("float", new Message("float", false, false));
-    PRIMITIVES.put("double", new Message("double", false, false));
-    PRIMITIVES.put("", new Message("", false, true));
+    PRIMITIVES.put("bool", new Message("bool", false, false, null));
+    PRIMITIVES.put("string", new Message("string", false, false, null));
+    PRIMITIVES.put("int32", new Message("int32", false, false, null));
+    PRIMITIVES.put("fixed32", new Message("fixed32", false, false, null));
+    PRIMITIVES.put("uint32", new Message("uint32", false, false, null));
+    PRIMITIVES.put("int64", new Message("int64", false, false, null));
+    PRIMITIVES.put("fixed64", new Message("fixed64", false, false, null));
+    PRIMITIVES.put("unit64", new Message("unit64", false, false, null));
+    PRIMITIVES.put("float", new Message("float", false, false, null));
+    PRIMITIVES.put("double", new Message("double", false, false, null));
+    PRIMITIVES.put("", new Message("", false, true, null));
   }
 
   private final String name;
@@ -44,7 +44,9 @@ public class Field {
   private Message keyType;
   private final List<Option> options = new ArrayList<>();
 
-  public Field(String name, Message valueType, boolean repeated, Message keyType) {
+  public Field(
+      String name, Message valueType, boolean repeated, Message keyType, String description) {
+    super(description);
     this.name = name;
     this.valueType = valueType;
     this.repeated = repeated;
@@ -87,16 +89,20 @@ public class Field {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
+    if (!super.equals(o)) {
+      return false;
+    }
     Field field = (Field) o;
     return repeated == field.repeated
-        && name.equals(field.name)
-        && valueType.equals(field.valueType)
-        && Objects.equals(keyType, field.keyType);
+        && Objects.equals(name, field.name)
+        && Objects.equals(valueType, field.valueType)
+        && Objects.equals(keyType, field.keyType)
+        && Objects.equals(options, field.options);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, valueType, repeated, keyType);
+    return Objects.hash(super.hashCode(), name, valueType, repeated, keyType, options);
   }
 
   @Override
@@ -112,7 +118,7 @@ public class Field {
       sb.append(valueType);
     }
     if (sb.length() > 0) {
-      sb.append(' ' );
+      sb.append(' ');
     }
 
     return sb.append(name).toString();

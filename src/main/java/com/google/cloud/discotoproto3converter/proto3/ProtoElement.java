@@ -15,33 +15,31 @@
  */
 package com.google.cloud.discotoproto3converter.proto3;
 
-import java.util.ArrayList;
-import java.util.List;
+public class ProtoElement {
+  private final String description;
 
-public class GrpcService extends ProtoElement {
-  private final String name;
-  private final List<GrpcMethod> methods = new ArrayList<>();
-  private final List<Option> options = new ArrayList<>();
-
-  public GrpcService(String name, String description) {
-    super(description);
-    this.name = name;
+  public ProtoElement(String description) {
+    this.description = description;
   }
 
-  public String getName() {
-    return name;
-  }
-
-  public List<GrpcMethod> getMethods() {
-    return methods;
-  }
-
-  public List<Option> getOptions() {
-    return options;
+  public String getDescription() {
+    return description;
   }
 
   @Override
-  public String toString() {
-    return name;
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ProtoElement that = (ProtoElement) o;
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return 1;
   }
 }

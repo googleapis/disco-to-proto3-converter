@@ -22,6 +22,7 @@ import com.google.cloud.discotoproto3converter.disco.Name;
 import com.google.cloud.discotoproto3converter.disco.Schema;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
@@ -100,7 +101,9 @@ public class DocumentToProtoConverter {
         while (fields.hasNext()) {
           Field f = fields.next();
           if (enumNames.contains(f.getValueType().getName())) {
-            fields.set(new Field(f.getName(), stringType, f.isRepeated(), f.getKeyType()));
+            fields.set(
+                new Field(
+                    f.getName(), stringType, f.isRepeated(), f.getKeyType(), f.getDescription()));
           }
         }
       }
@@ -109,6 +112,7 @@ public class DocumentToProtoConverter {
 
   private Field schemaToField(Schema sch) {
     String name = Name.anyCamel(sch.key()).toLowerUnderscore();
+    String description = sch.description();
     Message valueType = null;
     boolean repeated = false;
     Message keyType = null;
@@ -123,7 +127,7 @@ public class DocumentToProtoConverter {
         valueType = Field.PRIMITIVES.get("bool");
         break;
       case EMPTY:
-        valueType = new Message(sch.reference(), true, false);
+        valueType = new Message(sch.reference(), true, false, null);
       case INTEGER:
         switch (sch.format()) {
           case INT32:
@@ -155,14 +159,19 @@ public class DocumentToProtoConverter {
           repeated = true;
           keyType = Field.PRIMITIVES.get("string");
         } else {
-          valueType = new Message(getMessageName(sch), false, false);
+          valueType = new Message(getMessageName(sch), false, false, description);
         }
         break;
       case STRING:
         if (sch.isEnum() && !"".equals(sch.getIdentifier())) {
-          valueType = new Message(getMessageName(sch), false, true);
-          for (String enumValue : sch.enumValues()) {
-            valueType.getFields().add(new Field(enumValue, Field.PRIMITIVES.get(""), false, null));
+          valueType = new Message(getMessageName(sch), false, true, description);
+
+          Iterator<String> valIter = sch.enumValues().iterator();
+          Iterator<String> descIter = sch.enumDescriptions().iterator();
+          while (valIter.hasNext() && descIter.hasNext()) {
+            Field enumField =
+                new Field(valIter.next(), Field.PRIMITIVES.get(""), false, null, descIter.next());
+            valueType.getFields().add(enumField);
           }
         } else {
           valueType = Field.PRIMITIVES.get("string");
@@ -175,17 +184,13 @@ public class DocumentToProtoConverter {
       valueType = subField.getValueType();
     }
 
-    Field field = new Field(name, valueType, repeated, keyType);
+    Field field = new Field(name, valueType, repeated, keyType, description);
     if (sch.type() == Schema.Type.EMPTY) {
     } else if (Field.PRIMITIVES.containsKey(valueType.getName())) {
       return field;
     }
 
     for (Map.Entry<String, Schema> entry : sch.properties().entrySet()) {
-      // This breaks due to wrong camel-snake naming styles conversion bug.
-      if ("vlanTag8021q".equals(entry.getValue().key())) {
-        continue;
-      }
       Field valueTypeField = schemaToField(entry.getValue());
       valueType.getFields().add(valueTypeField);
       if (valueTypeField.getValueType().isEnum()) {
@@ -202,24 +207,33 @@ public class DocumentToProtoConverter {
 
     if (existingMessage == null || existingMessage.isRef()) {
       allMessages.put(valueType.getName(), valueType);
-    } else if (!valueType.isRef() && !valueType.equals(existingMessage)) {
-      if (!"Errors".equals(valueType.getName())) {
-        // ManagedInstanceLastAttempt has the following ridiculous internal Errors message
-        // definition:
-        // message ManagedInstanceLastAttempt {
-        //   message Errors {
-        //       message Errors {}
-        //       repeated Errors errors = 1;
-        //   }
-        //   Errors errors = 1;
-        // }
-        // (i.e. Errors inside Errors with repeated Errors inside and singular Errors outside (O_o))
-        // This is the only place where something like this happens, so simply ignoring it for now.
-        throw new IllegalArgumentException(
-            "Message collision detected. Existing message = "
-                + existingMessage
-                + ", new message = "
-                + valueType);
+    } else if (!valueType.isRef()) {
+      if (valueType.getDescription() != null
+          && existingMessage.getDescription() != null
+          && valueType.getDescription().length() < existingMessage.getDescription().length()) {
+        allMessages.put(valueType.getName(), valueType);
+      }
+      if (!valueType.equals(existingMessage)) {
+        if (!"Errors".equals(valueType.getName())) {
+          // ManagedInstanceLastAttempt has the following ridiculous internal Errors message
+          // definition:
+          // message ManagedInstanceLastAttempt {
+          //   message Errors {
+          //       message Errors {}
+          //       repeated Errors errors = 1;
+          //   }
+          //   Errors errors = 1;
+          // }
+          // (i.e. Errors inside Errors with repeated Errors inside and singular Errors outside
+          // (O_o))
+          // This is the only place where something like this happens, so simply ignoring it for
+          // now.
+          throw new IllegalArgumentException(
+              "Message collision detected. Existing message = "
+                  + existingMessage
+                  + ", new message = "
+                  + valueType);
+        }
       }
     }
     return field;
@@ -241,7 +255,8 @@ public class DocumentToProtoConverter {
 
     for (Map.Entry<String, List<Method>> entry : document.resources().entrySet()) {
       String grpcServiceName = Name.anyCamel(entry.getKey()).toUpperCamel();
-      GrpcService service = new GrpcService(grpcServiceName);
+      GrpcService service =
+          new GrpcService(grpcServiceName, getServiceDescription(grpcServiceName));
       Option defaultHostOpt = new Option("google.api.default_host");
       defaultHostOpt.getProperties().put("", endpoint);
       service.getOptions().add(defaultHostOpt);
@@ -257,7 +272,9 @@ public class DocumentToProtoConverter {
 
         // Request
         String requestName = getRpcMessageName(method, "request").toUpperCamel();
-        Message input = new Message(requestName, false, false);
+        String methodname = getRpcMethodName(method).toUpperCamel();
+        String inputDescription = getInputMessageDescription(grpcServiceName, methodname);
+        Message input = new Message(requestName, false, false, inputDescription);
         String httpOptionPath = method.flatPath();
         for (Schema pathParam : method.pathParams().values()) {
           Field pathField = schemaToField(pathParam);
@@ -286,7 +303,7 @@ public class DocumentToProtoConverter {
           Message request = allMessages.get(method.request().reference());
           String requestFieldName =
               Name.anyCamel(request.getName(), "resource").toLowerUnderscore();
-          input.getFields().add(new Field(requestFieldName, request, false, null));
+          input.getFields().add(new Field(requestFieldName, request, false, null, null));
           methodHttpOption.getProperties().put("body", requestFieldName);
         }
         allMessages.put(requestName, input);
@@ -297,14 +314,13 @@ public class DocumentToProtoConverter {
           output = allMessages.get(method.response().reference());
         } else {
           String responseName = getRpcMessageName(method, "response").toUpperCamel();
-          output = new Message(responseName, false, false);
+          String outputDescription = getOutputMessageDescription(grpcServiceName, methodname);
+          output = new Message(responseName, false, false, outputDescription);
           allMessages.put(responseName, output);
         }
 
-        String methodname = getRpcMethodName(method).toUpperCamel();
-
         // Method
-        GrpcMethod grpcMethod = new GrpcMethod(methodname, input, output);
+        GrpcMethod grpcMethod = new GrpcMethod(methodname, input, output, method.description());
         grpcMethod.getOptions().add(methodHttpOption);
 
         service.getMethods().add(grpcMethod);
@@ -317,7 +333,27 @@ public class DocumentToProtoConverter {
     }
   }
 
-  private static Name getRpcMessageName(Method method, String suffix) {
+  private String getInputMessageDescription(String serviceName, String methodName) {
+    return "A request message for "
+        + serviceName
+        + "."
+        + methodName
+        + ", see the method description for details.";
+  }
+
+  private String getOutputMessageDescription(String serviceName, String methodName) {
+    return "A response message for "
+        + serviceName
+        + "."
+        + methodName
+        + ", see the method description for details.";
+  }
+
+  private String getServiceDescription(String serviceName) {
+    return "The " + serviceName + " API.";
+  }
+
+  private Name getRpcMessageName(Method method, String suffix) {
     String[] pieces = method.id().split("\\.");
     String methodName = pieces[pieces.length - 1];
     String resourceName = pieces[pieces.length - 2];
@@ -327,7 +363,7 @@ public class DocumentToProtoConverter {
     return Name.anyCamel(methodName, resourceName, suffix);
   }
 
-  private static Name getRpcMethodName(Method method) {
+  private Name getRpcMethodName(Method method) {
     String[] pieces = method.id().split("\\.");
     String methodName = pieces[pieces.length - 1];
     return Name.anyCamel(methodName);
