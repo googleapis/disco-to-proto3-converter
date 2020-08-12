@@ -87,7 +87,7 @@ public class Message extends ProtoElement {
   }
 
   private int getFieldNumber(String fieldName) {
-    int fieldNumber = fieldName.hashCode() >>> 3;
+    int fieldNumber = (fieldName.hashCode() << 3) >>> 3;
     if (fieldNumber == 0 || (fieldNumber >= 19000 && fieldNumber <= 19999)) {
       fieldNumber = 20000 + ((fieldNumber % 19000) + 1) * 536314;
     }
