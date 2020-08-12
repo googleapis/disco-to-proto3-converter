@@ -131,6 +131,11 @@ public class Name {
     this.namePieces = namePieces;
   }
 
+  /** Returns the identifier in upper-underscore format. */
+  public String toUpperUnderscore() {
+    return toUnderscore(CaseFormat.UPPER_UNDERSCORE);
+  }
+
   /** Returns the identifier in lower-underscore format. */
   public String toLowerUnderscore() {
     return toUnderscore(CaseFormat.LOWER_UNDERSCORE);

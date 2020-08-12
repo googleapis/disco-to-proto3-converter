@@ -16,10 +16,31 @@
 package com.google.cloud.discotoproto3converter.proto3;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class Message extends ProtoElement {
+  public static final Map<String, Message> PRIMITIVES = new HashMap<>();
+
+  static {
+    PRIMITIVES.put("bool", new Message("bool", false, false, null));
+    PRIMITIVES.put("string", new Message("string", false, false, null));
+    PRIMITIVES.put("int32", new Message("int32", false, false, null));
+    PRIMITIVES.put("fixed32", new Message("fixed32", false, false, null));
+    PRIMITIVES.put("uint32", new Message("uint32", false, false, null));
+    PRIMITIVES.put("int64", new Message("int64", false, false, null));
+    PRIMITIVES.put("fixed64", new Message("fixed64", false, false, null));
+    PRIMITIVES.put("unit64", new Message("unit64", false, false, null));
+    PRIMITIVES.put("float", new Message("float", false, false, null));
+    PRIMITIVES.put("double", new Message("double", false, false, null));
+    PRIMITIVES.put("", new Message("", false, true, null));
+  }
+
   private final String name;
   private final List<Field> fields = new ArrayList<>();
   private final boolean ref;
@@ -36,6 +57,49 @@ public class Message extends ProtoElement {
 
   public List<Field> getFields() {
     return fields;
+  }
+
+  public Map<Integer, Field> getFieldsWithNumbers() {
+    Map<Integer, Field> fieldsWithNumbers = new LinkedHashMap<>();
+
+    List<Field> sortedFields =
+        fields.stream()
+            .skip(isEnum ? 1 : 0)
+            .sorted(Comparator.comparing(Field::getName))
+            .collect(Collectors.toList());
+    if (isEnum) {
+      sortedFields.add(0, fields.get(0));
+    }
+
+    for (Field f : sortedFields) {
+      if (fieldsWithNumbers.isEmpty() && isEnum()) {
+        fieldsWithNumbers.put(0, f);
+        continue;
+      }
+      int fieldNumber = getFieldNumber(f.getName());
+      while (fieldsWithNumbers.containsKey(fieldNumber)) {
+        fieldNumber = incrementFieldNumber(fieldNumber);
+      }
+      fieldsWithNumbers.put(fieldNumber, f);
+    }
+
+    return fieldsWithNumbers;
+  }
+
+  private int getFieldNumber(String fieldName) {
+    int fieldNumber = fieldName.hashCode() >>> 3;
+    if (fieldNumber == 0 || (fieldNumber >= 19000 && fieldNumber <= 19999)) {
+      fieldNumber = 20000 + ((fieldNumber % 19000) + 1) * 536314;
+    }
+    return fieldNumber;
+  }
+
+  private int incrementFieldNumber(int fieldNumber) {
+    int incrementedFieldNumber = fieldNumber + 1;
+    if ((fieldNumber >= 19000 && fieldNumber <= 19999)) {
+      incrementedFieldNumber = 20000;
+    }
+    return incrementedFieldNumber;
   }
 
   public List<Message> getEnums() {

@@ -83,7 +83,7 @@ public class DocumentToProtoConverter {
   // If there is a naming conflict between two or more enums in the same message, convert all
   // enum types to strings (happens rarely, but happens).
   private void cleanupEnumNamingConflicts() {
-    Message stringType = Field.PRIMITIVES.get("string");
+    Message stringType = Message.PRIMITIVES.get("string");
     for (Message message : allMessages.values()) {
       int enumFieldsCount = 0;
       Set<String> enumFieldsNames = new HashSet<>();
@@ -124,57 +124,51 @@ public class DocumentToProtoConverter {
         repeated = true;
         break;
       case BOOLEAN:
-        valueType = Field.PRIMITIVES.get("bool");
+        valueType = Message.PRIMITIVES.get("bool");
         break;
       case EMPTY:
         valueType = new Message(sch.reference(), true, false, null);
       case INTEGER:
         switch (sch.format()) {
           case INT32:
-            valueType = Field.PRIMITIVES.get("int32");
+            valueType = Message.PRIMITIVES.get("int32");
             break;
           case INT64:
-            valueType = Field.PRIMITIVES.get("int64");
+            valueType = Message.PRIMITIVES.get("int64");
             break;
           case UINT32:
-            valueType = Field.PRIMITIVES.get("uint32");
+            valueType = Message.PRIMITIVES.get("uint32");
             break;
           case UINT64:
-            valueType = Field.PRIMITIVES.get("uint64");
+            valueType = Message.PRIMITIVES.get("uint64");
             break;
         }
         break;
       case NUMBER:
         switch (sch.format()) {
           case FLOAT:
-            valueType = Field.PRIMITIVES.get("float");
+            valueType = Message.PRIMITIVES.get("float");
             break;
           case DOUBLE:
-            valueType = Field.PRIMITIVES.get("double");
+            valueType = Message.PRIMITIVES.get("double");
             break;
         }
         break;
       case OBJECT:
         if (sch.additionalProperties() != null) {
           repeated = true;
-          keyType = Field.PRIMITIVES.get("string");
+          keyType = Message.PRIMITIVES.get("string");
         } else {
           valueType = new Message(getMessageName(sch), false, false, description);
         }
         break;
       case STRING:
         if (sch.isEnum() && !"".equals(sch.getIdentifier())) {
-          valueType = new Message(getMessageName(sch), false, true, description);
-
-          Iterator<String> valIter = sch.enumValues().iterator();
-          Iterator<String> descIter = sch.enumDescriptions().iterator();
-          while (valIter.hasNext() && descIter.hasNext()) {
-            Field enumField =
-                new Field(valIter.next(), Field.PRIMITIVES.get(""), false, null, descIter.next());
-            valueType.getFields().add(enumField);
-          }
+          valueType =
+              constructEnumMessage(
+                  getMessageName(sch), description, sch.enumValues(), sch.enumDescriptions());
         } else {
-          valueType = Field.PRIMITIVES.get("string");
+          valueType = Message.PRIMITIVES.get("string");
         }
         break;
     }
@@ -186,7 +180,7 @@ public class DocumentToProtoConverter {
 
     Field field = new Field(name, valueType, repeated, keyType, description);
     if (sch.type() == Schema.Type.EMPTY) {
-    } else if (Field.PRIMITIVES.containsKey(valueType.getName())) {
+    } else if (Message.PRIMITIVES.containsKey(valueType.getName())) {
       return field;
     }
 
@@ -237,6 +231,31 @@ public class DocumentToProtoConverter {
       }
     }
     return field;
+  }
+
+  private Message constructEnumMessage(
+      String name, String description, List<String> enumVals, List<String> enumDescs) {
+    Message enumMessage = new Message(name, false, true, description);
+
+    String dummyDesc = "A dummy enum value indicating that the enum field is not set.";
+    String dummyFieldName = Name.anyCamel("Undefined", name).toUpperUnderscore();
+
+    Field dummyField =
+        new Field(dummyFieldName, Message.PRIMITIVES.get(""), false, null, dummyDesc);
+    enumMessage.getFields().add(dummyField);
+
+    Iterator<String> valIter = enumVals.iterator();
+    Iterator<String> descIter = enumDescs.iterator();
+    while (valIter.hasNext() && descIter.hasNext()) {
+      Field enumField =
+          new Field(valIter.next(), Message.PRIMITIVES.get(""), false, null, descIter.next());
+      if (dummyField.getName().equals(enumField.getName())) {
+        continue;
+      }
+      enumMessage.getFields().add(enumField);
+    }
+
+    return enumMessage;
   }
 
   private String getMessageName(Schema sch) {

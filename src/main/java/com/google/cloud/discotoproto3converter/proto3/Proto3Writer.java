@@ -142,12 +142,13 @@ public class Proto3Writer {
 
       printMessages(message.getEnums(), writer, indent + "  ");
 
-      int fieldIndex = message.isEnum() ? 0 : 1;
-      for (Field field : message.getFields()) {
+      for (Map.Entry<Integer, Field> entry : message.getFieldsWithNumbers().entrySet()) {
+        Field field = entry.getValue();
+        int fieldIndex = entry.getKey();
         if (field.getDescription() != null && !field.getDescription().isEmpty()) {
           writer.println(formatDescription(indent + "  ", field.getDescription()));
         }
-        writer.print(indent + "  " + field.toString(fieldIndex++));
+        writer.print(indent + "  " + field.toString(fieldIndex));
 
         String options = ";";
         if (!field.getOptions().isEmpty()) {
