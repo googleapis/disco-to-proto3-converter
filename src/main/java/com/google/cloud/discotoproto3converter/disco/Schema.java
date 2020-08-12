@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
 /**
  * (This class is "borrowed" (with modifications) from gapic-generator)
  *
- * A representation of a Discovery Document schema.
+ * <p>A representation of a Discovery Document schema.
  *
  * <p>Note that this class is not necessarily a 1-1 mapping of the official specification.
  */
@@ -57,9 +57,14 @@ public abstract class Schema implements Node {
     DiscoveryNode enumNode = root.getArray("enum");
     boolean isEnum = !enumNode.isEmpty();
     ImmutableList.Builder<String> enumValues = ImmutableList.builder();
+    ImmutableList.Builder<String> enumDescriptions = ImmutableList.builder();
     if (isEnum) {
       for (DiscoveryNode enumElement : enumNode.getElements()) {
         enumValues.add(enumElement.asText());
+      }
+      DiscoveryNode enumDescNode = root.getArray("enumDescriptions");
+      for (DiscoveryNode enumDescElement : enumDescNode.getElements()) {
+        enumDescriptions.add(enumDescElement.asText());
       }
     }
 
@@ -94,6 +99,7 @@ public abstract class Schema implements Node {
             .setId(id)
             .setIsEnum(isEnum)
             .setEnumValues(enumValues.build())
+            .setEnumDescriptions(enumDescriptions.build())
             .setIsMap(isMap)
             .setItems(items)
             .setKey(key)
@@ -170,6 +176,8 @@ public abstract class Schema implements Node {
 
   public abstract List<String> enumValues();
 
+  public abstract List<String> enumDescriptions();
+
   /**
    * @return the schema for each element in the array if this schema is an array, or null if not.
    */
@@ -205,7 +213,7 @@ public abstract class Schema implements Node {
 
   public boolean isRepeated() {
     return type() == Type.ARRAY;
-  };
+  }
 
   /** @return the type. */
   public abstract Type type();
@@ -353,6 +361,7 @@ public abstract class Schema implements Node {
         .setPattern("")
         .setProperties(ImmutableMap.of())
         .setEnumValues(ImmutableList.of())
+        .setEnumDescriptions(ImmutableList.of())
         .setReference("");
   }
 
@@ -371,6 +380,8 @@ public abstract class Schema implements Node {
     public abstract Builder setIsEnum(boolean val);
 
     public abstract Builder setEnumValues(List<String> val);
+
+    public abstract Builder setEnumDescriptions(List<String> val);
 
     public abstract Builder setIsMap(boolean val);
 

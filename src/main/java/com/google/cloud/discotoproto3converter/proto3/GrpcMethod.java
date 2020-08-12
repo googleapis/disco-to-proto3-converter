@@ -18,13 +18,14 @@ package com.google.cloud.discotoproto3converter.proto3;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GrpcMethod {
+public class GrpcMethod extends ProtoElement {
   private final String name;
   private final Message input;
   private final Message output;
   private final List<Option> options = new ArrayList<>();
 
-  public GrpcMethod(String name, Message input, Message output) {
+  public GrpcMethod(String name, Message input, Message output, String description) {
+    super(description);
     this.name = name;
     this.input = input;
     this.output = output;

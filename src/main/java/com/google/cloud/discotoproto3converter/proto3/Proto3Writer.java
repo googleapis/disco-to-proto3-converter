@@ -81,6 +81,7 @@ public class Proto3Writer {
 
   private void printServices(Collection<GrpcService> services, PrintWriter writer) {
     for (GrpcService service : services) {
+      writer.println(formatDescription("", service.getDescription()));
       writer.println("service " + service + " {");
 
       for (Option opt : service.getOptions()) {
@@ -101,6 +102,7 @@ public class Proto3Writer {
       }
 
       for (GrpcMethod method : service.getMethods()) {
+        writer.println(formatDescription("  ", method.getDescription()));
         writer.println("  " + method + " {");
 
         StringBuilder optionsSb = new StringBuilder();
@@ -135,12 +137,16 @@ public class Proto3Writer {
 
   private void printMessages(Collection<Message> messages, PrintWriter writer, String indent) {
     for (Message message : messages) {
+      writer.println(formatDescription(indent, message.getDescription()));
       writer.println(indent + (message.isEnum() ? "enum " : "message ") + message + " {");
 
       printMessages(message.getEnums(), writer, indent + "  ");
 
       int fieldIndex = message.isEnum() ? 0 : 1;
       for (Field field : message.getFields()) {
+        if (field.getDescription() != null && !field.getDescription().isEmpty()) {
+          writer.println(formatDescription(indent + "  ", field.getDescription()));
+        }
         writer.print(indent + "  " + field.toString(fieldIndex++));
 
         String options = ";";
@@ -150,7 +156,12 @@ public class Proto3Writer {
 
             String scalarOptionValue = option.getProperties().get("");
             if (option.getProperties().size() == 1 && scalarOptionValue != null) {
-              optionsSb.append("(").append(option).append(") = ").append(scalarOptionValue).append("];");
+              optionsSb
+                  .append("(")
+                  .append(option)
+                  .append(") = ")
+                  .append(scalarOptionValue)
+                  .append("];");
             } else {
               optionsSb.append(indent).append("    (").append(option).append(") = {\n");
               for (Map.Entry<String, String> prop : option.getProperties().entrySet()) {
@@ -165,8 +176,21 @@ public class Proto3Writer {
         }
 
         writer.println(options);
+        writer.println();
       }
       writer.println(indent + "}\n");
     }
+  }
+
+  private String formatDescription(String prefix, String description) {
+    if (description == null || description.isEmpty()) {
+      return prefix + "//";
+    }
+
+    String comments = description.replace("\n", "\n" + prefix + "// ");
+    // This is to get rid of end of line whitespaces, which are often removed by text editors
+    // automatically.
+    comments = comments.replaceAll(" *\n", "\n");
+    return prefix + "// " + comments;
   }
 }
