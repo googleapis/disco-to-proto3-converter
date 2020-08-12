@@ -430,7 +430,7 @@ message AddressList {
 
 }
 
-// A request message for Addresses.Insert, see the method description for details.
+// A request message for Addresses.Insert. See the method description for details.
 message InsertAddressRequest {
   // Project ID for this request.
   string project = 1 [(google.api.field_behavior) = REQUIRED];
@@ -449,7 +449,7 @@ message InsertAddressRequest {
 
 }
 
-// A request message for Addresses.List, see the method description for details.
+// A request message for Addresses.List. See the method description for details.
 message ListAddressesRequest {
   // Project ID for this request.
   string project = 1 [(google.api.field_behavior) = REQUIRED];

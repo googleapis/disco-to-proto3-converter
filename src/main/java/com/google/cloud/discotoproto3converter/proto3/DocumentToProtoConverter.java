@@ -338,7 +338,7 @@ public class DocumentToProtoConverter {
         + serviceName
         + "."
         + methodName
-        + ", see the method description for details.";
+        + ". See the method description for details.";
   }
 
   private String getOutputMessageDescription(String serviceName, String methodName) {
@@ -346,7 +346,7 @@ public class DocumentToProtoConverter {
         + serviceName
         + "."
         + methodName
-        + ", see the method description for details.";
+        + ". See the method description for details.";
   }
 
   private String getServiceDescription(String serviceName) {

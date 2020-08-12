@@ -188,7 +188,7 @@ public class Proto3Writer {
     }
 
     String comments = description.replace("\n", "\n" + prefix + "// ");
-    // This is to get rid from end of line whitespaces, which are often removed by text editors
+    // This is to get rid of end of line whitespaces, which are often removed by text editors
     // automatically.
     comments = comments.replaceAll(" *\n", "\n");
     return prefix + "// " + comments;
