@@ -24,10 +24,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
-* (This class is "borrowed" (with modifications) from gapic-generator)
-*
-* Name represents an identifier name which is casing-aware.
-* */
+ * (This class is "borrowed" (with modifications) from gapic-generator)
+ *
+ * <p>Name represents an identifier name which is casing-aware.
+ */
 public class Name {
   private List<NamePiece> namePieces;
 

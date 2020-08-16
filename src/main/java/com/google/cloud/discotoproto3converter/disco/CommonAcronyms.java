@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * (This class is "borrowed" (with modifications) from gapic-generator)
  *
- * Utility class to replace fully capitalized common acronyms with an upper camel interpretation.
+ * <p>Utility class to replace fully capitalized common acronyms with an upper camel interpretation.
  */
 public class CommonAcronyms {
   private static final ImmutableSet<String> ACRONYMS =

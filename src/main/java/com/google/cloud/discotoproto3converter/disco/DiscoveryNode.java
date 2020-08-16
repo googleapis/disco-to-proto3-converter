@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * (This class is "borrowed" (with modifications) from gapic-generator)
  *
- * A wrapper over {@link com.fasterxml.jackson.databind.JsonNode} that introduces more convenient
+ * <p>A wrapper over {@link com.fasterxml.jackson.databind.JsonNode} that introduces more convenient
  * methods for accessing JSON values.
  */
 public class DiscoveryNode {

@@ -26,7 +26,7 @@ import javax.annotation.Nullable;
 /**
  * (This class is "borrowed" (with modifications) from gapic-generator)
  *
- * A representation of a Discovery Document method.
+ * <p>A representation of a Discovery Document method.
  *
  * <p>Note that this class is not necessarily a 1-1 mapping of the official specification.
  */

@@ -63,7 +63,8 @@ public class Message extends ProtoElement {
     Map<Integer, Field> fieldsWithNumbers = new LinkedHashMap<>();
 
     List<Field> sortedFields =
-        fields.stream()
+        fields
+            .stream()
             .skip(isEnum ? 1 : 0)
             .sorted(Comparator.comparing(Field::getName))
             .collect(Collectors.toList());
