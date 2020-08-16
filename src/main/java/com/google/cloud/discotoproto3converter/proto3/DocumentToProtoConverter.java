@@ -237,7 +237,7 @@ public class DocumentToProtoConverter {
       String name, String description, List<String> enumVals, List<String> enumDescs) {
     Message enumMessage = new Message(name, false, true, description);
 
-    String dummyDesc = "A dummy enum value indicating that the enum field is not set.";
+    String dummyDesc = "A value indicating that the enum field is not set.";
     String dummyFieldName = Name.anyCamel("Undefined", name).toUpperUnderscore();
 
     Field dummyField =

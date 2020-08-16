@@ -68,11 +68,13 @@ public class Message extends ProtoElement {
             .sorted(Comparator.comparing(Field::getName))
             .collect(Collectors.toList());
     if (isEnum) {
+      // Make sure that the first element of an enum is always the dummy value
       sortedFields.add(0, fields.get(0));
     }
 
     for (Field f : sortedFields) {
       if (fieldsWithNumbers.isEmpty() && isEnum()) {
+        // For enum, the first element should always have number 0.
         fieldsWithNumbers.put(0, f);
         continue;
       }
@@ -86,6 +88,8 @@ public class Message extends ProtoElement {
     return fieldsWithNumbers;
   }
 
+  // All the "magic numbers" come from the proto3 spec:
+  // https://developers.google.com/protocol-buffers/docs/proto3#assigning_field_numbers
   private int getFieldNumber(String fieldName) {
     int fieldNumber = (fieldName.hashCode() << 3) >>> 3;
     if (fieldNumber == 0 || (fieldNumber >= 19000 && fieldNumber <= 19999)) {
@@ -96,7 +100,7 @@ public class Message extends ProtoElement {
 
   private int incrementFieldNumber(int fieldNumber) {
     int incrementedFieldNumber = fieldNumber + 1;
-    if ((fieldNumber >= 19000 && fieldNumber <= 19999)) {
+    if ((fieldNumber >= 19000 && fieldNumber <= 19999) || fieldNumber >= (1 << 29)) {
       incrementedFieldNumber = 20000;
     }
     return incrementedFieldNumber;

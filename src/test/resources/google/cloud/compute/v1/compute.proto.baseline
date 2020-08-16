@@ -41,7 +41,7 @@ option ruby_package = "Google::Cloud::Compute::V1";
 message Address {
   // The type of address to reserve, either INTERNAL or EXTERNAL. If unspecified, defaults to EXTERNAL.
   enum AddressType {
-    // A dummy enum value indicating that the enum field is not set.
+    // A value indicating that the enum field is not set.
     UNDEFINED_ADDRESS_TYPE = 0;
 
     EXTERNAL = 35607499;
@@ -54,7 +54,7 @@ message Address {
 
   // The IP version that will be used by this address. Valid options are IPV4 or IPV6. This can only be specified for a global address.
   enum IpVersion {
-    // A dummy enum value indicating that the enum field is not set.
+    // A value indicating that the enum field is not set.
     UNDEFINED_IP_VERSION = 0;
 
     IPV4 = 2254341;
@@ -69,7 +69,7 @@ message Address {
   //
   // If this field is not specified, it is assumed to be PREMIUM.
   enum NetworkTier {
-    // A dummy enum value indicating that the enum field is not set.
+    // A value indicating that the enum field is not set.
     UNDEFINED_NETWORK_TIER = 0;
 
     PREMIUM = 399530551;
@@ -84,7 +84,7 @@ message Address {
   // - `VPC_PEERING` for addresses that are reserved for VPC peer networks.
   // - `NAT_AUTO` for addresses that are external IP addresses automatically reserved for Cloud NAT.
   enum Purpose {
-    // A dummy enum value indicating that the enum field is not set.
+    // A value indicating that the enum field is not set.
     UNDEFINED_PURPOSE = 0;
 
     DNS_RESOLVER = 476114556;
@@ -99,7 +99,7 @@ message Address {
 
   // [Output Only] The status of the address, which can be one of RESERVING, RESERVED, or IN_USE. An address that is RESERVING is currently in the process of being reserved. A RESERVED address is currently reserved and available to use. An IN_USE address is currently being used by another resource and is not available.
   enum Status {
-    // A dummy enum value indicating that the enum field is not set.
+    // A value indicating that the enum field is not set.
     UNDEFINED_STATUS = 0;
 
     IN_USE = 17393485;
@@ -203,7 +203,7 @@ message Data {
 message Warnings {
   // [Output Only] A warning code, if applicable. For example, Compute Engine returns NO_RESULTS_ON_PAGE if there are no results in the response.
   enum Code {
-    // A dummy enum value indicating that the enum field is not set.
+    // A value indicating that the enum field is not set.
     UNDEFINED_CODE = 0;
 
     CLEANUP_FAILED = 150308440;
@@ -283,7 +283,7 @@ message Warnings {
 message Operation {
   // [Output Only] The status of the operation, which can be one of the following: PENDING, RUNNING, or DONE.
   enum Status {
-    // A dummy enum value indicating that the enum field is not set.
+    // A value indicating that the enum field is not set.
     UNDEFINED_STATUS = 0;
 
     DONE = 2104194;
@@ -369,7 +369,7 @@ message Operation {
 message Warning {
   // [Output Only] A warning code, if applicable. For example, Compute Engine returns NO_RESULTS_ON_PAGE if there are no results in the response.
   enum Code {
-    // A dummy enum value indicating that the enum field is not set.
+    // A value indicating that the enum field is not set.
     UNDEFINED_CODE = 0;
 
     CLEANUP_FAILED = 150308440;
