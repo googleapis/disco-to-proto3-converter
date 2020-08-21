@@ -30,9 +30,9 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * (This class is "borrowed" (with modifications) from gapic-generator)
+ * Adapted from its counterpart in gapic-generator.
  *
- * A representation of a Discovery Document.
+ * <p>A representation of a Discovery Document.
  *
  * <p>Note that this class is not necessarily a 1-1 mapping of the official specification. For
  * example, this class combines all methods in the Discovery Document into one list for convenience.

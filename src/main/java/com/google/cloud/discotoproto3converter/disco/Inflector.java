@@ -16,7 +16,7 @@
 package com.google.cloud.discotoproto3converter.disco;
 
 /**
- * (This class is "borrowed" (with modifications) from gapic-generator)
+ * Adapted from its counterpart in gapic-generator.
  *
  * <p>Utility class for manipulating words
  */

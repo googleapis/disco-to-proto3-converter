@@ -18,10 +18,10 @@ package com.google.cloud.discotoproto3converter.disco;
 import javax.annotation.Nullable;
 
 /**
-* (This interface is "borrowed" from gapic-generator)
-*
-* Represents a node in a tree of nodes.
-* */
+ * (This interface is "borrowed" from gapic-generator)
+ *
+ * <p>Represents a node in a tree of nodes.
+ */
 public interface Node {
   /** @return the ID of this node. */
   @Nullable

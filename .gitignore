@@ -1,2 +1,10 @@
 # Maven
 target/
+
+# Bazel
+bazel-*
+
+# IntelliJ
+.idea
+.ijwb
+out
