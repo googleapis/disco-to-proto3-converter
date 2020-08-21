@@ -36,6 +36,10 @@ def com_google_disco_to_proto3_converter_repositories():
         licenses = ["notice", "reciprocal"],
     )
 
+
+# If a dependency with the same name is already imported ignore this one
+# as a duplicate, otherwise import this one. It is a typical construct used
+# in many Bazel projects.
 def _maybe(repo_rule, name, strip_repo_prefix = "", **kwargs):
     if not name.startswith(strip_repo_prefix):
         return

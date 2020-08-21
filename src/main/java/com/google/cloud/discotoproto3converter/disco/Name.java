@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * (This class is "borrowed" (with modifications) from gapic-generator)
+ * Adapted from its counterpart in gapic-generator.
  *
  * <p>Name represents an identifier name which is casing-aware.
  */

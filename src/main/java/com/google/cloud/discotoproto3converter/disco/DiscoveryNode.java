@@ -23,7 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * (This class is "borrowed" (with modifications) from gapic-generator)
+ * Adapted from its counterpart in gapic-generator.
  *
  * <p>A wrapper over {@link com.fasterxml.jackson.databind.JsonNode} that introduces more convenient
  * methods for accessing JSON values.

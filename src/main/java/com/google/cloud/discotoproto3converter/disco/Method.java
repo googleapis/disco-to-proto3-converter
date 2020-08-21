@@ -24,7 +24,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * (This class is "borrowed" (with modifications) from gapic-generator)
+ * Adapted from its counterpart in gapic-generator.
  *
  * <p>A representation of a Discovery Document method.
  *

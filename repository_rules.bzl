@@ -12,21 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.AGE.
 
-def read_property(prop, cur_prop_val, prop_names):
-    for i in range(len(prop_names)):
-        prop_name = prop_names[i]
-        if prop.startswith("<%s>" % prop_name) and prop.endswith("</%s>" % prop_name):
-            pv = cur_prop_val.split(":")
-            pv[i] = prop[len(prop_name) + 2:len(prop) - (len(prop_name) + 3)].strip()
-            return ":".join(pv)
-    return cur_prop_val
-
-def construct_property_key(prefix, dep_val):
-    key_suffix = dep_val[:dep_val.rfind(":")]
-    for ch in [":", "-", "."]:
-        key_suffix = key_suffix.replace(ch, "_")
-    return "%s%s" % (prefix, key_suffix)
-
+# Read dependencies from pom.xml and make them available for importing in Bazel.
+# This lets us to avoid dependencies list sync problem between Maven and Bazel.
 def read_properties_from_pom_xml(props, parent_tags, property_tags):
     props_as_map = {}
     tag_index = 0
@@ -53,6 +40,8 @@ def read_properties_from_pom_xml(props, parent_tags, property_tags):
 
     return props_as_map
 
+# Convert the the <dependencies></dependencies> block from pom.xml to a
+# Starlark dictionary with the same information in it.
 def _com_google_disco_to_proto3_converter_properties_impl(ctx):
     props_path = ctx.path(ctx.attr.file)
     result = ctx.execute(["cat", props_path])
@@ -86,3 +75,21 @@ com_google_disco_to_proto3_converter_properties = repository_rule(
     },
     local = True,
 )
+
+# Read the val in <tag>val</tag>.
+def read_property(prop, cur_prop_val, prop_names):
+    for i in range(len(prop_names)):
+        prop_name = prop_names[i]
+        if prop.startswith("<%s>" % prop_name) and prop.endswith("</%s>" % prop_name):
+            pv = cur_prop_val.split(":")
+            pv[i] = prop[len(prop_name) + 2:len(prop) - (len(prop_name) + 3)].strip()
+            return ":".join(pv)
+    return cur_prop_val
+
+# Replace the ':', '-', '.' characters with '_' to construct a proper dictionary
+# key value.
+def construct_property_key(prefix, dep_val):
+    key_suffix = dep_val[:dep_val.rfind(":")]
+    for ch in [":", "-", "."]:
+        key_suffix = key_suffix.replace(ch, "_")
+    return "%s%s" % (prefix, key_suffix)

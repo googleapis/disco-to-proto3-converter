@@ -83,6 +83,8 @@ java_binary(
     runtime_deps = ["@google_java_format_all_deps//jar"],
 )
 
+# Fails the build if any of the java files are not properly formatted according
+# to the google-java-format tool.
 google_java_format_verification(
     name = "google_java_format_verification",
     srcs = glob(["src/**/*.java"]),

@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * (This class is "borrowed" (with modifications) from gapic-generator)
+ * Adapted from its counterpart in gapic-generator.
  *
  * <p>Utility class to replace fully capitalized common acronyms with an upper camel interpretation.
  */
