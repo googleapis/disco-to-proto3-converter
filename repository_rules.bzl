@@ -76,7 +76,8 @@ com_google_disco_to_proto3_converter_properties = repository_rule(
     local = True,
 )
 
-# Read the val in <tag>val</tag>.
+# Read 'val' from '<foo>val</foo>' and place it in the ith element of
+# 'cur_prop_val', where 'i' is such that 'prop_names[i]=="foo".
 def read_property(prop, cur_prop_val, prop_names):
     for i in range(len(prop_names)):
         prop_name = prop_names[i]
