@@ -31,20 +31,20 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class DocumentToProtoConverter {
-  private final String packageName;
+  private final ProtoFile protoFile;
   private final Map<String, Message> allMessages = new LinkedHashMap<>();
   private final Map<String, GrpcService> allServices = new LinkedHashMap<>();
   private final Map<String, Option> allResourceOptions = new LinkedHashMap<>();
 
-  public DocumentToProtoConverter(Document document) {
-    this.packageName = "google.cloud." + document.name() + "." + document.version();
+  public DocumentToProtoConverter(Document document, String documentFileName) {
+    this.protoFile = readDocumentMetadata(document, documentFileName);
     readSchema(document);
     readResources(document);
     cleanupEnumNamingConflicts();
   }
 
-  public String getPackageName() {
-    return packageName;
+  public ProtoFile getProtoFile() {
+    return protoFile;
   }
 
   public Map<String, Message> getAllMessages() {
@@ -57,6 +57,15 @@ public class DocumentToProtoConverter {
 
   public Map<String, Option> getAllResourceOptions() {
     return Collections.unmodifiableMap(allResourceOptions);
+  }
+
+  private ProtoFile readDocumentMetadata(Document document, String documentFileName) {
+    return new ProtoFile(
+        documentFileName,
+        document.name(),
+        document.version(),
+        document.revision(),
+        "google.cloud." + document.name() + "." + document.version());
   }
 
   private void readSchema(Document document) {
