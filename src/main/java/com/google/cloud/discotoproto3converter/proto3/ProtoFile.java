@@ -17,7 +17,7 @@ package com.google.cloud.discotoproto3converter.proto3;
 
 public class ProtoFile {
   private static final String LICENSE =
-      "// Copyright 2020 Google LLC\n"
+      "// Copyright %s Google LLC\n"
           + "//\n"
           + "// Licensed under the Apache License, Version 2.0 (the \"License\");\n"
           + "// you may not use this file except in compliance with the License.\n"
@@ -51,7 +51,7 @@ public class ProtoFile {
   }
 
   public String getLicense() {
-    return LICENSE;
+    return String.format(LICENSE, discoRevision.substring(0, 4));
   }
 
   public String getDiscoFileName() {

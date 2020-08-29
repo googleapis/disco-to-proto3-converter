@@ -65,6 +65,7 @@ public class DocumentToProtoConverter {
         document.name(),
         document.version(),
         document.revision(),
+        // TODO: Calculate package name from scopes
         "google.cloud." + document.name() + "." + document.version());
   }
 
