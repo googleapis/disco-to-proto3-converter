@@ -56,14 +56,16 @@ public class DiscoToProto3ConverterApp {
       throws IOException {
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Document document = app.createDocument(discoveryDocPath);
-    DocumentToProtoConverter converter = new DocumentToProtoConverter(document);
-    try (PrintWriter pw =
-        app.makeDefaultDirsAndWriter(outputRootPath, outputFileName, converter.getPackageName())) {
+    DocumentToProtoConverter converter =
+        new DocumentToProtoConverter(
+            document, Paths.get(discoveryDocPath).getFileName().toString());
+    String protoPkg = converter.getProtoFile().getProtoPkg();
+    try (PrintWriter pw = app.makeDefaultDirsAndWriter(outputRootPath, outputFileName, protoPkg)) {
       Proto3Writer writer = new Proto3Writer();
 
       writer.writeToFile(
           pw,
-          converter.getPackageName(),
+          converter.getProtoFile(),
           converter.getAllMessages().values(),
           converter.getAllServices().values(),
           converter.getAllResourceOptions().values());
