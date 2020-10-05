@@ -107,13 +107,22 @@ public class Proto3Writer {
         writer.println(formatDescription("  ", method.getDescription()));
         writer.println("  " + method + " {");
 
-        StringBuilder optionsSb = new StringBuilder();
         for (Option option : method.getOptions()) {
-          optionsSb.append("    option (").append(option).append(") = {\n");
-          for (Map.Entry<String, String> prop : option.getProperties().entrySet()) {
-            optionsSb.append("      " + prop.getKey() + ": " + '"' + prop.getValue() + "\"\n");
-          }
+          StringBuilder optionsSb = new StringBuilder();
+          optionsSb.append("    option (").append(option).append(") = ");
+          
+          if (option.toString().equals("google.api.http")) {
+            optionsSb.append("{\n");
+            for (Map.Entry<String, String> prop : option.getProperties().entrySet()) {
+              optionsSb.append("      " + prop.getKey() + ": " + '"' + prop.getValue() + "\"\n");
+            }
           optionsSb.append("    };");
+          }
+          else if (option.toString().equals("google.api.method_signature")) {
+            for (Map.Entry<String, String> prop : option.getProperties().entrySet())
+              optionsSb.append('"' + prop.getValue() + "\";");
+          }
+
           writer.println(optionsSb);
         }
 
