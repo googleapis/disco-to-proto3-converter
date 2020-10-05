@@ -20,6 +20,7 @@ import com.google.cloud.discotoproto3converter.disco.Inflector;
 import com.google.cloud.discotoproto3converter.disco.Method;
 import com.google.cloud.discotoproto3converter.disco.Name;
 import com.google.cloud.discotoproto3converter.disco.Schema;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -305,6 +306,7 @@ public class DocumentToProtoConverter {
         String inputDescription = getInputMessageDescription(grpcServiceName, methodname);
         Message input = new Message(requestName, false, false, inputDescription);
         String httpOptionPath = method.flatPath();
+        List<String> methodSignatureParams = new ArrayList<>();
         for (Schema pathParam : method.pathParams().values()) {
           Field pathField = schemaToField(pathParam);
           Option fieldBehaviorOption = new Option("google.api.field_behavior");
@@ -314,7 +316,13 @@ public class DocumentToProtoConverter {
           httpOptionPath =
               httpOptionPath.replace(
                   "{" + pathParam.getIdentifier() + "}", "{" + pathField.getName() + "}");
+          
+          // required method signatures
+          methodSignatureParams.add(pathField.getName());
         }
+
+        Option requiredMethodSignatureOption = new Option("google.api.method_signature");
+        requiredMethodSignatureOption.getProperties().put("", String.join(",", methodSignatureParams));
 
         for (Schema queryParam : method.queryParams().values()) {
           Field queryField = schemaToField(queryParam);
@@ -322,7 +330,14 @@ public class DocumentToProtoConverter {
           if (queryField.getValueType().isEnum()) {
             input.getEnums().add(queryField.getValueType());
           }
+
+          // optional method signatures
+          methodSignatureParams.add(queryField.getName());
         }
+
+        Option optionalMethodSignatureOption = new Option("google.api.method_signature");
+        optionalMethodSignatureOption.getProperties().put("", String.join(",", methodSignatureParams));
+        
         Option methodHttpOption = new Option("google.api.http");
         methodHttpOption
             .getProperties()
@@ -351,6 +366,8 @@ public class DocumentToProtoConverter {
         // Method
         GrpcMethod grpcMethod = new GrpcMethod(methodname, input, output, method.description());
         grpcMethod.getOptions().add(methodHttpOption);
+        grpcMethod.getOptions().add(requiredMethodSignatureOption);
+        // TODO: design heuristic for other useful mathod signatures with optional fields
 
         service.getMethods().add(grpcMethod);
       }
