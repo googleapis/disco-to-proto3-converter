@@ -543,6 +543,7 @@ service Addresses {
       post: "/compute/v1/projects/{project}/regions/{region}/addresses"
       body: "address_resource"
     };
+    option (google.api.method_signature) = "project,region";
   }
 
   // Retrieves a list of addresses contained within the specified region.
@@ -550,6 +551,7 @@ service Addresses {
     option (google.api.http) = {
       get: "/compute/v1/projects/{project}/regions/{region}/addresses"
     };
+    option (google.api.method_signature) = "project,region";
   }
 
 }
