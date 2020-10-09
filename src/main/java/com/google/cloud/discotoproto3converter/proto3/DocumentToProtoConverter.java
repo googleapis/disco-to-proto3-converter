@@ -307,18 +307,21 @@ public class DocumentToProtoConverter {
         Message input = new Message(requestName, false, false, inputDescription);
         String httpOptionPath = method.flatPath();
         List<String> methodSignatureParams = new ArrayList<>();
-        for (Schema pathParam : method.pathParams().values()) {
-          Field pathField = schemaToField(pathParam);
+
+        for (Schema requiredParam : method.requiredParams().values()) {
+          Field requiredField = schemaToField(requiredParam);
           Option fieldBehaviorOption = new Option("google.api.field_behavior");
           fieldBehaviorOption.getProperties().put("", "REQUIRED");
-          pathField.getOptions().add(fieldBehaviorOption);
-          input.getFields().add(pathField);
+          requiredField.getOptions().add(fieldBehaviorOption);
+          input.getFields().add(requiredField);
+          methodSignatureParams.add(requiredField.getName());
+        }
+
+        for (Schema pathParam : method.pathParams().values()) {
+          Field pathField = schemaToField(pathParam);
           httpOptionPath =
               httpOptionPath.replace(
                   "{" + pathParam.getIdentifier() + "}", "{" + pathField.getName() + "}");
-          
-          // required method signatures
-          methodSignatureParams.add(pathField.getName());
         }
 
         Option requiredMethodSignatureOption = new Option("google.api.method_signature");
@@ -330,13 +333,9 @@ public class DocumentToProtoConverter {
           if (queryField.getValueType().isEnum()) {
             input.getEnums().add(queryField.getValueType());
           }
-
-          // optional method signatures
-          methodSignatureParams.add(queryField.getName());
         }
 
-        Option optionalMethodSignatureOption = new Option("google.api.method_signature");
-        optionalMethodSignatureOption.getProperties().put("", String.join(",", methodSignatureParams));
+        // TODO: add logic to determine non-required method_signature options
         
         Option methodHttpOption = new Option("google.api.http");
         methodHttpOption
@@ -367,7 +366,7 @@ public class DocumentToProtoConverter {
         GrpcMethod grpcMethod = new GrpcMethod(methodname, input, output, method.description());
         grpcMethod.getOptions().add(methodHttpOption);
         grpcMethod.getOptions().add(requiredMethodSignatureOption);
-        // TODO: design heuristic for other useful mathod signatures with optional fields
+        // TODO: design heuristic for other useful method signatures with optional fields
 
         service.getMethods().add(grpcMethod);
       }

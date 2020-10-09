@@ -61,6 +61,9 @@ public class Proto3Writer {
     printServices(services, writer);
   }
 
+  // TODO: refactor to use enum for option types
+  // TODO: include helper method to build strings for options
+
   private void printOptions(String pkg, PrintWriter writer) {
     String[] tokens = pkg.split("\\.");
     List<String> capitalized =
@@ -114,7 +117,12 @@ public class Proto3Writer {
           if (option.toString().equals("google.api.http")) {
             optionsSb.append("{\n");
             for (Map.Entry<String, String> prop : option.getProperties().entrySet()) {
-              optionsSb.append("      " + prop.getKey() + ": " + '"' + prop.getValue() + "\"\n");
+              optionsSb.append("      ")
+                       .append(prop.getKey())
+                       .append(": ")
+                       .append('"')
+                       .append(prop.getValue())
+                       .append("\"\n");
             }
           optionsSb.append("    };");
           }
