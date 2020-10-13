@@ -61,6 +61,9 @@ public class Proto3Writer {
     printServices(services, writer);
   }
 
+  // TODO: refactor to use enum for option types
+  // TODO: include helper method to build strings for options
+
   private void printOptions(String pkg, PrintWriter writer) {
     String[] tokens = pkg.split("\\.");
     List<String> capitalized =
@@ -107,13 +110,29 @@ public class Proto3Writer {
         writer.println(formatDescription("  ", method.getDescription()));
         writer.println("  " + method + " {");
 
-        StringBuilder optionsSb = new StringBuilder();
         for (Option option : method.getOptions()) {
-          optionsSb.append("    option (").append(option).append(") = {\n");
-          for (Map.Entry<String, String> prop : option.getProperties().entrySet()) {
-            optionsSb.append("      " + prop.getKey() + ": " + '"' + prop.getValue() + "\"\n");
-          }
+          StringBuilder optionsSb = new StringBuilder();
+          optionsSb.append("    option (").append(option).append(") = ");
+          
+          if (option.toString().equals("google.api.http")) {
+            optionsSb.append("{\n");
+            for (Map.Entry<String, String> prop : option.getProperties().entrySet()) {
+              optionsSb.append("      ")
+                       .append(prop.getKey())
+                       .append(": ")
+                       .append('"')
+                       .append(prop.getValue())
+                       .append("\"\n");
+            }
           optionsSb.append("    };");
+          }
+          else if (option.toString().equals("google.api.method_signature")) {
+            for (Map.Entry<String, String> prop : option.getProperties().entrySet())
+              optionsSb.append('"')
+                       .append(prop.getValue())
+                       .append("\";");
+          }
+
           writer.println(optionsSb);
         }
 
