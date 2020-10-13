@@ -128,7 +128,9 @@ public class Proto3Writer {
           }
           else if (option.toString().equals("google.api.method_signature")) {
             for (Map.Entry<String, String> prop : option.getProperties().entrySet())
-              optionsSb.append('"' + prop.getValue() + "\";");
+              optionsSb.append('"')
+                       .append(prop.getValue())
+                       .append("\";");
           }
 
           writer.println(optionsSb);
