@@ -308,27 +308,28 @@ public class DocumentToProtoConverter {
         String httpOptionPath = method.flatPath();
         List<String> methodSignatureParams = new ArrayList<>();
 
-        for (Schema requiredParam : method.requiredParams().values()) {
-          Field requiredField = schemaToField(requiredParam);
-          Option fieldBehaviorOption = new Option("google.api.field_behavior");
-          fieldBehaviorOption.getProperties().put("", "REQUIRED");
-          requiredField.getOptions().add(fieldBehaviorOption);
-          input.getFields().add(requiredField);
-          methodSignatureParams.add(requiredField.getName());
-        }
-
         for (Schema pathParam : method.pathParams().values()) {
           Field pathField = schemaToField(pathParam);
+          if (method.requiredParamNames().contains(pathParam.getIdentifier())) {
+            pathField.getOptions().add(getFieldBehaviorOption());
+          }
+          input.getFields().add(pathField);
+          methodSignatureParams.add(pathField.getName());
           httpOptionPath =
               httpOptionPath.replace(
                   "{" + pathParam.getIdentifier() + "}", "{" + pathField.getName() + "}");
         }
 
         Option requiredMethodSignatureOption = new Option("google.api.method_signature");
-        requiredMethodSignatureOption.getProperties().put("", String.join(",", methodSignatureParams));
+        requiredMethodSignatureOption
+            .getProperties()
+            .put("", String.join(",", methodSignatureParams));
 
         for (Schema queryParam : method.queryParams().values()) {
           Field queryField = schemaToField(queryParam);
+          if (method.requiredParamNames().contains(queryParam.getIdentifier())) {
+            queryField.getOptions().add(getFieldBehaviorOption());
+          }
           input.getFields().add(queryField);
           if (queryField.getValueType().isEnum()) {
             input.getEnums().add(queryField.getValueType());
@@ -336,7 +337,6 @@ public class DocumentToProtoConverter {
         }
 
         // TODO: add logic to determine non-required method_signature options
-        
         Option methodHttpOption = new Option("google.api.http");
         methodHttpOption
             .getProperties()
@@ -376,6 +376,12 @@ public class DocumentToProtoConverter {
       service.getOptions().add(authScopesOpt);
       allServices.put(service.getName(), service);
     }
+  }
+
+  private Option getFieldBehaviorOption() {
+    Option fieldBehaviorOption = new Option("google.api.field_behavior");
+    fieldBehaviorOption.getProperties().put("", "REQUIRED");
+    return fieldBehaviorOption;
   }
 
   private String getInputMessageDescription(String serviceName, String methodName) {
