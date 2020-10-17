@@ -18,11 +18,9 @@ package com.google.cloud.discotoproto3converter.disco;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -52,7 +50,6 @@ public abstract class Method implements Comparable<Method>, Node {
     Map<String, Schema> parameters = new LinkedHashMap<>();
     Map<String, Schema> queryParams = new LinkedHashMap<>();
     Map<String, Schema> pathParams = new LinkedHashMap<>();
-    Set<String> requiredParamNames = new HashSet<>();
 
     for (String name : root.getObject("parameters").getFieldNames()) {
       Schema schema = Schema.from(parametersNode.getObject(name), name, null);
@@ -68,8 +65,16 @@ public abstract class Method implements Comparable<Method>, Node {
       } else if (schema.location().toLowerCase().equals("query")) {
         queryParams.put(name, schema);
       }
-      if (schema.required()) {
-        requiredParamNames.add(name);
+    }
+
+    List<String> requiredParamNames = new ArrayList<>();
+    for (DiscoveryNode orderedParam : root.getArray("parameterOrder").getElements()) {
+      String paramName = orderedParam.asText();
+      Schema pathParam = pathParams.get(paramName);
+      Schema queryParam = queryParams.get(paramName);
+      if ((pathParam != null && pathParam.required())
+          || (queryParam != null && queryParam.required())) {
+        requiredParamNames.add(paramName);
       }
     }
 
@@ -161,7 +166,7 @@ public abstract class Method implements Comparable<Method>, Node {
   public abstract Map<String, Schema> queryParams();
 
   /** @return the list of required parameters. */
-  public abstract Set<String> requiredParamNames();
+  public abstract List<String> requiredParamNames();
 
   /** @return the request's resource object schema, or null if none. */
   @Nullable

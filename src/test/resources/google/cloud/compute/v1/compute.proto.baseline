@@ -576,7 +576,7 @@ message ListAddressesRequest {
   // You can also sort results in descending order based on the creation timestamp using orderBy="creationTimestamp desc". This sorts results based on the creationTimestamp field in reverse chronological order (newest result first). Use this to sort resources like operations so that the newest operation is returned first.
   //
   // Currently, only sorting by name or creationTimestamp desc is supported.
-  string order_by = 160562920;
+  string order_by = 160562920 [(google.api.field_behavior) = REQUIRED];
 
   // Specifies a page token to use. Set pageToken to the nextPageToken returned by a previous list request to get the next page of results.
   string page_token = 19994697;
@@ -615,7 +615,7 @@ service Addresses {
       post: "/compute/v1/projects/{project}/regions/{region}/addresses"
       body: "address_resource"
     };
-    option (google.api.method_signature) = "project,region";
+    option (google.api.method_signature) = "project,region,address_resource";
   }
 
   // Retrieves a list of addresses contained within the specified region.
@@ -623,7 +623,7 @@ service Addresses {
     option (google.api.http) = {
       get: "/compute/v1/projects/{project}/regions/{region}/addresses"
     };
-    option (google.api.method_signature) = "project,region";
+    option (google.api.method_signature) = "project,region,order_by";
   }
 
 }

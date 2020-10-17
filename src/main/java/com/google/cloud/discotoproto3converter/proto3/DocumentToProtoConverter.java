@@ -20,7 +20,6 @@ import com.google.cloud.discotoproto3converter.disco.Inflector;
 import com.google.cloud.discotoproto3converter.disco.Method;
 import com.google.cloud.discotoproto3converter.disco.Name;
 import com.google.cloud.discotoproto3converter.disco.Schema;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -306,29 +305,28 @@ public class DocumentToProtoConverter {
         String inputDescription = getInputMessageDescription(grpcServiceName, methodname);
         Message input = new Message(requestName, false, false, inputDescription);
         String httpOptionPath = method.flatPath();
-        List<String> methodSignatureParams = new ArrayList<>();
+        Map<String, String> methodSignatureParamNames = new LinkedHashMap<>();
+        for (String requiredParamName : method.requiredParamNames()) {
+          methodSignatureParamNames.put(requiredParamName, null);
+        }
 
         for (Schema pathParam : method.pathParams().values()) {
           Field pathField = schemaToField(pathParam);
-          if (method.requiredParamNames().contains(pathParam.getIdentifier())) {
+          if (methodSignatureParamNames.containsKey(pathParam.getIdentifier())) {
             pathField.getOptions().add(getFieldBehaviorOption());
+            methodSignatureParamNames.put(pathParam.getIdentifier(), pathField.getName());
           }
           input.getFields().add(pathField);
-          methodSignatureParams.add(pathField.getName());
           httpOptionPath =
               httpOptionPath.replace(
                   "{" + pathParam.getIdentifier() + "}", "{" + pathField.getName() + "}");
         }
 
-        Option requiredMethodSignatureOption = new Option("google.api.method_signature");
-        requiredMethodSignatureOption
-            .getProperties()
-            .put("", String.join(",", methodSignatureParams));
-
         for (Schema queryParam : method.queryParams().values()) {
           Field queryField = schemaToField(queryParam);
-          if (method.requiredParamNames().contains(queryParam.getIdentifier())) {
+          if (methodSignatureParamNames.containsKey(queryParam.getIdentifier())) {
             queryField.getOptions().add(getFieldBehaviorOption());
+            methodSignatureParamNames.put(queryParam.getIdentifier(), queryField.getName());
           }
           input.getFields().add(queryField);
           if (queryField.getValueType().isEnum()) {
@@ -348,7 +346,14 @@ public class DocumentToProtoConverter {
               Name.anyCamel(request.getName(), "resource").toLowerUnderscore();
           input.getFields().add(new Field(requestFieldName, request, false, null, null));
           methodHttpOption.getProperties().put("body", requestFieldName);
+          methodSignatureParamNames.put("", requestFieldName);
         }
+
+        Option requiredMethodSignatureOption = new Option("google.api.method_signature");
+        requiredMethodSignatureOption
+            .getProperties()
+            .put("", String.join(",", methodSignatureParamNames.values()));
+
         allMessages.put(requestName, input);
 
         // Response
