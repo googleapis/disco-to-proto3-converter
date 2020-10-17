@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -67,16 +68,12 @@ public abstract class Method implements Comparable<Method>, Node {
       }
     }
 
-    List<String> requiredParamNames = new ArrayList<>();
-    for (DiscoveryNode orderedParam : root.getArray("parameterOrder").getElements()) {
-      String paramName = orderedParam.asText();
-      Schema pathParam = pathParams.get(paramName);
-      Schema queryParam = queryParams.get(paramName);
-      if ((pathParam != null && pathParam.required())
-          || (queryParam != null && queryParam.required())) {
-        requiredParamNames.add(paramName);
-      }
-    }
+    List<String> requiredParamNames =
+        root.getArray("parameterOrder")
+            .getElements()
+            .stream()
+            .map(DiscoveryNode::asText)
+            .collect(Collectors.toList());
 
     Schema request = Schema.from(root.getObject("request"), "request", null);
     if (request.reference().isEmpty()) {
