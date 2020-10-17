@@ -313,7 +313,7 @@ public class DocumentToProtoConverter {
         for (Schema pathParam : method.pathParams().values()) {
           Field pathField = schemaToField(pathParam);
           if (methodSignatureParamNames.containsKey(pathParam.getIdentifier())) {
-            pathField.getOptions().add(getFieldBehaviorOption());
+            pathField.getOptions().add(getFieldBehaviorOption("REQUIRED"));
             methodSignatureParamNames.put(pathParam.getIdentifier(), pathField.getName());
           }
           input.getFields().add(pathField);
@@ -325,7 +325,7 @@ public class DocumentToProtoConverter {
         for (Schema queryParam : method.queryParams().values()) {
           Field queryField = schemaToField(queryParam);
           if (methodSignatureParamNames.containsKey(queryParam.getIdentifier())) {
-            queryField.getOptions().add(getFieldBehaviorOption());
+            queryField.getOptions().add(getFieldBehaviorOption("REQUIRED"));
             methodSignatureParamNames.put(queryParam.getIdentifier(), queryField.getName());
           }
           input.getFields().add(queryField);
@@ -383,9 +383,9 @@ public class DocumentToProtoConverter {
     }
   }
 
-  private Option getFieldBehaviorOption() {
+  private Option getFieldBehaviorOption(String optionValue) {
     Option fieldBehaviorOption = new Option("google.api.field_behavior");
-    fieldBehaviorOption.getProperties().put("", "REQUIRED");
+    fieldBehaviorOption.getProperties().put("", optionValue);
     return fieldBehaviorOption;
   }
 
