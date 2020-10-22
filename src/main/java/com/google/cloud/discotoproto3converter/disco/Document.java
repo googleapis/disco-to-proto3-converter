@@ -24,7 +24,7 @@ import com.google.common.collect.ImmutableList.Builder;
 import com.google.gson.internal.LinkedTreeMap;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -159,7 +159,7 @@ public abstract class Document implements Node {
   }
 
   private static Map<String, Schema> parseSchemas(DiscoveryNode root) {
-    Map<String, Schema> schemas = new HashMap<>();
+    Map<String, Schema> schemas = new LinkedHashMap<>();
     DiscoveryNode schemasNode = root.getObject("schemas");
     for (String name : schemasNode.getFieldNames()) {
       schemas.put(name, Schema.from(schemasNode.getObject(name), name, null));

@@ -18,9 +18,10 @@ package com.google.cloud.discotoproto3converter.disco;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -47,11 +48,10 @@ public abstract class Method implements Comparable<Method>, Node {
     String flatPath = root.has("flatPath") ? root.getString("flatPath") : path;
 
     DiscoveryNode parametersNode = root.getObject("parameters");
-    Map<String, Schema> parameters = new HashMap<>();
-    Map<String, Schema> queryParams = new HashMap<>();
-    Map<String, Schema> pathParams = new HashMap<>();
-    Map<String, Schema> requiredParams = new HashMap<>();
-    
+    Map<String, Schema> parameters = new LinkedHashMap<>();
+    Map<String, Schema> queryParams = new LinkedHashMap<>();
+    Map<String, Schema> pathParams = new LinkedHashMap<>();
+
     for (String name : root.getObject("parameters").getFieldNames()) {
       Schema schema = Schema.from(parametersNode.getObject(name), name, null);
       // TODO: Remove these checks once we're sure that parameters can't be objects/arrays.
@@ -65,10 +65,15 @@ public abstract class Method implements Comparable<Method>, Node {
         pathParams.put(name, schema);
       } else if (schema.location().toLowerCase().equals("query")) {
         queryParams.put(name, schema);
-      } if (schema.required()) {
-        requiredParams.put(name, schema);
       }
     }
+
+    List<String> requiredParamNames =
+        root.getArray("parameterOrder")
+            .getElements()
+            .stream()
+            .map(DiscoveryNode::asText)
+            .collect(Collectors.toList());
 
     Schema request = Schema.from(root.getObject("request"), "request", null);
     if (request.reference().isEmpty()) {
@@ -95,7 +100,7 @@ public abstract class Method implements Comparable<Method>, Node {
             path,
             pathParams,
             queryParams,
-            requiredParams,
+            requiredParamNames,
             request,
             response,
             scopes,
@@ -158,7 +163,7 @@ public abstract class Method implements Comparable<Method>, Node {
   public abstract Map<String, Schema> queryParams();
 
   /** @return the list of required parameters. */
-  public abstract Map<String, Schema> requiredParams();
+  public abstract List<String> requiredParamNames();
 
   /** @return the request's resource object schema, or null if none. */
   @Nullable

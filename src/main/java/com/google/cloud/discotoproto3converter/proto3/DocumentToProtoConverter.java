@@ -20,7 +20,6 @@ import com.google.cloud.discotoproto3converter.disco.Inflector;
 import com.google.cloud.discotoproto3converter.disco.Method;
 import com.google.cloud.discotoproto3converter.disco.Name;
 import com.google.cloud.discotoproto3converter.disco.Schema;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -306,29 +305,32 @@ public class DocumentToProtoConverter {
         String inputDescription = getInputMessageDescription(grpcServiceName, methodname);
         Message input = new Message(requestName, false, false, inputDescription);
         String httpOptionPath = method.flatPath();
-        List<String> methodSignatureParams = new ArrayList<>();
-
-        for (Schema requiredParam : method.requiredParams().values()) {
-          Field requiredField = schemaToField(requiredParam);
-          Option fieldBehaviorOption = new Option("google.api.field_behavior");
-          fieldBehaviorOption.getProperties().put("", "REQUIRED");
-          requiredField.getOptions().add(fieldBehaviorOption);
-          input.getFields().add(requiredField);
-          methodSignatureParams.add(requiredField.getName());
+        // The map key is the parameter identifier in Discovery doc, while the map value is the
+        // parameter name in proto file (they may use different naming styles). The body parameter
+        // has empty string as a key because in Discovery doc it does not have a designated name.
+        Map<String, String> methodSignatureParamNames = new LinkedHashMap<>();
+        for (String requiredParamName : method.requiredParamNames()) {
+          methodSignatureParamNames.put(requiredParamName, null);
         }
 
         for (Schema pathParam : method.pathParams().values()) {
           Field pathField = schemaToField(pathParam);
+          if (methodSignatureParamNames.containsKey(pathParam.getIdentifier())) {
+            pathField.getOptions().add(getFieldBehaviorOption("REQUIRED"));
+            methodSignatureParamNames.put(pathParam.getIdentifier(), pathField.getName());
+          }
+          input.getFields().add(pathField);
           httpOptionPath =
               httpOptionPath.replace(
                   "{" + pathParam.getIdentifier() + "}", "{" + pathField.getName() + "}");
         }
 
-        Option requiredMethodSignatureOption = new Option("google.api.method_signature");
-        requiredMethodSignatureOption.getProperties().put("", String.join(",", methodSignatureParams));
-
         for (Schema queryParam : method.queryParams().values()) {
           Field queryField = schemaToField(queryParam);
+          if (methodSignatureParamNames.containsKey(queryParam.getIdentifier())) {
+            queryField.getOptions().add(getFieldBehaviorOption("REQUIRED"));
+            methodSignatureParamNames.put(queryParam.getIdentifier(), queryField.getName());
+          }
           input.getFields().add(queryField);
           if (queryField.getValueType().isEnum()) {
             input.getEnums().add(queryField.getValueType());
@@ -336,7 +338,6 @@ public class DocumentToProtoConverter {
         }
 
         // TODO: add logic to determine non-required method_signature options
-        
         Option methodHttpOption = new Option("google.api.http");
         methodHttpOption
             .getProperties()
@@ -348,7 +349,14 @@ public class DocumentToProtoConverter {
               Name.anyCamel(request.getName(), "resource").toLowerUnderscore();
           input.getFields().add(new Field(requestFieldName, request, false, null, null));
           methodHttpOption.getProperties().put("body", requestFieldName);
+          methodSignatureParamNames.put("", requestFieldName);
         }
+
+        Option requiredMethodSignatureOption = new Option("google.api.method_signature");
+        requiredMethodSignatureOption
+            .getProperties()
+            .put("", String.join(",", methodSignatureParamNames.values()));
+
         allMessages.put(requestName, input);
 
         // Response
@@ -376,6 +384,12 @@ public class DocumentToProtoConverter {
       service.getOptions().add(authScopesOpt);
       allServices.put(service.getName(), service);
     }
+  }
+
+  private Option getFieldBehaviorOption(String optionValue) {
+    Option fieldBehaviorOption = new Option("google.api.field_behavior");
+    fieldBehaviorOption.getProperties().put("", optionValue);
+    return fieldBehaviorOption;
   }
 
   private String getInputMessageDescription(String serviceName, String methodName) {
