@@ -305,9 +305,9 @@ public class DocumentToProtoConverter {
         String inputDescription = getInputMessageDescription(grpcServiceName, methodname);
         Message input = new Message(requestName, false, false, inputDescription);
         String httpOptionPath = method.flatPath();
-        // The map key is the parameter identifier in discovery doc, the map value is the parameter
-        // name in proto file (they may use different naming styles). The body parameter has empty
-        // string as a key because in discovery doc it does not have a designated name.
+        // The map key is the parameter identifier in Discovery doc, while the map value is the
+        // parameter name in proto file (they may use different naming styles). The body parameter
+        // has empty string as a key because in Discovery doc it does not have a designated name.
         Map<String, String> methodSignatureParamNames = new LinkedHashMap<>();
         for (String requiredParamName : method.requiredParamNames()) {
           methodSignatureParamNames.put(requiredParamName, null);
