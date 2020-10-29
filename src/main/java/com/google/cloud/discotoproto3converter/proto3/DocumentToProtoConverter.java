@@ -36,13 +36,13 @@ public class DocumentToProtoConverter {
   private final Map<String, Message> allMessages = new LinkedHashMap<>();
   private final Map<String, GrpcService> allServices = new LinkedHashMap<>();
   private final Map<String, Option> allResourceOptions = new LinkedHashMap<>();
-  private List<String> serviceIgnorelist;
-  private List<String> messageIgnorelist;
+  private Set<String> serviceIgnoreSet;
+  private Set<String> messageIgnoreSet;
 
   public DocumentToProtoConverter(
-    Document document, String documentFileName, List<String> serviceIgnorelist, List<String> messageIgnorelist) {
-    this.serviceIgnorelist = serviceIgnorelist;
-    this.messageIgnorelist = messageIgnorelist;
+    Document document, String documentFileName, Set<String> serviceIgnoreSet, Set<String> messageIgnoreSet) {
+    this.serviceIgnoreSet = serviceIgnoreSet;
+    this.messageIgnoreSet = messageIgnoreSet;
     this.protoFile = readDocumentMetadata(document, documentFileName);
     readSchema(document);
     readResources(document);
@@ -387,7 +387,7 @@ public class DocumentToProtoConverter {
       Option authScopesOpt = new Option("google.api.oauth_scopes");
       authScopesOpt.getProperties().put("", String.join(",", authScopes));
       service.getOptions().add(authScopesOpt);
-      if (!serviceIgnorelist.contains(service.getName())) {
+      if (!serviceIgnoreSet.contains(service.getName())) {
         allServices.put(service.getName(), service);
       }
     }
@@ -400,7 +400,7 @@ public class DocumentToProtoConverter {
   }
 
   private void putAllMessages(String messageName, Message message) {
-      if (!messageIgnorelist.contains(messageName)) {
+      if (!messageIgnoreSet.contains(messageName)) {
         allMessages.put(messageName, message);
       }
   }

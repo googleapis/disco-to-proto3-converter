@@ -34,21 +34,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 public class DiscoToProto3ConverterApp {
 
   public static void main(String[] args) throws IOException {
-    Map<String, String> parsedArgs = new HashMap<>();
-
-    // Optional Parameters
-    parsedArgs.put("--service_ignorelist", "");
-    parsedArgs.put("--message_ignorelist", "");
-
-    for (String arg : args) {
-      String[] argNameVal = arg.split("=");
-      parsedArgs.put(argNameVal[0], argNameVal[1]);
-    }
+    Map<String, String> parsedArgs = parseArgs(args);
 
     DiscoToProto3ConverterApp converter = new DiscoToProto3ConverterApp();
     converter.convert(
@@ -72,8 +64,8 @@ public class DiscoToProto3ConverterApp {
         new DocumentToProtoConverter(
             document,
             Paths.get(discoveryDocPath).getFileName().toString(),
-            Arrays.asList(serviceIgnorelist.split(",")),
-            Arrays.asList(messageIgnorelist.split(",")));
+            new HashSet<String>(Arrays.asList(serviceIgnorelist.split(","))),
+            new HashSet<String>(Arrays.asList(messageIgnorelist.split(","))));
     String protoPkg = converter.getProtoFile().getProtoPkg();
     try (PrintWriter pw = app.makeDefaultDirsAndWriter(outputRootPath, outputFileName, protoPkg)) {
       Proto3Writer writer = new Proto3Writer();
@@ -104,5 +96,21 @@ public class DiscoToProto3ConverterApp {
     ObjectMapper mapper = new ObjectMapper();
     JsonNode root = mapper.readTree(reader);
     return Document.from(new DiscoveryNode(root));
+  }
+
+  private static Map<String, String> parseArgs(String[] args)
+  {
+    Map<String, String> parsedArgs = new HashMap<>();
+
+    // Optional Parameters
+    parsedArgs.put("--service_ignorelist", "");
+    parsedArgs.put("--message_ignorelist", "");
+
+    for (String arg : args) {
+      String[] argNameVal = arg.split("=");
+      parsedArgs.put(argNameVal[0], argNameVal[1]);
+    }
+
+    return parsedArgs;
   }
 }
