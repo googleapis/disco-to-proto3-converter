@@ -32,33 +32,40 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 public class DiscoToProto3ConverterApp {
 
   public static void main(String[] args) throws IOException {
-    Map<String, String> parsedArgs = new HashMap<>();
-
-    for (String arg : args) {
-      String[] argNameVal = arg.split("=");
-      parsedArgs.put(argNameVal[0], argNameVal[1]);
-    }
+    Map<String, String> parsedArgs = parseArgs(args);
 
     DiscoToProto3ConverterApp converter = new DiscoToProto3ConverterApp();
     converter.convert(
         parsedArgs.get("--discovery_doc_path"),
         parsedArgs.get("--output_root_path"),
-        parsedArgs.get("--output_file_name"));
+        parsedArgs.get("--output_file_name"),
+        parsedArgs.get("--service_ignorelist"),
+        parsedArgs.get("--message_ignorelist"));
   }
 
-  public void convert(String discoveryDocPath, String outputRootPath, String outputFileName)
+  public void convert(
+      String discoveryDocPath,
+      String outputRootPath,
+      String outputFileName,
+      String serviceIgnorelist,
+      String messageIgnorelist)
       throws IOException {
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Document document = app.createDocument(discoveryDocPath);
     DocumentToProtoConverter converter =
         new DocumentToProtoConverter(
-            document, Paths.get(discoveryDocPath).getFileName().toString());
+            document,
+            Paths.get(discoveryDocPath).getFileName().toString(),
+            new HashSet<String>(Arrays.asList(serviceIgnorelist.split(","))),
+            new HashSet<String>(Arrays.asList(messageIgnorelist.split(","))));
     String protoPkg = converter.getProtoFile().getProtoPkg();
     try (PrintWriter pw = app.makeDefaultDirsAndWriter(outputRootPath, outputFileName, protoPkg)) {
       Proto3Writer writer = new Proto3Writer();
@@ -89,5 +96,20 @@ public class DiscoToProto3ConverterApp {
     ObjectMapper mapper = new ObjectMapper();
     JsonNode root = mapper.readTree(reader);
     return Document.from(new DiscoveryNode(root));
+  }
+
+  private static Map<String, String> parseArgs(String[] args) {
+    Map<String, String> parsedArgs = new HashMap<>();
+
+    // Optional Parameters
+    parsedArgs.put("--service_ignorelist", "");
+    parsedArgs.put("--message_ignorelist", "");
+
+    for (String arg : args) {
+      String[] argNameVal = arg.split("=");
+      parsedArgs.put(argNameVal[0], argNameVal[1]);
+    }
+
+    return parsedArgs;
   }
 }

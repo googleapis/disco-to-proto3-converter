@@ -22,17 +22,23 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.junit.Before;
 import org.junit.Test;
 
 public class DiscoToProto3ConverterAppTest {
+  Path outputDir;
+
+  @Before
+  public void setUp() throws IOException {
+    outputDir = Files.createTempDirectory("disco-to-proto3-converter");
+    outputDir.toFile().deleteOnExit();
+  }
 
   @Test
   public void convert() throws IOException {
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
-    Path outputDir = Files.createTempDirectory("disco-to-proto3-converter");
-
     Path discoveryDocPath = Paths.get("src", "test", "resources", "compute.v1.small.json");
-    app.convert(discoveryDocPath.toString(), outputDir.toString(), "compute.proto");
+    app.convert(discoveryDocPath.toString(), outputDir.toString(), "compute.proto", "", "");
 
     Path prefix = Paths.get("google", "cloud", "compute", "v1");
 
@@ -43,6 +49,30 @@ public class DiscoToProto3ConverterAppTest {
         Paths.get("src", "test", "resources", prefix.toString(), "compute.proto.baseline");
     String baselineBody = readFile(baselineFilePath);
 
+    assertEquals(baselineBody, actualBody);
+  }
+
+  @Test
+  public void convertWithIgnorelist() throws IOException {
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path discoveryDocPath = Paths.get("src", "test", "resources", "compute.v1.small.json");
+    app.convert(
+        discoveryDocPath.toString(),
+        outputDir.toString(),
+        "compute.proto",
+        "Addresses",
+        "Operation,AddressList,AddressesScopedList,Warning,Warnings,Data,Error,"
+            + "Errors,AddressAggregatedList,AggregatedListAddressesRequest,"
+            + "InsertAddressRequest,ListAddressesRequest,InsertAddressRequest");
+
+    Path prefix = Paths.get("google", "cloud", "compute", "v1");
+
+    Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute.proto");
+    String actualBody = readFile(generatedFilePath);
+
+    Path baselineFilePath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.proto.ignorelist");
+    String baselineBody = readFile(baselineFilePath);
     assertEquals(baselineBody, actualBody);
   }
 
