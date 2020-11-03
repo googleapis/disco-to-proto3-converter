@@ -22,8 +22,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import org.junit.Test;
 import org.junit.Before;
+import org.junit.Test;
 
 public class DiscoToProto3ConverterAppTest {
   Path outputDir;
@@ -62,8 +62,8 @@ public class DiscoToProto3ConverterAppTest {
         "compute.proto",
         "Addresses",
         "Operation,AddressList,AddressesScopedList,Warning,Warnings,Data,Error,"
-        + "Errors,AddressAggregatedList,AggregatedListAddressesRequest,"
-        + "InsertAddressRequest,ListAddressesRequest,InsertAddressRequest");
+            + "Errors,AddressAggregatedList,AggregatedListAddressesRequest,"
+            + "InsertAddressRequest,ListAddressesRequest,InsertAddressRequest");
 
     Path prefix = Paths.get("google", "cloud", "compute", "v1");
 

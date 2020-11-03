@@ -29,7 +29,6 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.io.IOException;
 
 public class DocumentToProtoConverter {
   private final ProtoFile protoFile;
@@ -40,7 +39,10 @@ public class DocumentToProtoConverter {
   private Set<String> messageIgnoreSet;
 
   public DocumentToProtoConverter(
-    Document document, String documentFileName, Set<String> serviceIgnoreSet, Set<String> messageIgnoreSet) {
+      Document document,
+      String documentFileName,
+      Set<String> serviceIgnoreSet,
+      Set<String> messageIgnoreSet) {
     this.serviceIgnoreSet = serviceIgnoreSet;
     this.messageIgnoreSet = messageIgnoreSet;
     this.protoFile = readDocumentMetadata(document, documentFileName);
@@ -400,9 +402,9 @@ public class DocumentToProtoConverter {
   }
 
   private void putAllMessages(String messageName, Message message) {
-      if (!messageIgnoreSet.contains(messageName)) {
-        allMessages.put(messageName, message);
-      }
+    if (!messageIgnoreSet.contains(messageName)) {
+      allMessages.put(messageName, message);
+    }
   }
 
   private String getInputMessageDescription(String serviceName, String methodName) {

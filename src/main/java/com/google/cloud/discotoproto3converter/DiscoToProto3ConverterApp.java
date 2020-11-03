@@ -98,8 +98,7 @@ public class DiscoToProto3ConverterApp {
     return Document.from(new DiscoveryNode(root));
   }
 
-  private static Map<String, String> parseArgs(String[] args)
-  {
+  private static Map<String, String> parseArgs(String[] args) {
     Map<String, String> parsedArgs = new HashMap<>();
 
     // Optional Parameters
