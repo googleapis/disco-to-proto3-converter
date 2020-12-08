@@ -352,13 +352,11 @@ public class DocumentToProtoConverter {
 
         if (method.request() != null) {
           Message request = allMessages.get(method.request().reference());
-          if (request != null) {
-            String requestFieldName =
-                Name.anyCamel(request.getName(), "resource").toLowerUnderscore();
-            input.getFields().add(new Field(requestFieldName, request, false, null, null));
-            methodHttpOption.getProperties().put("body", requestFieldName);
-            methodSignatureParamNames.put("", requestFieldName);
-          }
+          String requestFieldName =
+              Name.anyCamel(request.getName(), "resource").toLowerUnderscore();
+          input.getFields().add(new Field(requestFieldName, request, false, null, null));
+          methodHttpOption.getProperties().put("body", requestFieldName);
+          methodSignatureParamNames.put("", requestFieldName);
         }
 
         Option requiredMethodSignatureOption = new Option("google.api.method_signature");
