@@ -90,3 +90,5 @@ google_java_format_verification(
     srcs = glob(["src/**/*.java"]),
     formatter = "//:google_java_format_binary",
 )
+
+exports_files(glob(["src/test/resources/**/*.json"]))

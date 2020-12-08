@@ -38,11 +38,11 @@ public class DiscoToProto3ConverterAppTest {
   public void convert() throws IOException {
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path discoveryDocPath = Paths.get("src", "test", "resources", "compute.v1.small.json");
-    app.convert(discoveryDocPath.toString(), outputDir.toString(), "compute.proto", "", "");
-
     Path prefix = Paths.get("google", "cloud", "compute", "v1");
-
     Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute.proto");
+
+    app.convert(discoveryDocPath.toString(), generatedFilePath.toString(), "", "");
+
     String actualBody = readFile(generatedFilePath);
 
     Path baselineFilePath =
@@ -56,18 +56,16 @@ public class DiscoToProto3ConverterAppTest {
   public void convertWithIgnorelist() throws IOException {
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path discoveryDocPath = Paths.get("src", "test", "resources", "compute.v1.small.json");
+    Path prefix = Paths.get("google", "cloud", "compute", "v1");
+    Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute.proto");
     app.convert(
         discoveryDocPath.toString(),
-        outputDir.toString(),
-        "compute.proto",
+        generatedFilePath.toString(),
         "Addresses",
         "Operation,AddressList,AddressesScopedList,Warning,Warnings,Data,Error,"
             + "Errors,AddressAggregatedList,AggregatedListAddressesRequest,"
             + "InsertAddressRequest,ListAddressesRequest,InsertAddressRequest");
 
-    Path prefix = Paths.get("google", "cloud", "compute", "v1");
-
-    Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute.proto");
     String actualBody = readFile(generatedFilePath);
 
     Path baselineFilePath =

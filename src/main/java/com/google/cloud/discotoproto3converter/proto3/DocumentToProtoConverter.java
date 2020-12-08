@@ -293,6 +293,11 @@ public class DocumentToProtoConverter {
       String grpcServiceName = Name.anyCamel(entry.getKey()).toUpperCamel();
       GrpcService service =
           new GrpcService(grpcServiceName, getServiceDescription(grpcServiceName));
+      if (serviceIgnoreSet.contains(service.getName())) {
+        // Ignore the service (as early as possible to avoid dependency failures on previously
+        // ignored request messages used in this service).
+        continue;
+      }
       Option defaultHostOpt = new Option("google.api.default_host");
       defaultHostOpt.getProperties().put("", endpoint);
       service.getOptions().add(defaultHostOpt);
@@ -389,9 +394,7 @@ public class DocumentToProtoConverter {
       Option authScopesOpt = new Option("google.api.oauth_scopes");
       authScopesOpt.getProperties().put("", String.join(",", authScopes));
       service.getOptions().add(authScopesOpt);
-      if (!serviceIgnoreSet.contains(service.getName())) {
-        allServices.put(service.getName(), service);
-      }
+      allServices.put(service.getName(), service);
     }
   }
 
