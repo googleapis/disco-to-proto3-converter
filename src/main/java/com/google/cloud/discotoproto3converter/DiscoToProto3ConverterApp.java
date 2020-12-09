@@ -45,16 +45,14 @@ public class DiscoToProto3ConverterApp {
     DiscoToProto3ConverterApp converter = new DiscoToProto3ConverterApp();
     converter.convert(
         parsedArgs.get("--discovery_doc_path"),
-        parsedArgs.get("--output_root_path"),
-        parsedArgs.get("--output_file_name"),
+        parsedArgs.get("--output_file_path"),
         parsedArgs.get("--service_ignorelist"),
         parsedArgs.get("--message_ignorelist"));
   }
 
   public void convert(
       String discoveryDocPath,
-      String outputRootPath,
-      String outputFileName,
+      String outputFilePath,
       String serviceIgnorelist,
       String messageIgnorelist)
       throws IOException {
@@ -64,10 +62,9 @@ public class DiscoToProto3ConverterApp {
         new DocumentToProtoConverter(
             document,
             Paths.get(discoveryDocPath).getFileName().toString(),
-            new HashSet<String>(Arrays.asList(serviceIgnorelist.split(","))),
-            new HashSet<String>(Arrays.asList(messageIgnorelist.split(","))));
-    String protoPkg = converter.getProtoFile().getProtoPkg();
-    try (PrintWriter pw = app.makeDefaultDirsAndWriter(outputRootPath, outputFileName, protoPkg)) {
+            new HashSet<>(Arrays.asList(serviceIgnorelist.split(","))),
+            new HashSet<>(Arrays.asList(messageIgnorelist.split(","))));
+    try (PrintWriter pw = app.makeDefaultDirsAndWriter(outputFilePath)) {
       Proto3Writer writer = new Proto3Writer();
 
       writer.writeToFile(
@@ -79,15 +76,14 @@ public class DiscoToProto3ConverterApp {
     }
   }
 
-  PrintWriter makeDefaultDirsAndWriter(String outputDir, String fileName, String pkg)
+  private PrintWriter makeDefaultDirsAndWriter(String outputFilePath)
       throws FileNotFoundException, UnsupportedEncodingException {
-    Path outputPath = Paths.get(outputDir, pkg.replace('.', File.separatorChar));
-    outputPath.toFile().mkdirs();
-    String outputFilePath = Paths.get(outputPath.toString(), fileName).toString();
+    Path outputPath = Paths.get(outputFilePath);
+    outputPath.getParent().toFile().mkdirs();
     return new PrintWriter(outputFilePath, "UTF-8");
   }
 
-  Document createDocument(String discoveryDocPath) throws IOException {
+  private Document createDocument(String discoveryDocPath) throws IOException {
     if (!new File(discoveryDocPath).exists()) {
       throw new FileNotFoundException("Discovery document filepath not found.");
     }

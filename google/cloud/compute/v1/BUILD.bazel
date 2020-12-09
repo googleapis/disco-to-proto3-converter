@@ -1,0 +1,39 @@
+# For the converter's Bazel rules testing and demonstration, specifically
+# this file shows to to use the `proto_from_disco` build rule defined in this
+# repository.
+load(
+    "//rules_gapic:disco_to_proto.bzl",
+    "proto_from_disco",
+)
+
+proto_from_disco(
+    name = "compute_small",
+    src = "//:src/test/resources/compute.v1.small.json",
+)
+
+proto_from_disco(
+    name = "compute",
+    src = "//:src/test/resources/compute.v1.json",
+    message_ignorelist = [
+        "HttpHealthCheck",
+        "HttpsHealthCheck",
+        "HttpHealthCheckList",
+        "HttpsHealthCheckList",
+        "GetHttpHealthCheckRequest",
+        "GetHttpsHealthCheckRequest",
+        "PatchHttpHealthCheckRequest",
+        "PatchHttpsHealthCheckRequest",
+        "UpdateHttpHealthCheckRequest",
+        "UpdateHttpsHealthCheckRequest",
+        "InsertHttpHealthCheckRequest",
+        "InsertHttpsHealthCheckRequest",
+        "ListHttpHealthChecksRequest",
+        "ListHttpsHealthChecksRequest",
+        "DeleteHttpHealthCheckRequest",
+        "DeleteHttpsHealthCheckRequest",
+    ],
+    service_ignorelist = [
+        "HttpHealthChecks",
+        "HttpsHealthChecks",
+    ],
+)
