@@ -1,4 +1,6 @@
-# For the converter Bazel rules testing and demonstration
+# For the converter's Bazel rules testing and demonstration, specifically
+# this file shows to to use the `proto_from_disco` build rule defined in this
+# repository.
 load(
     "//rules_gapic:disco_to_proto.bzl",
     "proto_from_disco",

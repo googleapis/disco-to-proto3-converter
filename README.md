@@ -33,4 +33,20 @@ java \
 Check the `google/cloud/compute/v1` directory for the converted `compute.proto` 
 file.
 
+### Bazel
+The converter can also be used from Bazel via the `proto_from_disco` bazel rule 
+like the following:  
+
+```bzl
+load(
+    "@com_google_disco_to_proto3_converter//rules_gapic:disco_to_proto.bzl",
+    "proto_from_disco",
+)
+
+proto_from_disco(
+    name = "compute",
+    src = "//:src/test/resources/compute.v1.json",
+)
+```
+
 **This is not an officially supported Google product**
