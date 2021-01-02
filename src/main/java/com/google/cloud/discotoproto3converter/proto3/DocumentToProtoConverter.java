@@ -359,7 +359,10 @@ public class DocumentToProtoConverter {
           Message request = allMessages.get(method.request().reference());
           String requestFieldName =
               Name.anyCamel(request.getName(), "resource").toLowerUnderscore();
-          input.getFields().add(new Field(requestFieldName, request, false, null, null));
+          String description = getMessageBodyDescription();
+          Field bodyField = new Field(requestFieldName, request, false, null, description);
+          bodyField.getOptions().add(getFieldBehaviorOption("REQUIRED"));
+          input.getFields().add(bodyField);
           methodHttpOption.getProperties().put("body", requestFieldName);
           methodSignatureParamNames.put("", requestFieldName);
         }
@@ -424,6 +427,10 @@ public class DocumentToProtoConverter {
         + "."
         + methodName
         + ". See the method description for details.";
+  }
+
+  private String getMessageBodyDescription() {
+    return "The body resource for this request";
   }
 
   private String getServiceDescription(String serviceName) {
