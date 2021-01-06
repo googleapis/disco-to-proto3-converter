@@ -41,5 +41,8 @@ jobs:
         echo "and it will start over with a clean cache."
         echo "The old one will disappear after 7 days."
 
-    - name: Run bazel build in google/cloud/compute/v1
-      run: bazel build '//google/cloud/compute/v1/...'
+    - name: Run bazel build
+      run: bazel build '//...'
+
+    - name: Run bazel test
+      run: bazel test '//...'
