@@ -540,7 +540,8 @@ message AggregatedListAddressesRequest {
 
 // A request message for Addresses.Insert. See the method description for details.
 message InsertAddressRequest {
-  Address address_resource = 215452665;
+  // The body resource for this request
+  Address address_resource = 215452665 [(google.api.field_behavior) = REQUIRED];
 
   // Project ID for this request.
   string project = 227560217 [(google.api.field_behavior) = REQUIRED];
