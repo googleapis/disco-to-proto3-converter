@@ -43,6 +43,3 @@ jobs:
 
     - name: Run bazel build in google/cloud/compute/v1
       run: bazel build '//google/cloud/compute/v1/...'
-
-    - name: Run generated tests
-      run: bazel test '//google/cloud/compute/v1/...'
