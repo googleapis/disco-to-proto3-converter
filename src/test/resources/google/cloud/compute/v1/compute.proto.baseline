@@ -144,7 +144,7 @@ message Warnings {
 //
 // Google Compute Engine has three Operation resources:
 //
-// * [Global](/compute/docs/reference/rest/{$api_version}/globalOperations) * [Regional](/compute/docs/reference/rest/{$api_version}/regionOperations) * [Zonal](/compute/docs/reference/rest/{$api_version}/zoneOperations)
+// * [Global](https://cloud.google.com/compute/docs/reference/rest/v1/globalOperations) * [Regional](https://cloud.google.com/compute/docs/reference/rest/v1/regionOperations) * [Zonal](https://cloud.google.com/compute/docs/reference/rest/v1/zoneOperations)
 //
 // You can use an operation resource to manage asynchronous API requests. For more information, read Handling API responses.
 //
@@ -153,7 +153,7 @@ message Warnings {
 // - For regional operations, use the regionOperations resource.
 // - For zonal operations, use the zoneOperations resource.
 //
-// For more information, read  Global, Regional, and Zonal Resources. (== resource_for {$api_version}.globalOperations ==) (== resource_for {$api_version}.regionOperations ==) (== resource_for {$api_version}.zoneOperations ==)
+// For more information, read  Global, Regional, and Zonal Resources. (== resource_for v1.globalOperations ==) (== resource_for v1.regionOperations ==) (== resource_for v1.zoneOperations ==)
 message Operation {
   // [Output Only] The status of the operation, which can be one of the following: PENDING, RUNNING, or DONE.
   enum Status {
@@ -253,7 +253,7 @@ message Operation {
 //
 // For more information, read reserved IP address.
 //
-// (== resource_for {$api_version}.addresses ==) (== resource_for {$api_version}.globalAddresses ==)
+// (== resource_for v1.addresses ==) (== resource_for v1.globalAddresses ==)
 message Address {
   // The type of address to reserve, either INTERNAL or EXTERNAL. If unspecified, defaults to EXTERNAL.
   enum AddressType {

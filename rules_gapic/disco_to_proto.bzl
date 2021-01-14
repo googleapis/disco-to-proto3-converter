@@ -27,6 +27,7 @@ def _proto_from_disco_impl(ctx):
     _set_args(attr.src, "--discovery_doc_path=", arguments, inputs)
     _set_args(",".join(attr.service_ignorelist), "--service_ignorelist=", arguments)
     _set_args(",".join(attr.message_ignorelist), "--message_ignorelist=", arguments)
+    _set_args(attr.relative_link_prefix, "--relative_link_prefix=", arguments)
 
     converter = ctx.executable.converter
     ctx.actions.run(
@@ -39,9 +40,10 @@ def _proto_from_disco_impl(ctx):
 
 proto_from_disco = rule(
     attrs = {
-        "src": attr.label(mandatory = True, allow_single_file = True),
-        "service_ignorelist": attr.string_list(allow_empty=True, default=[]),
-        "message_ignorelist": attr.string_list(allow_empty=True, default=[]),
+        "src": attr.label(mandatory = True, allow_single_file=True),
+        "service_ignorelist": attr.string_list(allow_empty = True, default = []),
+        "message_ignorelist": attr.string_list(allow_empty = True, default = []),
+        "relative_link_prefix": attr.string(mandatory = False, default = ""),
         "converter": attr.label(
             default = Label("//:disco_to_proto3_converter"),
             executable = True,

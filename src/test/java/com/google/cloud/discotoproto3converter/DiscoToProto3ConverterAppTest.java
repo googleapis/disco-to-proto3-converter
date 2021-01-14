@@ -41,7 +41,12 @@ public class DiscoToProto3ConverterAppTest {
     Path prefix = Paths.get("google", "cloud", "compute", "v1");
     Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute.proto");
 
-    app.convert(discoveryDocPath.toString(), generatedFilePath.toString(), "", "");
+    app.convert(
+        discoveryDocPath.toString(),
+        generatedFilePath.toString(),
+        "",
+        "",
+        "https://cloud.google.com");
 
     String actualBody = readFile(generatedFilePath);
 
@@ -64,7 +69,8 @@ public class DiscoToProto3ConverterAppTest {
         "Addresses",
         "Operation,AddressList,AddressesScopedList,Warning,Warnings,Data,Error,"
             + "Errors,AddressAggregatedList,AggregatedListAddressesRequest,"
-            + "InsertAddressRequest,ListAddressesRequest,InsertAddressRequest");
+            + "InsertAddressRequest,ListAddressesRequest,InsertAddressRequest",
+        "");
 
     String actualBody = readFile(generatedFilePath);
 
