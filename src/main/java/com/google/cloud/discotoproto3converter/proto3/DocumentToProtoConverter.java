@@ -28,23 +28,30 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class DocumentToProtoConverter {
+  private static final Pattern RELATIVE_LINK = Pattern.compile("(?<linkName>\\[[\\w\\s]+])\\(/");
+
   private final ProtoFile protoFile;
   private final Map<String, Message> allMessages = new LinkedHashMap<>();
   private final Map<String, GrpcService> allServices = new LinkedHashMap<>();
   private final Map<String, Option> allResourceOptions = new LinkedHashMap<>();
   private Set<String> serviceIgnoreSet;
   private Set<String> messageIgnoreSet;
+  private final String relativeLinkPrefix;
 
   public DocumentToProtoConverter(
       Document document,
       String documentFileName,
       Set<String> serviceIgnoreSet,
-      Set<String> messageIgnoreSet) {
+      Set<String> messageIgnoreSet,
+      String relativeLinkPrefix) {
     this.serviceIgnoreSet = serviceIgnoreSet;
     this.messageIgnoreSet = messageIgnoreSet;
+    this.relativeLinkPrefix = relativeLinkPrefix;
     this.protoFile = readDocumentMetadata(document, documentFileName);
     readSchema(document);
     readResources(document);
@@ -74,7 +81,8 @@ public class DocumentToProtoConverter {
         document.version(),
         document.revision(),
         // TODO: Calculate package name from scopes
-        "google.cloud." + document.name() + "." + document.version());
+        "google.cloud." + document.name() + "." + document.version(),
+        document.version());
   }
 
   private void readSchema(Document document) {
@@ -118,9 +126,8 @@ public class DocumentToProtoConverter {
         while (fields.hasNext()) {
           Field f = fields.next();
           if (enumNames.contains(f.getValueType().getName())) {
-            fields.set(
-                new Field(
-                    f.getName(), stringType, f.isRepeated(), f.getKeyType(), f.getDescription()));
+            String desc = sanitizeDescr(f.getDescription());
+            fields.set(new Field(f.getName(), stringType, f.isRepeated(), f.getKeyType(), desc));
           }
         }
       }
@@ -176,7 +183,7 @@ public class DocumentToProtoConverter {
           repeated = true;
           keyType = Message.PRIMITIVES.get("string");
         } else {
-          valueType = new Message(getMessageName(sch), false, false, description);
+          valueType = new Message(getMessageName(sch), false, false, sanitizeDescr(description));
         }
         break;
       case STRING:
@@ -195,7 +202,7 @@ public class DocumentToProtoConverter {
       valueType = subField.getValueType();
     }
 
-    Field field = new Field(name, valueType, repeated, keyType, description);
+    Field field = new Field(name, valueType, repeated, keyType, sanitizeDescr(description));
     if (sch.type() == Schema.Type.EMPTY) {
     } else if (Message.PRIMITIVES.containsKey(valueType.getName())) {
       return field;
@@ -252,20 +259,21 @@ public class DocumentToProtoConverter {
 
   private Message constructEnumMessage(
       String name, String description, List<String> enumVals, List<String> enumDescs) {
-    Message enumMessage = new Message(name, false, true, description);
+    Message enumMessage = new Message(name, false, true, sanitizeDescr(description));
 
     String dummyDesc = "A value indicating that the enum field is not set.";
     String dummyFieldName = Name.anyCamel("Undefined", name).toUpperUnderscore();
 
     Field dummyField =
-        new Field(dummyFieldName, Message.PRIMITIVES.get(""), false, null, dummyDesc);
+        new Field(
+            dummyFieldName, Message.PRIMITIVES.get(""), false, null, sanitizeDescr(dummyDesc));
     enumMessage.getFields().add(dummyField);
 
     Iterator<String> valIter = enumVals.iterator();
     Iterator<String> descIter = enumDescs.iterator();
     while (valIter.hasNext() && descIter.hasNext()) {
-      Field enumField =
-          new Field(valIter.next(), Message.PRIMITIVES.get(""), false, null, descIter.next());
+      String desc = sanitizeDescr(descIter.next());
+      Field enumField = new Field(valIter.next(), Message.PRIMITIVES.get(""), false, null, desc);
       if (dummyField.getName().equals(enumField.getName())) {
         continue;
       }
@@ -315,7 +323,7 @@ public class DocumentToProtoConverter {
         String requestName = getRpcMessageName(method, "request").toUpperCamel();
         String methodname = getRpcMethodName(method).toUpperCamel();
         String inputDescription = getInputMessageDescription(grpcServiceName, methodname);
-        Message input = new Message(requestName, false, false, inputDescription);
+        Message input = new Message(requestName, false, false, sanitizeDescr(inputDescription));
         String httpOptionPath = method.flatPath();
         // The map key is the parameter identifier in Discovery doc, while the map value is the
         // parameter name in proto file (they may use different naming styles). The body parameter
@@ -360,7 +368,8 @@ public class DocumentToProtoConverter {
           String requestFieldName =
               Name.anyCamel(request.getName(), "resource").toLowerUnderscore();
           String description = getMessageBodyDescription();
-          Field bodyField = new Field(requestFieldName, request, false, null, description);
+          Field bodyField =
+              new Field(requestFieldName, request, false, null, sanitizeDescr(description));
           bodyField.getOptions().add(getFieldBehaviorOption("REQUIRED"));
           input.getFields().add(bodyField);
           methodHttpOption.getProperties().put("body", requestFieldName);
@@ -386,7 +395,8 @@ public class DocumentToProtoConverter {
         }
 
         // Method
-        GrpcMethod grpcMethod = new GrpcMethod(methodname, input, output, method.description());
+        GrpcMethod grpcMethod =
+            new GrpcMethod(methodname, input, output, sanitizeDescr(method.description()));
         grpcMethod.getOptions().add(methodHttpOption);
         grpcMethod.getOptions().add(requiredMethodSignatureOption);
         // TODO: design heuristic for other useful method signatures with optional fields
@@ -451,5 +461,26 @@ public class DocumentToProtoConverter {
     String[] pieces = method.id().split("\\.");
     String methodName = pieces[pieces.length - 1];
     return Name.anyCamel(methodName);
+  }
+
+  private String sanitizeDescr(String description) {
+    if (description == null
+        || description.isEmpty()
+        || relativeLinkPrefix == null
+        || relativeLinkPrefix.isEmpty()) {
+      return description;
+    }
+
+    // It is an inefficient way of doing it, but it does not really matter for all possible
+    // practical
+    // applications of this converter app.
+    Matcher m = RELATIVE_LINK.matcher(description);
+    String sanitizedDescription = description;
+    while (m.find()) {
+      sanitizedDescription = m.replaceFirst(m.group("linkName") + "(" + relativeLinkPrefix + "/");
+      m = RELATIVE_LINK.matcher(sanitizedDescription);
+    }
+
+    return sanitizedDescription.replace("{$api_version}", protoFile.getProtoPkgVersion());
   }
 }

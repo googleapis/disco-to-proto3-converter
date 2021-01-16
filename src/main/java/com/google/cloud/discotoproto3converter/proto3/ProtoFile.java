@@ -36,18 +36,21 @@ public class ProtoFile {
   private final String discoVersion;
   private final String discoRevision;
   private final String protoPkg;
+  private final String protoPkgVersion;
 
   public ProtoFile(
       String discoFileName,
       String discoName,
       String discoVersion,
       String discoRevision,
-      String protoPkg) {
+      String protoPkg,
+      String protoPkgVersion) {
     this.discoFileName = discoFileName;
     this.discoName = discoName;
     this.discoVersion = discoVersion;
     this.discoRevision = discoRevision;
     this.protoPkg = protoPkg;
+    this.protoPkgVersion = protoPkgVersion;
   }
 
   public String getLicense() {
@@ -72,5 +75,9 @@ public class ProtoFile {
 
   public String getProtoPkg() {
     return protoPkg;
+  }
+
+  public String getProtoPkgVersion() {
+    return protoPkgVersion;
   }
 }

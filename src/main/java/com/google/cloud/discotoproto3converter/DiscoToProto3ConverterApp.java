@@ -47,14 +47,16 @@ public class DiscoToProto3ConverterApp {
         parsedArgs.get("--discovery_doc_path"),
         parsedArgs.get("--output_file_path"),
         parsedArgs.get("--service_ignorelist"),
-        parsedArgs.get("--message_ignorelist"));
+        parsedArgs.get("--message_ignorelist"),
+        parsedArgs.get("--relative_link_prefix"));
   }
 
   public void convert(
       String discoveryDocPath,
       String outputFilePath,
       String serviceIgnorelist,
-      String messageIgnorelist)
+      String messageIgnorelist,
+      String relativeLinkPrefix)
       throws IOException {
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Document document = app.createDocument(discoveryDocPath);
@@ -63,7 +65,8 @@ public class DiscoToProto3ConverterApp {
             document,
             Paths.get(discoveryDocPath).getFileName().toString(),
             new HashSet<>(Arrays.asList(serviceIgnorelist.split(","))),
-            new HashSet<>(Arrays.asList(messageIgnorelist.split(","))));
+            new HashSet<>(Arrays.asList(messageIgnorelist.split(","))),
+            relativeLinkPrefix);
     try (PrintWriter pw = app.makeDefaultDirsAndWriter(outputFilePath)) {
       Proto3Writer writer = new Proto3Writer();
 

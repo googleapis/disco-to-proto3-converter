@@ -9,6 +9,7 @@ load(
 proto_from_disco(
     name = "compute_small",
     src = "//:src/test/resources/compute.v1.small.json",
+    relative_link_prefix = "https://cloud.google.com",
 )
 
 proto_from_disco(
@@ -36,4 +37,5 @@ proto_from_disco(
         "HttpHealthChecks",
         "HttpsHealthChecks",
     ],
+    relative_link_prefix = "https://cloud.google.com",
 )
