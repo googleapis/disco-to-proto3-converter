@@ -20,18 +20,26 @@ import java.util.List;
 import java.util.Objects;
 
 public class Field extends ProtoElement {
+  private static int COUNTER = 0;
   private final String name;
   private Message valueType;
   private final boolean repeated;
+  private final boolean optional;
   private Message keyType;
   private final List<Option> options = new ArrayList<>();
 
   public Field(
-      String name, Message valueType, boolean repeated, Message keyType, String description) {
+      String name,
+      Message valueType,
+      boolean repeated,
+      boolean optional,
+      Message keyType,
+      String description) {
     super(description);
     this.name = name;
     this.valueType = valueType;
     this.repeated = repeated;
+    this.optional = optional;
     this.keyType = keyType;
   }
 
@@ -49,6 +57,10 @@ public class Field extends ProtoElement {
 
   public boolean isRepeated() {
     return repeated;
+  }
+
+  public boolean isOptional() {
+    return optional;
   }
 
   public void setKeyType(Message keyType) {
@@ -97,6 +109,9 @@ public class Field extends ProtoElement {
         sb.append("repeated ").append(valueType);
       }
     } else {
+      if (optional) {
+        sb.append("optional ");
+      }
       sb.append(valueType);
     }
     if (sb.length() > 0) {
