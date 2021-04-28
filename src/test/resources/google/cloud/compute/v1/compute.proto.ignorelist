@@ -131,58 +131,58 @@ message Address {
   }
 
   // The static IP address represented by this resource.
-  string address = 194485236;
+  optional string address = 194485236;
 
   // The type of address to reserve, either INTERNAL or EXTERNAL. If unspecified, defaults to EXTERNAL.
-  AddressType address_type = 264307877;
+  optional AddressType address_type = 264307877;
 
   // [Output Only] Creation timestamp in RFC3339 text format.
-  string creation_timestamp = 30525366;
+  optional string creation_timestamp = 30525366;
 
   // An optional description of this resource. Provide this field when you create the resource.
-  string description = 154502140;
+  optional string description = 154502140;
 
   // [Output Only] The unique identifier for the resource. This identifier is defined by the server.
-  string id = 3355;
+  optional string id = 3355;
 
   // The IP version that will be used by this address. Valid options are IPV4 or IPV6. This can only be specified for a global address.
-  IpVersion ip_version = 26524096;
+  optional IpVersion ip_version = 26524096;
 
   // [Output Only] Type of the resource. Always compute#address for addresses.
-  string kind = 3292052;
+  optional string kind = 3292052;
 
   // Name of the resource. Provided by the client when the resource is created. The name must be 1-63 characters long, and comply with RFC1035. Specifically, the name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`. The first character must be a lowercase letter, and all following characters (except for the last character) must be a dash, lowercase letter, or digit. The last character must be a lowercase letter or digit.
-  string name = 3373707;
+  optional string name = 3373707;
 
   // The URL of the network in which to reserve the address. This field can only be used with INTERNAL type with the VPC_PEERING purpose.
-  string network = 232872494;
+  optional string network = 232872494;
 
   // This signifies the networking tier used for configuring this address and can only take the following values: PREMIUM or STANDARD. Global forwarding rules can only be Premium Tier. Regional forwarding rules can be either Premium or Standard Tier. Standard Tier addresses applied to regional forwarding rules can be used with any external load balancer. Regional forwarding rules in Premium Tier can only be used with a network load balancer.
   //
   // If this field is not specified, it is assumed to be PREMIUM.
-  NetworkTier network_tier = 248962387;
+  optional NetworkTier network_tier = 248962387;
 
   // The prefix length if the resource reprensents an IP range.
-  int32 prefix_length = 185130291;
+  optional int32 prefix_length = 185130291;
 
   // The purpose of this resource, which can be one of the following values:
   // - `GCE_ENDPOINT` for addresses that are used by VM instances, alias IP ranges, internal load balancers, and similar resources.
   // - `DNS_RESOLVER` for a DNS resolver address in a subnetwork
   // - `VPC_PEERING` for addresses that are reserved for VPC peer networks.
   // - `NAT_AUTO` for addresses that are external IP addresses automatically reserved for Cloud NAT.
-  Purpose purpose = 47971614;
+  optional Purpose purpose = 47971614;
 
   // [Output Only] The URL of the region where the regional address resides. This field is not applicable to global addresses. You must specify this field as part of the HTTP request URL.
-  string region = 138946292;
+  optional string region = 138946292;
 
   // [Output Only] Server-defined URL for the resource.
-  string self_link = 187779341;
+  optional string self_link = 187779341;
 
   // [Output Only] The status of the address, which can be one of RESERVING, RESERVED, or IN_USE. An address that is RESERVING is currently in the process of being reserved. A RESERVED address is currently reserved and available to use. An IN_USE address is currently being used by another resource and is not available.
-  Status status = 181260274;
+  optional Status status = 181260274;
 
   // The URL of the subnetwork in which to reserve the address. If an IP address is specified, it must be within the subnetwork's IP range. This field can only be used with INTERNAL type with a GCE_ENDPOINT or DNS_RESOLVER purpose.
-  string subnetwork = 39392238;
+  optional string subnetwork = 39392238;
 
   // [Output Only] The URLs of the resources that are using this address.
   repeated string users = 111578632;
