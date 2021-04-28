@@ -87,7 +87,7 @@ public class DocumentToProtoConverter {
 
   private void readSchema(Document document) {
     for (Map.Entry<String, Schema> entry : document.schemas().entrySet()) {
-      schemaToField(entry.getValue());
+      schemaToField(entry.getValue(), true);
     }
     for (Message message : allMessages.values()) {
       resolveReferences(message);
@@ -127,14 +127,16 @@ public class DocumentToProtoConverter {
           Field f = fields.next();
           if (enumNames.contains(f.getValueType().getName())) {
             String desc = sanitizeDescr(f.getDescription());
-            fields.set(new Field(f.getName(), stringType, f.isRepeated(), f.getKeyType(), desc));
+            fields.set(
+                new Field(
+                    f.getName(), stringType, f.isRepeated(), f.isOptional(), f.getKeyType(), desc));
           }
         }
       }
     }
   }
 
-  private Field schemaToField(Schema sch) {
+  private Field schemaToField(Schema sch, boolean optional) {
     String name = Name.anyCamel(sch.key()).toLowerUnderscore();
     String description = sch.description();
     Message valueType = null;
@@ -198,18 +200,20 @@ public class DocumentToProtoConverter {
     }
 
     if (repeated) {
-      Field subField = schemaToField(keyType == null ? sch.items() : sch.additionalProperties());
+      Field subField =
+          schemaToField(keyType == null ? sch.items() : sch.additionalProperties(), true);
       valueType = subField.getValueType();
     }
 
-    Field field = new Field(name, valueType, repeated, keyType, sanitizeDescr(description));
+    Field field =
+        new Field(name, valueType, repeated, optional, keyType, sanitizeDescr(description));
     if (sch.type() == Schema.Type.EMPTY) {
     } else if (Message.PRIMITIVES.containsKey(valueType.getName())) {
       return field;
     }
 
     for (Map.Entry<String, Schema> entry : sch.properties().entrySet()) {
-      Field valueTypeField = schemaToField(entry.getValue());
+      Field valueTypeField = schemaToField(entry.getValue(), true);
       valueType.getFields().add(valueTypeField);
       if (valueTypeField.getValueType().isEnum()) {
         valueType.getEnums().add(valueTypeField.getValueType());
@@ -263,17 +267,16 @@ public class DocumentToProtoConverter {
 
     String dummyDesc = "A value indicating that the enum field is not set.";
     String dummyFieldName = Name.anyCamel("Undefined", name).toUpperUnderscore();
-
+    Message emptyType = Message.PRIMITIVES.get("");
     Field dummyField =
-        new Field(
-            dummyFieldName, Message.PRIMITIVES.get(""), false, null, sanitizeDescr(dummyDesc));
+        new Field(dummyFieldName, emptyType, false, false, null, sanitizeDescr(dummyDesc));
     enumMessage.getFields().add(dummyField);
 
     Iterator<String> valIter = enumVals.iterator();
     Iterator<String> descIter = enumDescs.iterator();
     while (valIter.hasNext() && descIter.hasNext()) {
       String desc = sanitizeDescr(descIter.next());
-      Field enumField = new Field(valIter.next(), Message.PRIMITIVES.get(""), false, null, desc);
+      Field enumField = new Field(valIter.next(), emptyType, false, false, null, desc);
       if (dummyField.getName().equals(enumField.getName())) {
         continue;
       }
@@ -334,8 +337,9 @@ public class DocumentToProtoConverter {
         }
 
         for (Schema pathParam : method.pathParams().values()) {
-          Field pathField = schemaToField(pathParam);
-          if (methodSignatureParamNames.containsKey(pathParam.getIdentifier())) {
+          boolean required = methodSignatureParamNames.containsKey(pathParam.getIdentifier());
+          Field pathField = schemaToField(pathParam, !required);
+          if (required) {
             pathField.getOptions().add(getFieldBehaviorOption("REQUIRED"));
             methodSignatureParamNames.put(pathParam.getIdentifier(), pathField.getName());
           }
@@ -346,8 +350,9 @@ public class DocumentToProtoConverter {
         }
 
         for (Schema queryParam : method.queryParams().values()) {
-          Field queryField = schemaToField(queryParam);
-          if (methodSignatureParamNames.containsKey(queryParam.getIdentifier())) {
+          boolean required = methodSignatureParamNames.containsKey(queryParam.getIdentifier());
+          Field queryField = schemaToField(queryParam, !required);
+          if (required) {
             queryField.getOptions().add(getFieldBehaviorOption("REQUIRED"));
             methodSignatureParamNames.put(queryParam.getIdentifier(), queryField.getName());
           }
@@ -369,7 +374,7 @@ public class DocumentToProtoConverter {
               Name.anyCamel(request.getName(), "resource").toLowerUnderscore();
           String description = getMessageBodyDescription();
           Field bodyField =
-              new Field(requestFieldName, request, false, null, sanitizeDescr(description));
+              new Field(requestFieldName, request, false, false, null, sanitizeDescr(description));
           bodyField.getOptions().add(getFieldBehaviorOption("REQUIRED"));
           input.getFields().add(bodyField);
           methodHttpOption.getProperties().put("body", requestFieldName);
