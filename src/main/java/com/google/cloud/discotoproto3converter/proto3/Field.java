@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Objects;
 
 public class Field extends ProtoElement {
-  private static int COUNTER = 0;
   private final String name;
   private Message valueType;
   private final boolean repeated;
