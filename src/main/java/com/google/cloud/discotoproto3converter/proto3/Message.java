@@ -92,18 +92,16 @@ public class Message extends ProtoElement {
   // All the "magic numbers" come from the proto3 spec:
   // https://developers.google.com/protocol-buffers/docs/proto3#assigning_field_numbers
   private int getFieldNumber(String fieldName) {
-    // TODO: Use 2^29 instead of 2^28 once the following is fixed:
-    // https://github.com/protocolbuffers/protobuf/issues/8114
-    int fieldNumber = (fieldName.hashCode() << 4) >>> 4;
+    int fieldNumber = (fieldName.hashCode() << 3) >>> 3;
     if (fieldNumber == 0 || (fieldNumber >= 19000 && fieldNumber <= 19999)) {
-      fieldNumber = 20000 + ((fieldNumber % 19000) + 1) * 268147;
+      fieldNumber = 20000 + ((fieldNumber % 19000) + 1) * 536314;
     }
     return fieldNumber;
   }
 
   private int incrementFieldNumber(int fieldNumber) {
     int incrementedFieldNumber = fieldNumber + 1;
-    if ((fieldNumber >= 19000 && fieldNumber <= 19999) || fieldNumber >= (1 << 28)) {
+    if ((fieldNumber >= 19000 && fieldNumber <= 19999) || fieldNumber >= (1 << 29)) {
       incrementedFieldNumber = 20000;
     }
     return incrementedFieldNumber;
