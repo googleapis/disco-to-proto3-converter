@@ -145,7 +145,7 @@ public class Name {
    * Returns the identifier in lower-underscore format but with the first uppercase letter if the
    * original identifier started with an uppercase letter.
    */
-  public String toUpperLowerUnderscor() {
+  public String toUpperLowerUnderscore() {
     List<String> newPieces = new ArrayList<>();
     for (NamePiece namePiece : namePieces) {
       String newPiece = namePiece.caseFormat.to(CaseFormat.LOWER_UNDERSCORE, namePiece.identifier);
