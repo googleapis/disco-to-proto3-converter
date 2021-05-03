@@ -141,6 +141,23 @@ public class Name {
     return toUnderscore(CaseFormat.LOWER_UNDERSCORE);
   }
 
+  /**
+   * Returns the identifier in lower-underscore format but with the first uppercase letter if the
+   * original identifier started with an uppercase letter.
+   */
+  public String toUpperLowerUnderscor() {
+    List<String> newPieces = new ArrayList<>();
+    for (NamePiece namePiece : namePieces) {
+      String newPiece = namePiece.caseFormat.to(CaseFormat.LOWER_UNDERSCORE, namePiece.identifier);
+      if (newPieces.isEmpty() && Character.isUpperCase(namePiece.identifier.charAt(0))) {
+        newPiece = Character.toUpperCase(newPiece.charAt(0)) + newPiece.substring(1);
+      }
+      newPieces.add(newPiece);
+    }
+
+    return Joiner.on('_').join(newPieces);
+  }
+
   private String toUnderscore(CaseFormat caseFormat) {
     List<String> newPieces = new ArrayList<>();
     for (NamePiece namePiece : namePieces) {

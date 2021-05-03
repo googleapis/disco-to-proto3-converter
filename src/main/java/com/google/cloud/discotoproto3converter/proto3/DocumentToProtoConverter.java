@@ -137,7 +137,7 @@ public class DocumentToProtoConverter {
   }
 
   private Field schemaToField(Schema sch, boolean optional) {
-    String name = Name.anyCamel(sch.key()).toLowerUnderscore();
+    String name = Name.anyCamel(sch.key()).toUpperLowerUnderscor();
     String description = sch.description();
     Message valueType = null;
     boolean repeated = false;

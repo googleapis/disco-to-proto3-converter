@@ -326,6 +326,9 @@ message Address {
 
   }
 
+  // IP address.
+  optional string I_p_address = 42976943;
+
   // The static IP address represented by this resource.
   optional string address = 462920692;
 
