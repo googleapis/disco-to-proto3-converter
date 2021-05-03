@@ -75,7 +75,7 @@ public class DiscoToProto3ConverterApp {
           converter.getProtoFile(),
           converter.getAllMessages().values(),
           converter.getAllServices().values(),
-          converter.getAllResourceOptions().values());
+          converter.isLroConfigPresent());
     }
   }
 

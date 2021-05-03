@@ -21,7 +21,7 @@ import java.util.Objects;
 
 public class Option extends ProtoElement {
   private final String name;
-  private final Map<String, String> properties = new LinkedHashMap<>();
+  private final Map<String, Object> properties = new LinkedHashMap<>();
 
   public Option(String name) {
     super(null);
@@ -32,7 +32,7 @@ public class Option extends ProtoElement {
     return name;
   }
 
-  public Map<String, String> getProperties() {
+  public Map<String, Object> getProperties() {
     return properties;
   }
 
