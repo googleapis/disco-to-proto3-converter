@@ -358,6 +358,10 @@
             ""
           ]
         },
+        "IPAddress": {
+         "type": "string",
+         "description": "IP address."
+        },
         "kind": {
           "type": "string",
           "description": "[Output Only] Type of the resource. Always compute#address for addresses.",
