@@ -143,9 +143,10 @@ public class Name {
 
   /**
    * Returns the identifier in lower-underscore format but with the first uppercase letter if the
-   * original identifier started with an uppercase letter.
+   * original identifier started with an uppercase letter. For example ipAddress will be converted
+   * to ip_address, but IpAddress will be converted to Ip_address.
    */
-  public String toUpperLowerUnderscore() {
+  public String toCapitalizedLowerUnderscore() {
     List<String> newPieces = new ArrayList<>();
     for (NamePiece namePiece : namePieces) {
       String newPiece = namePiece.caseFormat.to(CaseFormat.LOWER_UNDERSCORE, namePiece.identifier);
