@@ -35,6 +35,14 @@ public class GrpcMethod extends ProtoElement {
     return options;
   }
 
+  public Message getInput() {
+    return input;
+  }
+
+  public Message getOutput() {
+    return output;
+  }
+
   @Override
   public String toString() {
     return "rpc " + name + "(" + input + ") returns (" + output + ")";

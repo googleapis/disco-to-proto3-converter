@@ -27,18 +27,15 @@ import "google/api/client.proto";
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 
+//
+// File Options
+//
 option csharp_namespace = "Google.Cloud.Compute.V1";
 option go_package = "google.golang.org/genproto/googleapis/cloud/compute/v1;compute";
 option java_multiple_files = true;
 option java_package = "com.google.cloud.compute.v1";
 option php_namespace = "Google\\Cloud\\Compute\\V1";
 option ruby_package = "Google::Cloud::Compute::V1";
-
-//
-// File level resource definitions
-//
-
-// [Empty]
 
 //
 // Messages

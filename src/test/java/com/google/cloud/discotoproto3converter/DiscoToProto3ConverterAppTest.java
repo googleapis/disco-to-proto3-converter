@@ -66,10 +66,11 @@ public class DiscoToProto3ConverterAppTest {
     app.convert(
         discoveryDocPath.toString(),
         generatedFilePath.toString(),
-        "Addresses",
+        "Addresses,RegionOperations",
         "Operation,AddressList,AddressesScopedList,Warning,Warnings,Data,Error,"
             + "Errors,AddressAggregatedList,AggregatedListAddressesRequest,"
-            + "InsertAddressRequest,ListAddressesRequest,InsertAddressRequest",
+            + "InsertAddressRequest,ListAddressesRequest,InsertAddressRequest,"
+            + "GetRegionOperationRequest",
         "");
 
     String actualBody = readFile(generatedFilePath);
