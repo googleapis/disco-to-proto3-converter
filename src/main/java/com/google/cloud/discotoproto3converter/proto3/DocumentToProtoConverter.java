@@ -168,6 +168,12 @@ public class DocumentToProtoConverter {
           case UINT64:
             valueType = Message.PRIMITIVES.get("uint64");
             break;
+          case FIXED32:
+            valueType = Message.PRIMITIVES.get("fixed32");
+            break;
+          case FIXED64:
+            valueType = Message.PRIMITIVES.get("fixed64");
+            break;
         }
         break;
       case NUMBER:
@@ -194,7 +200,20 @@ public class DocumentToProtoConverter {
               constructEnumMessage(
                   getMessageName(sch), description, sch.enumValues(), sch.enumDescriptions());
         } else {
-          valueType = Message.PRIMITIVES.get("string");
+          switch (sch.format()) {
+            case INT64:
+              valueType = Message.PRIMITIVES.get("int64");
+              break;
+            case UINT64:
+              valueType = Message.PRIMITIVES.get("uint64");
+              break;
+            case FIXED64:
+              valueType = Message.PRIMITIVES.get("fixed64");
+              break;
+            default:
+              valueType = Message.PRIMITIVES.get("string");
+              break;
+          }
         }
         break;
     }

@@ -260,7 +260,9 @@ public abstract class Schema implements Node {
     INT32("int32"),
     INT64("int64"),
     UINT32("uint32"),
-    UINT64("uint64");
+    UINT64("uint64"),
+    FIXED32("fixed32"),
+    FIXED64("fixed64");
 
     private String text;
 
