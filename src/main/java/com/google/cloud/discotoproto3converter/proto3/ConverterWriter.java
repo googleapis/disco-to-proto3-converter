@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.google.cloud.discotoproto3converter.proto3;
 
-package com.google.cloud.discotoproto3converter;
-
-import com.google.cloud.discotoproto3converter.proto3.Proto3Writer;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Collection;
 
-public class DiscoToProto3ConverterApp extends ConverterApp {
-  public DiscoToProto3ConverterApp() {
-    super(new Proto3Writer());
-  }
-
-  public static void main(String[] args) throws IOException {
-    DiscoToProto3ConverterApp converterApp = new DiscoToProto3ConverterApp();
-    converterApp.convert(args);
-  }
+public interface ConverterWriter {
+  void writeToFile(
+      PrintWriter writer,
+      ProtoFile protoFile,
+      Collection<Message> messages,
+      Collection<GrpcService> services,
+      Collection<Option> resourceOptions)
+      throws IOException;
 }

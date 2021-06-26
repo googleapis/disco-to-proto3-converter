@@ -40,7 +40,7 @@ def _proto_from_disco_impl(ctx):
 
 proto_from_disco = rule(
     attrs = {
-        "src": attr.label(mandatory = True, allow_single_file=True),
+        "src": attr.label(mandatory = True, allow_single_file = True),
         "service_ignorelist": attr.string_list(allow_empty = True, default = []),
         "message_ignorelist": attr.string_list(allow_empty = True, default = []),
         "relative_link_prefix": attr.string(mandatory = False, default = ""),
@@ -49,9 +49,29 @@ proto_from_disco = rule(
             executable = True,
             cfg = "host",
         ),
+        "extension": attr.string(mandatory = False, default = ".proto"),
     },
     outputs = {
-        "output": "%{name}.proto",
+        "output": "%{name}%{extension}",
     },
     implementation = _proto_from_disco_impl,
 )
+
+def grpc_service_config_from_disco(
+        name,
+        src,
+        service_ignorelist = None,
+        message_ignorelist = None,
+        relative_link_prefix = None,
+        visibility = None,
+        **kwargs):
+    proto_from_disco(
+        name = name,
+        src = src,
+        service_ignorelist = service_ignorelist,
+        message_ignorelist = message_ignorelist,
+        relative_link_prefix = relative_link_prefix,
+        converter = Label("//:service_config_generator"),
+        extension = ".json",
+        visibility = visibility,
+    )
