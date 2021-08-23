@@ -25,6 +25,6 @@ public interface ConverterWriter {
       ProtoFile protoFile,
       Collection<Message> messages,
       Collection<GrpcService> services,
-      Collection<Option> resourceOptions)
+      boolean hasLroDefinitions)
       throws IOException;
 }

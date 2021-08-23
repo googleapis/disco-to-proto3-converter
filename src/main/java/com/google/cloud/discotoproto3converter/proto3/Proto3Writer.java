@@ -29,7 +29,7 @@ public class Proto3Writer implements ConverterWriter {
       ProtoFile protoFile,
       Collection<Message> messages,
       Collection<GrpcService> services,
-      boolean printLroAnnotationDefinitions) {
+      boolean hasLroDefinitions) {
 
     writeLicenseAndWarning(writer, protoFile);
 
@@ -42,10 +42,9 @@ public class Proto3Writer implements ConverterWriter {
     writer.println("import \"google/api/field_behavior.proto\";");
     writer.println("import \"google/api/resource.proto\";");
 
-    if (printLroAnnotationDefinitions) {
+    if (hasLroDefinitions) {
       // LRO
-      writer.println("import \"google/protobuf/descriptor.proto\";\n");
-      printLroAnnotationDefinitions(printLroAnnotationDefinitions, writer);
+      writer.println("import \"google/cloud/extended_operations.proto\";\n");
     } else {
       writer.println();
     }
@@ -67,30 +66,6 @@ public class Proto3Writer implements ConverterWriter {
     writer.println("// Services");
     writer.println("//");
     printServices(services, writer);
-  }
-
-  private void printLroAnnotationDefinitions(
-      boolean printLroAnnotationDefinitions, PrintWriter writer) {
-    writer.println("//");
-    writer.println("// LRO Annotations");
-    writer.println("//");
-    writer.println("extend google.protobuf.FieldOptions {");
-    writer.println("  OperationResponseMapping operation_field = 1149;");
-    writer.println("  string operation_request_field = 1150;");
-    writer.println("  string operation_response_field = 1151;");
-    writer.println("}");
-    writer.println("");
-    writer.println("extend google.protobuf.MethodOptions {");
-    writer.println("  string operation_service = 1249;");
-    writer.println("  bool operation_polling_method = 1250;");
-    writer.println("}");
-    writer.println("");
-    writer.println("enum OperationResponseMapping {");
-    writer.println("  NAME = 0;");
-    writer.println("  STATUS = 1;");
-    writer.println("  ERROR_CODE = 2;");
-    writer.println("  ERROR_MESSAGE = 3;");
-    writer.println("}\n");
   }
 
   // TODO: refactor to use enum for option types

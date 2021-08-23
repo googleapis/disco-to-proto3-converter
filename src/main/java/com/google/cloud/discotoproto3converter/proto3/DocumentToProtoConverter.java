@@ -154,8 +154,8 @@ public class DocumentToProtoConverter {
     Map<ProtoOptionValues, Field> opFields = new HashMap<>();
     for (Field field : operation.getFieldsWithNumbers().values()) {
       String fieldName = field.getName();
-      if ("id".equals(fieldName)
-          || ("name".equals(fieldName) && !opFields.containsKey(ProtoOptionValues.NAME))) {
+      if ("name".equals(fieldName)
+          || ("id".equals(fieldName) && !opFields.containsKey(ProtoOptionValues.NAME))) {
         opFields.put(ProtoOptionValues.NAME, field);
       } else if ("done".equals(fieldName)
           || ("status".equals(fieldName) && !opFields.containsKey(ProtoOptionValues.STATUS))) {
