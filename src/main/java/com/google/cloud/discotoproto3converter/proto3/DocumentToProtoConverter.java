@@ -187,6 +187,7 @@ public class DocumentToProtoConverter {
     //
     Map<String, Map<String, Field>> pollingServiceMessageFieldsMap = new HashMap<>();
 
+    String noMatchPollingServiceName = null;
     for (GrpcService service : allServices.values()) {
       for (GrpcMethod method : service.getMethods()) {
         if (!operation.equals(method.getOutput())) {
@@ -231,6 +232,11 @@ public class DocumentToProtoConverter {
           }
         }
 
+        // A temprorary workaround to detect polling service to use if there is no match.
+        if (pollingServiceMessageFields.size() == 1
+            && pollingServiceMessageFields.containsKey("parent_id")) {
+          noMatchPollingServiceName = service.getName();
+        }
         pollingServiceMessageFieldsMap.put(service.getName(), pollingServiceMessageFields);
       }
     }
@@ -266,6 +272,8 @@ public class DocumentToProtoConverter {
         // LRO initiating method.
         List<Field[]> matchingFieldPairsCandidate = null;
         String pollingServiceCandidate = null;
+        int matchingFieldPairsMax = 0;
+
         for (Map.Entry<String, Map<String, Field>> entry :
             pollingServiceMessageFieldsMap.entrySet()) {
           List<Field[]> matchingFieldPairs = new ArrayList<>();
@@ -277,6 +285,7 @@ public class DocumentToProtoConverter {
             }
           }
 
+          matchingFieldPairsMax = Math.max(matchingFieldPairsMax, matchingFieldPairs.size());
           if (matchingFieldPairs.size() < pollingMessageFields.size()) {
             continue;
           }
@@ -287,10 +296,16 @@ public class DocumentToProtoConverter {
           }
         }
 
-        if (matchingFieldPairsCandidate == null) {
-          // No matching polling service was found for the potential LRO method, keep the method
-          // as a regular unary method (do not add LRO annotatioins to it).
-          continue;
+        if (pollingServiceCandidate == null) {
+          if (matchingFieldPairsMax == 0) {
+            pollingServiceCandidate = noMatchPollingServiceName;
+            matchingFieldPairsCandidate = Collections.emptyList();
+          } else {
+            // No matching polling service was found for the potential LRO method, keep the method
+            // as a regular unary method (do not add LRO annotatioins to it).
+            throw new IllegalArgumentException(
+                method.getName() + " has no matching polling service");
+          }
         }
 
         method.getOptions().add(createOption("operation_service", pollingServiceCandidate));
