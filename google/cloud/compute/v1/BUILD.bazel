@@ -13,6 +13,31 @@ proto_from_disco(
 )
 
 proto_from_disco(
+    name = "compute_small_with_ignorelist",
+    src = "//:src/test/resources/compute.v1.small.json",
+    message_ignorelist = [
+        "Operation",
+        "AddressList",
+        "AddressesScopedList",
+        "Warning",
+        "Warnings",
+        "Data",
+        "Error",
+        "Errors",
+        "AddressAggregatedList",
+        "AggregatedListAddressesRequest",
+        "InsertAddressRequest",
+        "ListAddressesRequest",
+        "InsertAddressRequest",
+        "GetRegionOperationRequest"
+    ],
+    service_ignorelist = [
+        "Addresses",
+        "RegionOperations",
+    ],
+)
+
+proto_from_disco(
     name = "compute",
     src = "//:src/test/resources/compute.v1.json",
     message_ignorelist = [

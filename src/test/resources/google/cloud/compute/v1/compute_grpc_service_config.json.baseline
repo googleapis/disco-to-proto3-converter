@@ -6,6 +6,9 @@
     }, {
       "service" : "google.cloud.compute.v1.Addresses",
       "method" : "List"
+    }, {
+      "service" : "google.cloud.compute.v1.RegionOperations",
+      "method" : "Get"
     } ],
     "timeout" : "600s",
     "retryPolicy" : {
@@ -16,6 +19,9 @@
     }
   }, {
     "name" : [ {
+      "service" : "google.cloud.compute.v1.Addresses",
+      "method" : "Delete"
+    }, {
       "service" : "google.cloud.compute.v1.Addresses",
       "method" : "Insert"
     } ],
