@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import java.nio.file.Paths;
 import org.junit.Before;
 import org.junit.Test;
 
-public class DiscoToProto3ConverterAppTest {
+public class ServiceConfigGeneratorAppTest {
   private Path outputDir;
 
   @Before
@@ -36,10 +36,11 @@ public class DiscoToProto3ConverterAppTest {
 
   @Test
   public void convert() throws IOException {
-    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    ServiceConfigGeneratorApp app = new ServiceConfigGeneratorApp();
     Path discoveryDocPath = Paths.get("src", "test", "resources", "compute.v1.small.json");
     Path prefix = Paths.get("google", "cloud", "compute", "v1");
-    Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute.proto");
+    Path generatedFilePath =
+        Paths.get(outputDir.toString(), prefix.toString(), "compute_grpc_service_config.json");
 
     app.convert(
         discoveryDocPath.toString(),
@@ -51,33 +52,14 @@ public class DiscoToProto3ConverterAppTest {
     String actualBody = readFile(generatedFilePath);
 
     Path baselineFilePath =
-        Paths.get("src", "test", "resources", prefix.toString(), "compute.proto.baseline");
+        Paths.get(
+            "src",
+            "test",
+            "resources",
+            prefix.toString(),
+            "compute_grpc_service_config.json.baseline");
     String baselineBody = readFile(baselineFilePath);
 
-    assertEquals(baselineBody, actualBody);
-  }
-
-  @Test
-  public void convertWithIgnorelist() throws IOException {
-    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
-    Path discoveryDocPath = Paths.get("src", "test", "resources", "compute.v1.small.json");
-    Path prefix = Paths.get("google", "cloud", "compute", "v1");
-    Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute.proto");
-    app.convert(
-        discoveryDocPath.toString(),
-        generatedFilePath.toString(),
-        "Addresses,RegionOperations",
-        "Operation,AddressList,AddressesScopedList,Warning,Warnings,Data,Error,"
-            + "Errors,AddressAggregatedList,AggregatedListAddressesRequest,"
-            + "InsertAddressRequest,ListAddressesRequest,InsertAddressRequest,"
-            + "GetRegionOperationRequest",
-        "");
-
-    String actualBody = readFile(generatedFilePath);
-
-    Path baselineFilePath =
-        Paths.get("src", "test", "resources", prefix.toString(), "compute.proto.ignorelist");
-    String baselineBody = readFile(baselineFilePath);
     assertEquals(baselineBody, actualBody);
   }
 

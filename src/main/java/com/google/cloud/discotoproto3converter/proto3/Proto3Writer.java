@@ -22,7 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class Proto3Writer {
+public class Proto3Writer implements ConverterWriter {
+  @Override
   public void writeToFile(
       PrintWriter writer,
       ProtoFile protoFile,

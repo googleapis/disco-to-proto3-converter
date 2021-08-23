@@ -35,7 +35,7 @@ public class Message extends ProtoElement {
     PRIMITIVES.put("uint32", new Message("uint32", false, false, null));
     PRIMITIVES.put("int64", new Message("int64", false, false, null));
     PRIMITIVES.put("fixed64", new Message("fixed64", false, false, null));
-    PRIMITIVES.put("unit64", new Message("unit64", false, false, null));
+    PRIMITIVES.put("uint64", new Message("uint64", false, false, null));
     PRIMITIVES.put("float", new Message("float", false, false, null));
     PRIMITIVES.put("double", new Message("double", false, false, null));
     PRIMITIVES.put("", new Message("", false, true, null));

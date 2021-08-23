@@ -47,4 +47,8 @@ public class GrpcMethod extends ProtoElement {
   public String toString() {
     return "rpc " + name + "(" + input + ") returns (" + output + ")";
   }
+
+  public String getName() {
+    return name;
+  }
 }

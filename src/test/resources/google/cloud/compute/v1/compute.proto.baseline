@@ -209,7 +209,7 @@ message Operation {
   optional int32 http_error_status_code = 312345196 [(operation_field) = ERROR_CODE];
 
   // [Output Only] The unique identifier for the operation. This identifier is defined by the server.
-  optional string id = 3355 [(operation_field) = NAME];
+  optional uint64 id = 3355 [(operation_field) = NAME];
 
   // [Output Only] The time that this operation was requested. This value is in RFC3339 text format.
   optional string insert_time = 433722515;
@@ -242,7 +242,7 @@ message Operation {
   optional string status_message = 297428154;
 
   // [Output Only] The unique target ID, which identifies a specific incarnation of the target resource.
-  optional string target_id = 258165385;
+  optional uint64 target_id = 258165385;
 
   // [Output Only] The URL of the resource that the operation modifies. For operations related to creating a snapshot, this points to the persistent disk that the snapshot was created from.
   optional string target_link = 62671336;
@@ -361,7 +361,7 @@ message Address {
   optional string description = 422937596;
 
   // [Output Only] The unique identifier for the resource. This identifier is defined by the server.
-  optional string id = 3355;
+  optional uint64 id = 3355;
 
   // The IP version that will be used by this address. Valid options are IPV4 or IPV6. This can only be specified for a global address.
   optional IpVersion ip_version = 294959552;
