@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Google LLC
+ * Copyright 2020 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,10 @@
  */
 package com.google.cloud.discotoproto3converter.proto3;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Collection;
-
-public interface ConverterWriter {
-  void writeToFile(
-      PrintWriter writer,
-      ProtoFile protoFile,
-      Collection<Message> messages,
-      Collection<GrpcService> services,
-      boolean hasLroDefinitions)
-      throws IOException;
+public enum ProtoOptionValues {
+  REQUIRED,
+  NAME,
+  STATUS,
+  ERROR_CODE,
+  ERROR_MESSAGE
 }
