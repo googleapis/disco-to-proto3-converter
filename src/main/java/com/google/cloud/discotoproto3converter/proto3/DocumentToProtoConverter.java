@@ -20,13 +20,16 @@ import com.google.cloud.discotoproto3converter.disco.Inflector;
 import com.google.cloud.discotoproto3converter.disco.Method;
 import com.google.cloud.discotoproto3converter.disco.Name;
 import com.google.cloud.discotoproto3converter.disco.Schema;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -39,9 +42,10 @@ public class DocumentToProtoConverter {
   private final Map<String, Message> allMessages = new LinkedHashMap<>();
   private final Map<String, GrpcService> allServices = new LinkedHashMap<>();
   private final Map<String, Option> allResourceOptions = new LinkedHashMap<>();
-  private Set<String> serviceIgnoreSet;
-  private Set<String> messageIgnoreSet;
+  private final Set<String> serviceIgnoreSet;
+  private final Set<String> messageIgnoreSet;
   private final String relativeLinkPrefix;
+  private final boolean lroConfigPresent;
 
   public DocumentToProtoConverter(
       Document document,
@@ -56,6 +60,7 @@ public class DocumentToProtoConverter {
     readSchema(document);
     readResources(document);
     cleanupEnumNamingConflicts();
+    this.lroConfigPresent = applyLroConfiguration();
   }
 
   public ProtoFile getProtoFile() {
@@ -70,8 +75,8 @@ public class DocumentToProtoConverter {
     return Collections.unmodifiableMap(allServices);
   }
 
-  public Map<String, Option> getAllResourceOptions() {
-    return Collections.unmodifiableMap(allResourceOptions);
+  public boolean isLroConfigPresent() {
+    return lroConfigPresent;
   }
 
   private ProtoFile readDocumentMetadata(Document document, String documentFileName) {
@@ -134,6 +139,191 @@ public class DocumentToProtoConverter {
         }
       }
     }
+  }
+
+  private boolean applyLroConfiguration() {
+    //
+    // 1. Set `operation_field` annotations (Operation fields essential for LRO).
+    //
+    Message operation = allMessages.get("Operation");
+    if (operation == null) {
+      // This service does not have LRO - do nothing;
+      return false;
+    }
+
+    Map<ProtoOptionValues, Field> opFields = new HashMap<>();
+    for (Field field : operation.getFieldsWithNumbers().values()) {
+      String fieldName = field.getName();
+      if ("name".equals(fieldName)
+          || ("id".equals(fieldName) && !opFields.containsKey(ProtoOptionValues.NAME))) {
+        opFields.put(ProtoOptionValues.NAME, field);
+      } else if ("done".equals(fieldName)
+          || ("status".equals(fieldName) && !opFields.containsKey(ProtoOptionValues.STATUS))) {
+        opFields.put(ProtoOptionValues.STATUS, field);
+      } else if (fieldName.contains("error")) {
+        if (fieldName.contains("code")) {
+          opFields.put(ProtoOptionValues.ERROR_CODE, field);
+        } else if (fieldName.contains("message")) {
+          opFields.put(ProtoOptionValues.ERROR_MESSAGE, field);
+        }
+
+        opFields.putIfAbsent(ProtoOptionValues.ERROR_CODE, field);
+        opFields.putIfAbsent(ProtoOptionValues.ERROR_MESSAGE, field);
+      }
+    }
+
+    if (opFields.size() != 4) {
+      // Could not detect all LRO fields in the Operation message object.
+      return false;
+    }
+
+    for (Map.Entry<ProtoOptionValues, Field> entry : opFields.entrySet()) {
+      entry.getValue().getOptions().add(createOption("operation_field", entry.getKey()));
+    }
+
+    //
+    // 2. Set `operation_response_field` and `operation_polling_method` annotations. Find the
+    // LRO polling methods within the API (the ones, which are used to poll for Operation status).
+    //
+    Map<String, Map<String, Field>> pollingServiceMessageFieldsMap = new HashMap<>();
+
+    String noMatchPollingServiceName = null;
+    for (GrpcService service : allServices.values()) {
+      for (GrpcMethod method : service.getMethods()) {
+        if (!operation.equals(method.getOutput())) {
+          continue;
+        }
+
+        Optional<Option> optHttp =
+            method
+                .getOptions()
+                .stream()
+                .filter(a -> "google.api.http".equals(a.getName()))
+                .findFirst();
+
+        if (!optHttp.isPresent() || !optHttp.get().getProperties().containsKey("get")) {
+          continue;
+        }
+
+        if (pollingServiceMessageFieldsMap.containsKey(service.getName())) {
+          throw new IllegalArgumentException(
+              service.getName() + " service has more than one LRO polling method");
+        }
+
+        method.getOptions().add(createOption("operation_polling_method", true));
+
+        Map<String, Field> pollingServiceMessageFields = new HashMap<>();
+        for (Field pollingMessageField : method.getInput().getFieldsWithNumbers().values()) {
+          String fieldName = pollingMessageField.getName();
+          if ("name".equals(fieldName) || "operation".equals(fieldName) || "id".equals(fieldName)) {
+            // this field will be populated from the response (Operation) message, thus adding
+            // `operation_response_field` option to it.
+            pollingMessageField
+                .getOptions()
+                .add(
+                    createOption(
+                        "operation_response_field",
+                        opFields.get(ProtoOptionValues.NAME).getName()));
+          } else {
+            // These fields will be populated from initial request message, thus putting them in
+            // pollingServiceMessageFields map, which will be used to populate
+            // `operation_request_field` annotations.
+            pollingServiceMessageFields.put(fieldName, pollingMessageField);
+          }
+        }
+
+        // A temprorary workaround to detect polling service to use if there is no match.
+        if (pollingServiceMessageFields.size() == 1
+            && pollingServiceMessageFields.containsKey("parent_id")) {
+          noMatchPollingServiceName = service.getName();
+        }
+        pollingServiceMessageFieldsMap.put(service.getName(), pollingServiceMessageFields);
+      }
+    }
+
+    if (pollingServiceMessageFieldsMap.isEmpty()) {
+      // No polling services found.
+      return true;
+    }
+
+    //
+    // 3. Set `operation_request_field` and `operation_service` annotation. Find the LRO methods
+    // (the ones which start Operation within the API).
+    //
+    for (GrpcService service : allServices.values()) {
+      for (GrpcMethod method : service.getMethods()) {
+        if (!operation.equals(method.getOutput())) {
+          continue;
+        }
+
+        Optional<Option> optHttp =
+            method
+                .getOptions()
+                .stream()
+                .filter(a -> "google.api.http".equals(a.getName()))
+                .findFirst();
+
+        if (!optHttp.isPresent() || optHttp.get().getProperties().containsKey("get")) {
+          continue;
+        }
+
+        // Find the LRO polling message with the most intersecting fields with the LRO initiating
+        // message. The "winner" will determine which polling service should be used for this
+        // LRO initiating method.
+        List<Field[]> matchingFieldPairsCandidate = null;
+        String pollingServiceCandidate = null;
+        int matchingFieldPairsMax = 0;
+
+        for (Map.Entry<String, Map<String, Field>> entry :
+            pollingServiceMessageFieldsMap.entrySet()) {
+          List<Field[]> matchingFieldPairs = new ArrayList<>();
+          Map<String, Field> pollingMessageFields = entry.getValue();
+          for (Field initiatingMessageField : method.getInput().getFieldsWithNumbers().values()) {
+            Field pollingMessageField = pollingMessageFields.get(initiatingMessageField.getName());
+            if (pollingMessageField != null && pollingMessageField.equals(initiatingMessageField)) {
+              matchingFieldPairs.add(new Field[] {initiatingMessageField, pollingMessageField});
+            }
+          }
+
+          matchingFieldPairsMax = Math.max(matchingFieldPairsMax, matchingFieldPairs.size());
+          if (matchingFieldPairs.size() < pollingMessageFields.size()) {
+            continue;
+          }
+          if (matchingFieldPairsCandidate == null
+              || matchingFieldPairs.size() > matchingFieldPairsCandidate.size()) {
+            matchingFieldPairsCandidate = matchingFieldPairs;
+            pollingServiceCandidate = entry.getKey();
+          }
+        }
+
+        if (pollingServiceCandidate == null) {
+          if (matchingFieldPairsMax == 0) {
+            pollingServiceCandidate = noMatchPollingServiceName;
+            matchingFieldPairsCandidate = Collections.emptyList();
+          } else {
+            // No matching polling service was found for the potential LRO method, keep the method
+            // as a regular unary method (do not add LRO annotatioins to it).
+            throw new IllegalArgumentException(
+                method.getName() + " has no matching polling service");
+          }
+        }
+
+        method.getOptions().add(createOption("operation_service", pollingServiceCandidate));
+        for (Field[] fieldPair : matchingFieldPairsCandidate) {
+          fieldPair[0]
+              .getOptions()
+              .add(createOption("operation_request_field", fieldPair[1].getName()));
+        }
+      }
+    }
+
+    return true;
+  }
+
+  private Option createOption(String optionName, Object scalarValue) {
+    Option option = new Option(optionName);
+    option.getProperties().put("", scalarValue);
+    return option;
   }
 
   private Field schemaToField(Schema sch, boolean optional) {
@@ -328,9 +518,7 @@ public class DocumentToProtoConverter {
         // ignored request messages used in this service).
         continue;
       }
-      Option defaultHostOpt = new Option("google.api.default_host");
-      defaultHostOpt.getProperties().put("", endpoint);
-      service.getOptions().add(defaultHostOpt);
+      service.getOptions().add(createOption("google.api.default_host", endpoint));
 
       Set<String> authScopes = new HashSet<>();
 
@@ -359,7 +547,8 @@ public class DocumentToProtoConverter {
           boolean required = methodSignatureParamNames.containsKey(pathParam.getIdentifier());
           Field pathField = schemaToField(pathParam, !required);
           if (required) {
-            pathField.getOptions().add(getFieldBehaviorOption("REQUIRED"));
+            Option opt = createOption("google.api.field_behavior", ProtoOptionValues.REQUIRED);
+            pathField.getOptions().add(opt);
             methodSignatureParamNames.put(pathParam.getIdentifier(), pathField.getName());
           }
           input.getFields().add(pathField);
@@ -372,7 +561,8 @@ public class DocumentToProtoConverter {
           boolean required = methodSignatureParamNames.containsKey(queryParam.getIdentifier());
           Field queryField = schemaToField(queryParam, !required);
           if (required) {
-            queryField.getOptions().add(getFieldBehaviorOption("REQUIRED"));
+            Option opt = createOption("google.api.field_behavior", ProtoOptionValues.REQUIRED);
+            queryField.getOptions().add(opt);
             methodSignatureParamNames.put(queryParam.getIdentifier(), queryField.getName());
           }
           input.getFields().add(queryField);
@@ -394,16 +584,13 @@ public class DocumentToProtoConverter {
           String description = getMessageBodyDescription();
           Field bodyField =
               new Field(requestFieldName, request, false, false, null, sanitizeDescr(description));
-          bodyField.getOptions().add(getFieldBehaviorOption("REQUIRED"));
+          bodyField
+              .getOptions()
+              .add(createOption("google.api.field_behavior", ProtoOptionValues.REQUIRED));
           input.getFields().add(bodyField);
           methodHttpOption.getProperties().put("body", requestFieldName);
           methodSignatureParamNames.put("", requestFieldName);
         }
-
-        Option requiredMethodSignatureOption = new Option("google.api.method_signature");
-        requiredMethodSignatureOption
-            .getProperties()
-            .put("", String.join(",", methodSignatureParamNames.values()));
 
         putAllMessages(requestName, input);
 
@@ -422,23 +609,21 @@ public class DocumentToProtoConverter {
         GrpcMethod grpcMethod =
             new GrpcMethod(methodname, input, output, sanitizeDescr(method.description()));
         grpcMethod.getOptions().add(methodHttpOption);
+        Option requiredMethodSignatureOption =
+            createOption(
+                "google.api.method_signature",
+                String.join(",", methodSignatureParamNames.values()));
         grpcMethod.getOptions().add(requiredMethodSignatureOption);
         // TODO: design heuristic for other useful method signatures with optional fields
 
         service.getMethods().add(grpcMethod);
       }
 
-      Option authScopesOpt = new Option("google.api.oauth_scopes");
-      authScopesOpt.getProperties().put("", String.join(",", authScopes));
-      service.getOptions().add(authScopesOpt);
+      service
+          .getOptions()
+          .add(createOption("google.api.oauth_scopes", String.join(",", authScopes)));
       allServices.put(service.getName(), service);
     }
-  }
-
-  private Option getFieldBehaviorOption(String optionValue) {
-    Option fieldBehaviorOption = new Option("google.api.field_behavior");
-    fieldBehaviorOption.getProperties().put("", optionValue);
-    return fieldBehaviorOption;
   }
 
   private void putAllMessages(String messageName, Message message) {

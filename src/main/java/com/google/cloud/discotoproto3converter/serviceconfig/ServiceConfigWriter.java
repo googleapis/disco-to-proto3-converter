@@ -38,7 +38,7 @@ public class ServiceConfigWriter implements ConverterWriter {
       ProtoFile protoFile,
       Collection<Message> messages,
       Collection<GrpcService> services,
-      Collection<Option> resourceOptions)
+      boolean hasLroDefinitions)
       throws IOException {
 
     ServiceConfig serviceConfig = new ServiceConfig();
