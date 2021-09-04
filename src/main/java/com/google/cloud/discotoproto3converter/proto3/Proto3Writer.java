@@ -29,7 +29,7 @@ public class Proto3Writer implements ConverterWriter {
       ProtoFile protoFile,
       Collection<Message> messages,
       Collection<GrpcService> services,
-      Collection<Option> resourceOptions) {
+      boolean hasLroDefinitions) {
 
     writeLicenseAndWarning(writer, protoFile);
 
@@ -40,14 +40,20 @@ public class Proto3Writer implements ConverterWriter {
     writer.println("import \"google/api/annotations.proto\";");
     writer.println("import \"google/api/client.proto\";");
     writer.println("import \"google/api/field_behavior.proto\";");
-    writer.println("import \"google/api/resource.proto\";\n");
-    printOptions(protoFile.getProtoPkg(), writer);
+    writer.println("import \"google/api/resource.proto\";");
 
-    // File level options
+    if (hasLroDefinitions) {
+      // LRO
+      writer.println("import \"google/cloud/extended_operations.proto\";\n");
+    } else {
+      writer.println();
+    }
+
+    // File Options
     writer.println("//");
-    writer.println("// File level resource definitions");
+    writer.println("// File Options");
     writer.println("//");
-    printFileLevelOptions(resourceOptions, writer);
+    printOptions(protoFile.getProtoPkg(), writer);
 
     // Messages
     writer.println("//");
@@ -64,7 +70,6 @@ public class Proto3Writer implements ConverterWriter {
 
   // TODO: refactor to use enum for option types
   // TODO: include helper method to build strings for options
-
   private void printOptions(String pkg, PrintWriter writer) {
     String[] tokens = pkg.split("\\.");
     List<String> capitalized =
@@ -93,7 +98,7 @@ public class Proto3Writer implements ConverterWriter {
       for (Option opt : service.getOptions()) {
         // Support only scalar service-level options for now (there are not use-cases for vector
         // ones).
-        String comaSeparatedScalar = opt.getProperties().get("");
+        String comaSeparatedScalar = (String) opt.getProperties().get("");
         if (comaSeparatedScalar == null) {
           continue;
         }
@@ -114,22 +119,20 @@ public class Proto3Writer implements ConverterWriter {
         for (Option option : method.getOptions()) {
           StringBuilder optionsSb = new StringBuilder();
           optionsSb.append("    option (").append(option).append(") = ");
-
-          if (option.toString().equals("google.api.http")) {
+          Object scalarOptionValue = option.getProperties().get("");
+          if (option.getProperties().size() == 1 && scalarOptionValue != null) {
+            optionsSb.append(optionValueToString(scalarOptionValue)).append(";");
+          } else {
             optionsSb.append("{\n");
-            for (Map.Entry<String, String> prop : option.getProperties().entrySet()) {
+            for (Map.Entry<String, Object> prop : option.getProperties().entrySet()) {
               optionsSb
                   .append("      ")
                   .append(prop.getKey())
                   .append(": ")
-                  .append('"')
-                  .append(prop.getValue())
-                  .append("\"\n");
+                  .append(optionValueToString(prop.getValue()))
+                  .append("\n");
             }
             optionsSb.append("    };");
-          } else if (option.toString().equals("google.api.method_signature")) {
-            for (Map.Entry<String, String> prop : option.getProperties().entrySet())
-              optionsSb.append('"').append(prop.getValue()).append("\";");
           }
 
           writer.println(optionsSb);
@@ -139,19 +142,6 @@ public class Proto3Writer implements ConverterWriter {
       }
 
       writer.println("}\n");
-    }
-  }
-
-  private void printFileLevelOptions(Collection<Option> resourceOptions, PrintWriter writer) {
-    if (resourceOptions.isEmpty()) {
-      writer.println("\n// [Empty]\n");
-    }
-    for (Option resOption : resourceOptions) {
-      writer.println("option (" + resOption + ") = {");
-      for (Map.Entry<String, String> optProp : resOption.getProperties().entrySet()) {
-        writer.println("  " + optProp.getKey() + ": " + '"' + optProp.getValue() + '"');
-      }
-      writer.println("};\n");
     }
   }
 
@@ -172,27 +162,27 @@ public class Proto3Writer implements ConverterWriter {
 
         String options = ";";
         if (!field.getOptions().isEmpty()) {
-          StringBuilder optionsSb = new StringBuilder(" [");
+          StringBuilder optionsSb = new StringBuilder();
           for (Option option : field.getOptions()) {
+            optionsSb.append(optionsSb.length() <= 0 ? " [" : ",");
+            if (field.getOptions().size() > 1) {
+              optionsSb.append("\n    ");
+            }
 
-            String scalarOptionValue = option.getProperties().get("");
+            // Only scalar field level options are supported as of now.
+            Object scalarOptionValue = option.getProperties().get("");
             if (option.getProperties().size() == 1 && scalarOptionValue != null) {
               optionsSb
                   .append("(")
                   .append(option)
                   .append(") = ")
-                  .append(scalarOptionValue)
-                  .append("];");
-            } else {
-              optionsSb.append(indent).append("    (").append(option).append(") = {\n");
-              for (Map.Entry<String, String> prop : option.getProperties().entrySet()) {
-                optionsSb.append(indent).append("      ").append(prop.getKey()).append(": ");
-                optionsSb.append('"').append(prop.getValue()).append("\"\n");
-              }
-              optionsSb.append(indent).append("    }");
-              optionsSb.append("\n").append(indent).append("  ];");
+                  .append(optionValueToString(scalarOptionValue));
             }
           }
+          if (field.getOptions().size() > 1) {
+            optionsSb.append("\n  ");
+          }
+          optionsSb.append("];");
           options = optionsSb.toString();
         }
 
@@ -201,6 +191,10 @@ public class Proto3Writer implements ConverterWriter {
       }
       writer.println(indent + "}\n");
     }
+  }
+
+  private Object optionValueToString(Object optionValue) {
+    return (optionValue instanceof String) ? "\"" + optionValue + "\"" : optionValue;
   }
 
   private String formatDescription(String prefix, String description) {
