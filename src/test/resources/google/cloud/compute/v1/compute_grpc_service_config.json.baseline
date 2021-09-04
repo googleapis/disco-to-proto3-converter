@@ -24,6 +24,9 @@
     }, {
       "service" : "google.cloud.compute.v1.Addresses",
       "method" : "Insert"
+    }, {
+      "service" : "google.cloud.compute.v1.RegionOperations",
+      "method" : "Wait"
     } ],
     "timeout" : "600s"
   } ]
