@@ -17,22 +17,18 @@ package com.google.cloud.discotoproto3converter.proto3;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
-public class GrpcService extends ProtoElement {
-  private final String name;
-  private final List<GrpcMethod> methods = new ArrayList<>();
+public class GrpcService extends ProtoElement<GrpcService> {
+  private final SortedSet<GrpcMethod> methods = new TreeSet<>();
   private final List<Option> options = new ArrayList<>();
 
   public GrpcService(String name, String description) {
-    super(description);
-    this.name = name;
+    super(name, description);
   }
 
-  public String getName() {
-    return name;
-  }
-
-  public List<GrpcMethod> getMethods() {
+  public SortedSet<GrpcMethod> getMethods() {
     return methods;
   }
 
@@ -42,6 +38,6 @@ public class GrpcService extends ProtoElement {
 
   @Override
   public String toString() {
-    return name;
+    return getName();
   }
 }

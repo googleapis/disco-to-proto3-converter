@@ -15,16 +15,14 @@
  */
 package com.google.cloud.discotoproto3converter.proto3;
 
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
-public class Message extends ProtoElement {
+public class Message extends ProtoElement<Message> {
   public static final Map<String, Message> PRIMITIVES = new HashMap<>();
 
   static {
@@ -41,39 +39,26 @@ public class Message extends ProtoElement {
     PRIMITIVES.put("", new Message("", false, true, null));
   }
 
-  private final String name;
-  private final List<Field> fields = new ArrayList<>();
+  private final SortedSet<Field> fields = new TreeSet<>();
   private final boolean ref;
-  // Not used for now, and hopefully will never be used.
-  private final List<Message> enums = new ArrayList<>();
-  private boolean isEnum;
+  private final SortedSet<Message> enums = new TreeSet<>();
+  private final boolean isEnum;
 
   public Message(String name, boolean ref, boolean isEnum, String description) {
-    super(description);
-    this.name = name;
+    super(name, description);
     this.ref = ref;
     this.isEnum = isEnum;
   }
 
-  public List<Field> getFields() {
+  public SortedSet<Field> getFields() {
     return fields;
   }
 
+  // NOTE: the fields list is expected to be sorted
   public Map<Integer, Field> getFieldsWithNumbers() {
     Map<Integer, Field> fieldsWithNumbers = new LinkedHashMap<>();
 
-    List<Field> sortedFields =
-        fields
-            .stream()
-            .skip(isEnum ? 1 : 0)
-            .sorted(Comparator.comparing(Field::getName))
-            .collect(Collectors.toList());
-    if (isEnum) {
-      // Make sure that the first element of an enum is always the dummy value
-      sortedFields.add(0, fields.get(0));
-    }
-
-    for (Field f : sortedFields) {
+    for (Field f : fields) {
       if (fieldsWithNumbers.isEmpty() && isEnum()) {
         // For enum, the first element should always have number 0.
         fieldsWithNumbers.put(0, f);
@@ -107,12 +92,8 @@ public class Message extends ProtoElement {
     return incrementedFieldNumber;
   }
 
-  public List<Message> getEnums() {
+  public SortedSet<Message> getEnums() {
     return enums;
-  }
-
-  public String getName() {
-    return name;
   }
 
   public boolean isRef() {
@@ -137,18 +118,17 @@ public class Message extends ProtoElement {
     Message message = (Message) o;
     return ref == message.ref
         && isEnum == message.isEnum
-        && Objects.equals(name, message.name)
         && Objects.equals(fields, message.fields)
         && Objects.equals(enums, message.enums);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), name, fields, ref, enums, isEnum);
+    return Objects.hash(super.hashCode(), fields, ref, enums, isEnum);
   }
 
   @Override
   public String toString() {
-    return name;
+    return getName();
   }
 }

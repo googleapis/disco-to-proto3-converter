@@ -27,10 +27,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -39,9 +41,8 @@ public class DocumentToProtoConverter {
   private static final Pattern RELATIVE_LINK = Pattern.compile("(?<linkName>\\[[\\w\\s]+])\\(/");
 
   private final ProtoFile protoFile;
-  private final Map<String, Message> allMessages = new LinkedHashMap<>();
-  private final Map<String, GrpcService> allServices = new LinkedHashMap<>();
-  private final Map<String, Option> allResourceOptions = new LinkedHashMap<>();
+  private final Map<String, Message> allMessages = new TreeMap<>();
+  private final Map<String, GrpcService> allServices = new TreeMap<>();
   private final Set<String> serviceIgnoreSet;
   private final Set<String> messageIgnoreSet;
   private final String relativeLinkPrefix;
@@ -127,16 +128,26 @@ public class DocumentToProtoConverter {
       }
       if (enumFieldsCount > enumFieldsNames.size()) {
         message.getEnums().clear();
-        ListIterator<Field> fields = message.getFields().listIterator();
-        while (fields.hasNext()) {
-          Field f = fields.next();
+        SortedSet<Field> newFields = new TreeSet<>();
+        for (Field f : message.getFields()) {
           if (enumNames.contains(f.getValueType().getName())) {
             String desc = sanitizeDescr(f.getDescription());
-            fields.set(
+            newFields.add(
                 new Field(
-                    f.getName(), stringType, f.isRepeated(), f.isOptional(), f.getKeyType(), desc));
+                    f.getName(),
+                    stringType,
+                    f.isRepeated(),
+                    f.isOptional(),
+                    f.getKeyType(),
+                    desc,
+                    false));
+          } else {
+            newFields.add(f);
           }
         }
+
+        message.getFields().clear();
+        message.getFields().addAll(newFields);
       }
     }
   }
@@ -426,7 +437,7 @@ public class DocumentToProtoConverter {
     }
 
     Field field =
-        new Field(name, valueType, repeated, optional, keyType, sanitizeDescr(description));
+        new Field(name, valueType, repeated, optional, keyType, sanitizeDescr(description), false);
     if (sch.type() == Schema.Type.EMPTY) {
     } else if (Message.PRIMITIVES.containsKey(valueType.getName())) {
       return field;
@@ -489,14 +500,14 @@ public class DocumentToProtoConverter {
     String dummyFieldName = Name.anyCamel("Undefined", name).toUpperUnderscore();
     Message emptyType = Message.PRIMITIVES.get("");
     Field dummyField =
-        new Field(dummyFieldName, emptyType, false, false, null, sanitizeDescr(dummyDesc));
+        new Field(dummyFieldName, emptyType, false, false, null, sanitizeDescr(dummyDesc), true);
     enumMessage.getFields().add(dummyField);
 
     Iterator<String> valIter = enumVals.iterator();
     Iterator<String> descIter = enumDescs.iterator();
     while (valIter.hasNext() && descIter.hasNext()) {
       String desc = sanitizeDescr(descIter.next());
-      Field enumField = new Field(valIter.next(), emptyType, false, false, null, desc);
+      Field enumField = new Field(valIter.next(), emptyType, false, false, null, desc, false);
       if (dummyField.getName().equals(enumField.getName())) {
         continue;
       }
@@ -594,7 +605,8 @@ public class DocumentToProtoConverter {
               Name.anyCamel(request.getName(), "resource").toLowerUnderscore();
           String description = getMessageBodyDescription();
           Field bodyField =
-              new Field(requestFieldName, request, false, false, null, sanitizeDescr(description));
+              new Field(
+                  requestFieldName, request, false, false, null, sanitizeDescr(description), false);
           bodyField
               .getOptions()
               .add(createOption("google.api.field_behavior", ProtoOptionValues.REQUIRED));

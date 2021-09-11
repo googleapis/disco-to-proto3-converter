@@ -15,11 +15,26 @@
  */
 package com.google.cloud.discotoproto3converter.proto3;
 
-public class ProtoElement {
-  private final String description;
+import java.util.Objects;
 
-  public ProtoElement(String description) {
+// compareTo() == 0 and equals are inconsistent for this implementation
+// The ProtoElement objects are expected to be stored in SrotedMap/SortedSet containers
+public class ProtoElement<T extends ProtoElement<T>> implements Comparable<T> {
+  private final String description;
+  private final String name;
+
+  public ProtoElement(String name, String description) {
+    this.name = name;
     this.description = description;
+  }
+
+  @Override
+  public int compareTo(T o) {
+    return this.getName().compareTo(o.getName());
+  }
+
+  public String getName() {
+    return name;
   }
 
   public String getDescription() {
@@ -34,12 +49,12 @@ public class ProtoElement {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ProtoElement that = (ProtoElement) o;
-    return true;
+    ProtoElement<?> that = (ProtoElement<?>) o;
+    return Objects.equals(name, that.name);
   }
 
   @Override
   public int hashCode() {
-    return 1;
+    return Objects.hash(name);
   }
 }

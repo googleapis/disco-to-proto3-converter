@@ -19,13 +19,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class Field extends ProtoElement {
-  private final String name;
+// compareTo() == 0 and equals() are inconsistent for this implementation
+public class Field extends ProtoElement<Field> {
   private Message valueType;
   private final boolean repeated;
   private final boolean optional;
   private Message keyType;
   private final List<Option> options = new ArrayList<>();
+  private final boolean firstInOrder;
 
   public Field(
       String name,
@@ -33,17 +34,20 @@ public class Field extends ProtoElement {
       boolean repeated,
       boolean optional,
       Message keyType,
-      String description) {
-    super(description);
-    this.name = name;
+      String description,
+      boolean firstInOrder) {
+    super(name, description);
     this.valueType = valueType;
     this.repeated = repeated;
     this.optional = optional;
     this.keyType = keyType;
+    this.firstInOrder = firstInOrder;
   }
 
-  public String getName() {
-    return name;
+  @Override
+  public int compareTo(Field o) {
+    int rv = -Boolean.compare(this.firstInOrder, o.firstInOrder);
+    return rv == 0 ? super.compareTo(o) : rv;
   }
 
   public void setValueType(Message valueType) {
@@ -87,7 +91,6 @@ public class Field extends ProtoElement {
     }
     Field field = (Field) o;
     return repeated == field.repeated
-        && Objects.equals(name, field.name)
         && Objects.equals(valueType, field.valueType)
         && Objects.equals(keyType, field.keyType)
         && Objects.equals(options, field.options);
@@ -95,7 +98,7 @@ public class Field extends ProtoElement {
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), name, valueType, repeated, keyType, options);
+    return Objects.hash(super.hashCode(), valueType, repeated, keyType, options);
   }
 
   @Override
@@ -117,7 +120,7 @@ public class Field extends ProtoElement {
       sb.append(' ');
     }
 
-    return sb.append(name).toString();
+    return sb.append(getName()).toString();
   }
 
   public String toString(int fieldIndex) {
