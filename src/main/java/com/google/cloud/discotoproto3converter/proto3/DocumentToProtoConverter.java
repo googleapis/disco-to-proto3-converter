@@ -178,7 +178,10 @@ public class DocumentToProtoConverter {
     }
 
     for (Map.Entry<ProtoOptionValues, Field> entry : opFields.entrySet()) {
-      entry.getValue().getOptions().add(createOption("operation_field", entry.getKey()));
+      entry
+          .getValue()
+          .getOptions()
+          .add(createOption("google.cloud.operation_field", entry.getKey()));
     }
 
     //
@@ -201,7 +204,10 @@ public class DocumentToProtoConverter {
                 .filter(a -> "google.api.http".equals(a.getName()))
                 .findFirst();
 
-        if (!optHttp.isPresent() || !optHttp.get().getProperties().containsKey("get")) {
+        if (!optHttp.isPresent()
+            || !optHttp.get().getProperties().containsKey("get")
+            || (optHttp.get().getProperties().containsKey("post")
+                && "Wait".equals(method.getName()))) {
           continue;
         }
 
@@ -210,7 +216,7 @@ public class DocumentToProtoConverter {
               service.getName() + " service has more than one LRO polling method");
         }
 
-        method.getOptions().add(createOption("operation_polling_method", true));
+        method.getOptions().add(createOption("google.cloud.operation_polling_method", true));
 
         Map<String, Field> pollingServiceMessageFields = new HashMap<>();
         for (Field pollingMessageField : method.getInput().getFieldsWithNumbers().values()) {
@@ -222,7 +228,7 @@ public class DocumentToProtoConverter {
                 .getOptions()
                 .add(
                     createOption(
-                        "operation_response_field",
+                        "google.cloud.operation_response_field",
                         opFields.get(ProtoOptionValues.NAME).getName()));
           } else {
             // These fields will be populated from initial request message, thus putting them in
@@ -263,7 +269,10 @@ public class DocumentToProtoConverter {
                 .filter(a -> "google.api.http".equals(a.getName()))
                 .findFirst();
 
-        if (!optHttp.isPresent() || optHttp.get().getProperties().containsKey("get")) {
+        if (!optHttp.isPresent()
+            || optHttp.get().getProperties().containsKey("get")
+            || (optHttp.get().getProperties().containsKey("post")
+                && "Wait".equals(method.getName()))) {
           continue;
         }
 
@@ -308,11 +317,13 @@ public class DocumentToProtoConverter {
           }
         }
 
-        method.getOptions().add(createOption("operation_service", pollingServiceCandidate));
+        method
+            .getOptions()
+            .add(createOption("google.cloud.operation_service", pollingServiceCandidate));
         for (Field[] fieldPair : matchingFieldPairsCandidate) {
           fieldPair[0]
               .getOptions()
-              .add(createOption("operation_request_field", fieldPair[1].getName()));
+              .add(createOption("google.cloud.operation_request_field", fieldPair[1].getName()));
         }
       }
     }
