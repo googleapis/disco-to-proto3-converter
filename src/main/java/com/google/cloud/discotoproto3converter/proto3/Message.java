@@ -54,7 +54,6 @@ public class Message extends ProtoElement<Message> {
     return fields;
   }
 
-  // NOTE: the fields list is expected to be sorted
   public Map<Integer, Field> getFieldsWithNumbers() {
     Map<Integer, Field> fieldsWithNumbers = new LinkedHashMap<>();
 

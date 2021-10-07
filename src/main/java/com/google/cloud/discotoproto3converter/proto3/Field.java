@@ -41,6 +41,7 @@ public class Field extends ProtoElement<Field> {
     this.repeated = repeated;
     this.optional = optional;
     this.keyType = keyType;
+    // This exists to cover the `UNDEFINED = 0` enum field, which should always go first
     this.firstInOrder = firstInOrder;
   }
 

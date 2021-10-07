@@ -18,7 +18,7 @@ package com.google.cloud.discotoproto3converter.proto3;
 import java.util.Objects;
 
 // compareTo() == 0 and equals are inconsistent for this implementation
-// The ProtoElement objects are expected to be stored in SrotedMap/SortedSet containers
+// The ProtoElement objects are expected to be stored in SortedMap/SortedSet containers
 public class ProtoElement<T extends ProtoElement<T>> implements Comparable<T> {
   private final String description;
   private final String name;
