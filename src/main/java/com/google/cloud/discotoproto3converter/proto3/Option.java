@@ -15,24 +15,18 @@
  */
 package com.google.cloud.discotoproto3converter.proto3;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Objects;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
-public class Option extends ProtoElement {
-  private final String name;
-  private final Map<String, Object> properties = new LinkedHashMap<>();
+public class Option extends ProtoElement<Option> {
+  private final SortedMap<String, Object> properties = new TreeMap<>();
 
   public Option(String name) {
-    super(null);
-    this.name = name;
+    super(name, null);
   }
 
-  public String getName() {
-    return name;
-  }
-
-  public Map<String, Object> getProperties() {
+  public SortedMap<String, Object> getProperties() {
     return properties;
   }
 
@@ -48,16 +42,16 @@ public class Option extends ProtoElement {
       return false;
     }
     Option option = (Option) o;
-    return Objects.equals(name, option.name) && Objects.equals(properties, option.properties);
+    return Objects.equals(properties, option.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), name, properties);
+    return Objects.hash(super.hashCode(), properties);
   }
 
   @Override
   public String toString() {
-    return name;
+    return getName();
   }
 }

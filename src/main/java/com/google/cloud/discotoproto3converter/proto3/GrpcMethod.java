@@ -18,15 +18,14 @@ package com.google.cloud.discotoproto3converter.proto3;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GrpcMethod extends ProtoElement {
-  private final String name;
+// compareTo() == 0 and equals are inconsistent for this implementation
+public class GrpcMethod extends ProtoElement<GrpcMethod> {
   private final Message input;
   private final Message output;
   private final List<Option> options = new ArrayList<>();
 
   public GrpcMethod(String name, Message input, Message output, String description) {
-    super(description);
-    this.name = name;
+    super(name, description);
     this.input = input;
     this.output = output;
   }
@@ -45,10 +44,6 @@ public class GrpcMethod extends ProtoElement {
 
   @Override
   public String toString() {
-    return "rpc " + name + "(" + input + ") returns (" + output + ")";
-  }
-
-  public String getName() {
-    return name;
+    return "rpc " + getName() + "(" + input + ") returns (" + output + ")";
   }
 }
