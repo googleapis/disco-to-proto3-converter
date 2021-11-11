@@ -46,7 +46,8 @@ public class DiscoToProto3ConverterAppTest {
         generatedFilePath.toString(),
         "",
         "",
-        "https://cloud.google.com");
+        "https://cloud.google.com",
+        "false");
 
     String actualBody = readFile(generatedFilePath);
 
@@ -71,7 +72,8 @@ public class DiscoToProto3ConverterAppTest {
             + "Errors,AddressAggregatedList,AggregatedListAddressesRequest,"
             + "InsertAddressRequest,ListAddressesRequest,InsertAddressRequest,"
             + "GetRegionOperationRequest",
-        "");
+        "",
+        "false");
 
     String actualBody = readFile(generatedFilePath);
 
@@ -81,7 +83,31 @@ public class DiscoToProto3ConverterAppTest {
     assertEquals(baselineBody, actualBody);
   }
 
-  public static String readFile(Path path) throws IOException {
+  @Test
+  public void convertEnumsAsStrings() throws IOException {
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path discoveryDocPath = Paths.get("src", "test", "resources", "compute.v1.small.json");
+    Path prefix = Paths.get("google", "cloud", "compute", "v1");
+    Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute.proto");
+
+    app.convert(
+        discoveryDocPath.toString(),
+        generatedFilePath.toString(),
+        "",
+        "",
+        "https://cloud.google.com",
+        "true");
+
+    String actualBody = readFile(generatedFilePath);
+
+    Path baselineFilePath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute_strings.proto.baseline");
+    String baselineBody = readFile(baselineFilePath);
+
+    assertEquals(baselineBody, actualBody);
+  }
+
+  private static String readFile(Path path) throws IOException {
     return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
   }
 }

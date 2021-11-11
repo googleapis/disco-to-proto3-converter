@@ -47,7 +47,8 @@ public class ServiceConfigGeneratorAppTest {
         generatedFilePath.toString(),
         "",
         "",
-        "https://cloud.google.com");
+        "https://cloud.google.com",
+        "false");
 
     String actualBody = readFile(generatedFilePath);
 
