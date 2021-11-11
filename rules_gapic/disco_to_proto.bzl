@@ -28,6 +28,7 @@ def _proto_from_disco_impl(ctx):
     _set_args(",".join(attr.service_ignorelist), "--service_ignorelist=", arguments)
     _set_args(",".join(attr.message_ignorelist), "--message_ignorelist=", arguments)
     _set_args(attr.relative_link_prefix, "--relative_link_prefix=", arguments)
+    _set_args(attr.enums_as_strings, "--enums_as_strings=", arguments)
 
     converter = ctx.executable.converter
     ctx.actions.run(
@@ -44,6 +45,7 @@ proto_from_disco = rule(
         "service_ignorelist": attr.string_list(allow_empty = True, default = []),
         "message_ignorelist": attr.string_list(allow_empty = True, default = []),
         "relative_link_prefix": attr.string(mandatory = False, default = ""),
+        "enums_as_strings": attr.bool(mandatory = False, default = False),
         "converter": attr.label(
             default = Label("//:disco_to_proto3_converter"),
             executable = True,

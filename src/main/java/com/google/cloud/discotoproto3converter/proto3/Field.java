@@ -79,6 +79,10 @@ public class Field extends ProtoElement<Field> {
     return options;
   }
 
+  public boolean isFirstInOrder() {
+    return firstInOrder;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
