@@ -77,3 +77,22 @@ def grpc_service_config_from_disco(
         extension = ".json",
         visibility = visibility,
     )
+
+def gapic_yaml_from_disco(
+        name,
+        src,
+        service_ignorelist = None,
+        message_ignorelist = None,
+        relative_link_prefix = None,
+        visibility = None,
+        **kwargs):
+    proto_from_disco(
+        name = name,
+        src = src,
+        service_ignorelist = service_ignorelist,
+        message_ignorelist = message_ignorelist,
+        relative_link_prefix = relative_link_prefix,
+        converter = Label("//:gapic_yaml_generator"),
+        extension = ".yaml",
+        visibility = visibility,
+    )
