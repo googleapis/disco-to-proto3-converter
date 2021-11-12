@@ -53,6 +53,19 @@ java_binary(
     deps = _COMPILE_DEPS,
 )
 
+java_binary(
+    name = "gapic_yaml_generator",
+    srcs = glob(["src/main/java/**/*.java"]),
+    create_executable = True,
+    javacopts = _JAVA_COPTS,
+    jvm_flags = ["-Xmx512m"],
+    main_class = "com.google.cloud.discotoproto3converter.GapicYamlGeneratorApp",
+    plugins = ["//:auto_value_plugin"],
+    resources = [],
+    visibility = ["//visibility:public"],
+    deps = _COMPILE_DEPS,
+)
+
 java_library(
     name = "disco_to_proto3_converter_testlib",
     srcs = glob(["src/test/java/**/*.java"]),
