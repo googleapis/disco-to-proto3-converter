@@ -53,12 +53,7 @@ public class GapicYamlGeneratorAppTest {
     String actualBody = readFile(generatedFilePath);
 
     Path baselineFilePath =
-        Paths.get(
-            "src",
-            "test",
-            "resources",
-            prefix.toString(),
-            "compute_small_gapic.yaml");
+        Paths.get("src", "test", "resources", prefix.toString(), "compute_small_gapic.yaml");
     String baselineBody = readFile(baselineFilePath);
 
     assertEquals(baselineBody, actualBody);

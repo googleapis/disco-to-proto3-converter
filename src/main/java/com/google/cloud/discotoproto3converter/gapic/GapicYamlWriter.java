@@ -70,7 +70,7 @@ public class GapicYamlWriter implements ConverterWriter {
         writer.println("    long_running:");
         writer.println("      initial_poll_delay_millis: 500");
         writer.println("      poll_delay_multiplier: 1.5");
-        writer.println("      max_poll_delay_millis: 15000");
+        writer.println("      max_poll_delay_millis: 20000");
         writer.println("      total_poll_timeout_millis: 600000");
       }
     }
