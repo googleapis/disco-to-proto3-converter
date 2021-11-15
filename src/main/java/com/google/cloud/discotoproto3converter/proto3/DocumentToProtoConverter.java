@@ -38,6 +38,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class DocumentToProtoConverter {
+
   private static final Pattern RELATIVE_LINK = Pattern.compile("(?<linkName>\\[[\\w\\s]+])\\(/");
 
   private final ProtoFile protoFile;
@@ -46,6 +47,7 @@ public class DocumentToProtoConverter {
   private final Set<String> serviceIgnoreSet;
   private final Set<String> messageIgnoreSet;
   private final String relativeLinkPrefix;
+  private final boolean enumsAsStrings;
   private final boolean lroConfigPresent;
 
   public DocumentToProtoConverter(
@@ -53,15 +55,18 @@ public class DocumentToProtoConverter {
       String documentFileName,
       Set<String> serviceIgnoreSet,
       Set<String> messageIgnoreSet,
-      String relativeLinkPrefix) {
+      String relativeLinkPrefix,
+      boolean enumsAsStrings) {
     this.serviceIgnoreSet = serviceIgnoreSet;
     this.messageIgnoreSet = messageIgnoreSet;
     this.relativeLinkPrefix = relativeLinkPrefix;
     this.protoFile = readDocumentMetadata(document, documentFileName);
+    this.enumsAsStrings = enumsAsStrings;
     readSchema(document);
     readResources(document);
     cleanupEnumNamingConflicts();
     this.lroConfigPresent = applyLroConfiguration();
+    convertEnumFieldsToStrings();
   }
 
   public ProtoFile getProtoFile() {
@@ -140,7 +145,7 @@ public class DocumentToProtoConverter {
                     f.isOptional(),
                     f.getKeyType(),
                     desc,
-                    false));
+                    f.isFirstInOrder()));
           } else {
             newFields.add(f);
           }
@@ -148,6 +153,50 @@ public class DocumentToProtoConverter {
 
         message.getFields().clear();
         message.getFields().addAll(newFields);
+      }
+    }
+  }
+
+  private void convertEnumFieldsToStrings() {
+    if (!this.enumsAsStrings) {
+      return;
+    }
+
+    Message stringType = Message.PRIMITIVES.get("string");
+    for (Message message : allMessages.values()) {
+      SortedSet<Field> enumFields = new TreeSet<>();
+      for (Field field : message.getFields()) {
+        // Enums declared in Operation must remain intact
+        if (field
+            .getOptions()
+            .stream()
+            .anyMatch(a -> "google.cloud.operation_field".equals(a.getName()))) {
+          enumFields.clear();
+          break;
+        }
+        if (field.getValueType().isEnum()) {
+          enumFields.add(field);
+        }
+      }
+
+      message.getFields().removeAll(enumFields);
+      for (Field f : enumFields) {
+        String desc =
+            f.getDescription()
+                + "\nCheck the "
+                + f.getValueType().getName()
+                + " enum for the list of possible values.";
+        message
+            .getFields()
+            .add(
+                new Field(
+                    f.getName(),
+                    stringType,
+                    f.isRepeated(),
+                    f.isOptional(),
+                    f.getKeyType(),
+                    desc,
+                    f.isFirstInOrder()));
       }
     }
   }

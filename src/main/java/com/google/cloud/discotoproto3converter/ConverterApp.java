@@ -48,7 +48,8 @@ public abstract class ConverterApp {
       String outputFilePath,
       String serviceIgnorelist,
       String messageIgnorelist,
-      String relativeLinkPrefix)
+      String relativeLinkPrefix,
+      String enumsAsStrings)
       throws IOException {
     Document document = createDocument(discoveryDocPath);
     DocumentToProtoConverter converter =
@@ -57,7 +58,8 @@ public abstract class ConverterApp {
             Paths.get(discoveryDocPath).getFileName().toString(),
             new HashSet<>(Arrays.asList(serviceIgnorelist.split(","))),
             new HashSet<>(Arrays.asList(messageIgnorelist.split(","))),
-            relativeLinkPrefix);
+            relativeLinkPrefix,
+            Boolean.valueOf(enumsAsStrings));
     try (PrintWriter pw = makeDefaultDirsAndWriter(outputFilePath)) {
       writer.writeToFile(
           pw,
@@ -75,7 +77,8 @@ public abstract class ConverterApp {
         parsedArgs.get("--output_file_path"),
         parsedArgs.get("--service_ignorelist"),
         parsedArgs.get("--message_ignorelist"),
-        parsedArgs.get("--relative_link_prefix"));
+        parsedArgs.get("--relative_link_prefix"),
+        parsedArgs.get("--enums_as_strings"));
   }
 
   private Map<String, String> parseArgs(String[] args) {
@@ -84,6 +87,7 @@ public abstract class ConverterApp {
     // Optional Parameters
     parsedArgs.put("--service_ignorelist", "");
     parsedArgs.put("--message_ignorelist", "");
+    parsedArgs.put("--enums_as_strings", "false");
 
     for (String arg : args) {
       String[] argNameVal = arg.split("=");

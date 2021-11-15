@@ -25,7 +25,7 @@ import java.nio.file.Paths;
 import org.junit.Before;
 import org.junit.Test;
 
-public class ServiceConfigGeneratorAppTest {
+public class GapicYamlGeneratorAppTest {
   private Path outputDir;
 
   @Before
@@ -36,11 +36,11 @@ public class ServiceConfigGeneratorAppTest {
 
   @Test
   public void convert() throws IOException {
-    ServiceConfigGeneratorApp app = new ServiceConfigGeneratorApp();
+    GapicYamlGeneratorApp app = new GapicYamlGeneratorApp();
     Path discoveryDocPath = Paths.get("src", "test", "resources", "compute.v1.small.json");
     Path prefix = Paths.get("google", "cloud", "compute", "v1");
     Path generatedFilePath =
-        Paths.get(outputDir.toString(), prefix.toString(), "compute_grpc_service_config.json");
+        Paths.get(outputDir.toString(), prefix.toString(), "compute_small_gapic.yaml");
 
     app.convert(
         discoveryDocPath.toString(),
@@ -53,12 +53,7 @@ public class ServiceConfigGeneratorAppTest {
     String actualBody = readFile(generatedFilePath);
 
     Path baselineFilePath =
-        Paths.get(
-            "src",
-            "test",
-            "resources",
-            prefix.toString(),
-            "compute_grpc_service_config.json.baseline");
+        Paths.get("src", "test", "resources", prefix.toString(), "compute_small_gapic.yaml");
     String baselineBody = readFile(baselineFilePath);
 
     assertEquals(baselineBody, actualBody);
