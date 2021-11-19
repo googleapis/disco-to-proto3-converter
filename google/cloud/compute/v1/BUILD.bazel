@@ -3,64 +3,25 @@
 # repository.
 load(
     "//rules_gapic:disco_to_proto.bzl",
+    "gapic_yaml_from_disco",
+    "grpc_service_config_from_disco",
     "proto_from_disco",
 )
 
 proto_from_disco(
-    name = "compute_small",
-    src = "//:src/test/resources/compute.v1.small.json",
+    name = "compute",
+    src = "//:src/test/resources/compute.v1small.json",
     relative_link_prefix = "https://cloud.google.com",
 )
 
-proto_from_disco(
-    name = "compute_small_with_ignorelist",
-    src = "//:src/test/resources/compute.v1.small.json",
-    message_ignorelist = [
-        "Operation",
-        "AddressList",
-        "AddressesScopedList",
-        "Warning",
-        "Warnings",
-        "Data",
-        "Error",
-        "Errors",
-        "AddressAggregatedList",
-        "AggregatedListAddressesRequest",
-        "InsertAddressRequest",
-        "ListAddressesRequest",
-        "InsertAddressRequest",
-        "GetRegionOperationRequest"
-    ],
-    service_ignorelist = [
-        "Addresses",
-        "RegionOperations",
-    ],
+grpc_service_config_from_disco(
+    name = "compute_grpc_service_config",
+    src = "//:src/test/resources/compute.v1small.json",
+    relative_link_prefix = "https://cloud.google.com",
 )
 
-proto_from_disco(
-    name = "compute",
-    src = "//:src/test/resources/compute.v1.json",
-    message_ignorelist = [
-        "HttpHealthCheck",
-        "HttpsHealthCheck",
-        "HttpHealthCheckList",
-        "HttpsHealthCheckList",
-        "GetHttpHealthCheckRequest",
-        "GetHttpsHealthCheckRequest",
-        "PatchHttpHealthCheckRequest",
-        "PatchHttpsHealthCheckRequest",
-        "UpdateHttpHealthCheckRequest",
-        "UpdateHttpsHealthCheckRequest",
-        "InsertHttpHealthCheckRequest",
-        "InsertHttpsHealthCheckRequest",
-        "ListHttpHealthChecksRequest",
-        "ListHttpsHealthChecksRequest",
-        "DeleteHttpHealthCheckRequest",
-        "DeleteHttpsHealthCheckRequest",
-    ],
-    service_ignorelist = [
-        "HttpHealthChecks",
-        "HttpsHealthChecks",
-    ],
+gapic_yaml_from_disco(
+    name = "compute_gapic",
+    src = "//:src/test/resources/compute.v1small.json",
     relative_link_prefix = "https://cloud.google.com",
 )
