@@ -37,10 +37,11 @@ public class GapicYamlGeneratorAppTest {
   @Test
   public void convert() throws IOException {
     GapicYamlGeneratorApp app = new GapicYamlGeneratorApp();
-    Path discoveryDocPath = Paths.get("src", "test", "resources", "compute.v1.small.json");
-    Path prefix = Paths.get("google", "cloud", "compute", "v1");
+    Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.json");
     Path generatedFilePath =
-        Paths.get(outputDir.toString(), prefix.toString(), "compute_small_gapic.yaml");
+        Paths.get(outputDir.toString(), prefix.toString(), "compute_gapic.yaml");
 
     app.convert(
         discoveryDocPath.toString(),
@@ -53,7 +54,7 @@ public class GapicYamlGeneratorAppTest {
     String actualBody = readFile(generatedFilePath);
 
     Path baselineFilePath =
-        Paths.get("src", "test", "resources", prefix.toString(), "compute_small_gapic.yaml");
+        Paths.get("src", "test", "resources", prefix.toString(), "compute_gapic.yaml.baseline");
     String baselineBody = readFile(baselineFilePath);
 
     assertEquals(baselineBody, actualBody);
