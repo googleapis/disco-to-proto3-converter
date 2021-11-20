@@ -37,8 +37,9 @@ public class DiscoToProto3ConverterAppTest {
   @Test
   public void convert() throws IOException {
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
-    Path discoveryDocPath = Paths.get("src", "test", "resources", "compute.v1small.json");
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.json");
     Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute.proto");
 
     app.convert(
@@ -61,8 +62,9 @@ public class DiscoToProto3ConverterAppTest {
   @Test
   public void convertWithIgnorelist() throws IOException {
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
-    Path discoveryDocPath = Paths.get("src", "test", "resources", "compute.v1small.json");
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.json");
     Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute.proto");
     app.convert(
         discoveryDocPath.toString(),
@@ -78,7 +80,8 @@ public class DiscoToProto3ConverterAppTest {
     String actualBody = readFile(generatedFilePath);
 
     Path baselineFilePath =
-        Paths.get("src", "test", "resources", prefix.toString(), "compute.ignorelist.proto.baseline");
+        Paths.get(
+            "src", "test", "resources", prefix.toString(), "compute.ignorelist.proto.baseline");
     String baselineBody = readFile(baselineFilePath);
     assertEquals(baselineBody, actualBody);
   }
@@ -86,8 +89,9 @@ public class DiscoToProto3ConverterAppTest {
   @Test
   public void convertEnumsAsStrings() throws IOException {
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
-    Path discoveryDocPath = Paths.get("src", "test", "resources", "compute.v1small.json");
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.json");
     Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute.proto");
 
     app.convert(

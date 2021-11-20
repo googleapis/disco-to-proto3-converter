@@ -8,48 +8,20 @@ load(
     "proto_from_disco",
 )
 
-_MESSAGE_IGNORE_LIST = [
-    "HttpHealthCheck",
-    "HttpsHealthCheck",
-    "HttpHealthCheckList",
-    "HttpsHealthCheckList",
-    "GetHttpHealthCheckRequest",
-    "GetHttpsHealthCheckRequest",
-    "PatchHttpHealthCheckRequest",
-    "PatchHttpsHealthCheckRequest",
-    "UpdateHttpHealthCheckRequest",
-    "UpdateHttpsHealthCheckRequest",
-    "InsertHttpHealthCheckRequest",
-    "InsertHttpsHealthCheckRequest",
-    "ListHttpHealthChecksRequest",
-    "ListHttpsHealthChecksRequest",
-    "DeleteHttpHealthCheckRequest",
-    "DeleteHttpsHealthCheckRequest",
-]
-
-_SERVICE_IGNORE_LIST = [
-    "HttpHealthChecks",
-    "HttpsHealthChecks",
-]
-
 proto_from_disco(
     name = "compute",
-    src = "//:src/test/resources/compute.v1.json",
-    message_ignorelist = _MESSAGE_IGNORE_LIST,
+    src = "//:src/test/resources/google/cloud/compute/v1small/compute.v1small.json",
     relative_link_prefix = "https://cloud.google.com",
-    service_ignorelist = _SERVICE_IGNORE_LIST,
 )
 
 grpc_service_config_from_disco(
     name = "compute_grpc_service_config",
-    src = "//:src/test/resources/compute.v1small.json",
-    message_ignorelist = _MESSAGE_IGNORE_LIST,
-    service_ignorelist = _SERVICE_IGNORE_LIST,
+    src = "//:src/test/resources/google/cloud/compute/v1small/compute.v1small.json",
+    relative_link_prefix = "https://cloud.google.com",
 )
 
 gapic_yaml_from_disco(
     name = "compute_gapic",
-    src = "//:src/test/resources/compute.v1small.json",
-    message_ignorelist = _MESSAGE_IGNORE_LIST,
-    service_ignorelist = _SERVICE_IGNORE_LIST,
+    src = "//:src/test/resources/google/cloud/compute/v1small/compute.v1small.json",
+    relative_link_prefix = "https://cloud.google.com",
 )

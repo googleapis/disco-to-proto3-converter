@@ -37,8 +37,10 @@ public class ServiceConfigGeneratorAppTest {
   @Test
   public void convert() throws IOException {
     ServiceConfigGeneratorApp app = new ServiceConfigGeneratorApp();
-    Path discoveryDocPath = Paths.get("src", "test", "resources", "compute.v1small.json");
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.json");
+
     Path generatedFilePath =
         Paths.get(outputDir.toString(), prefix.toString(), "compute_grpc_service_config.json");
 
