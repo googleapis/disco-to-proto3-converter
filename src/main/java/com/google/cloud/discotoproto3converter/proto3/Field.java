@@ -97,13 +97,12 @@ public class Field extends ProtoElement<Field> {
     Field field = (Field) o;
     return repeated == field.repeated
         && Objects.equals(valueType, field.valueType)
-        && Objects.equals(keyType, field.keyType)
-        && Objects.equals(options, field.options);
+        && Objects.equals(keyType, field.keyType);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), valueType, repeated, keyType, options);
+    return Objects.hash(super.hashCode(), valueType, repeated, keyType);
   }
 
   @Override

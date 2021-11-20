@@ -75,7 +75,12 @@ public class Proto3Writer implements ConverterWriter {
     List<String> capitalized =
         Arrays.stream(tokens).map(this::capitalize).collect(Collectors.toList());
 
-    writer.println("option csharp_namespace = \"" + String.join(".", capitalized) + "\";");
+    List<String> csharpCapitalized =
+        Arrays.stream(String.join(".", capitalized).split("(?<=\\d)|(?<=\\d\\d)|(?<=\\d\\d\\d)"))
+            .map(this::capitalize)
+            .collect(Collectors.toList());
+
+    writer.println("option csharp_namespace = \"" + String.join("", csharpCapitalized) + "\";");
     String goPkg1 = Arrays.stream(tokens).skip(1).collect(Collectors.joining("/"));
     String goPkg2 = tokens[tokens.length - 2];
     String goPkg = "google.golang.org/genproto/googleapis/" + goPkg1 + ";" + goPkg2;

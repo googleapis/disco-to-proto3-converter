@@ -1,0 +1,27 @@
+# For the converter's Bazel rules testing and demonstration, specifically
+# this file shows to to use the `proto_from_disco` build rule defined in this
+# repository.
+load(
+    "//rules_gapic:disco_to_proto.bzl",
+    "gapic_yaml_from_disco",
+    "grpc_service_config_from_disco",
+    "proto_from_disco",
+)
+
+proto_from_disco(
+    name = "compute",
+    src = "//:src/test/resources/google/cloud/compute/v1small/compute.v1small.json",
+    relative_link_prefix = "https://cloud.google.com",
+)
+
+grpc_service_config_from_disco(
+    name = "compute_grpc_service_config",
+    src = "//:src/test/resources/google/cloud/compute/v1small/compute.v1small.json",
+    relative_link_prefix = "https://cloud.google.com",
+)
+
+gapic_yaml_from_disco(
+    name = "compute_gapic",
+    src = "//:src/test/resources/google/cloud/compute/v1small/compute.v1small.json",
+    relative_link_prefix = "https://cloud.google.com",
+)
