@@ -547,7 +547,10 @@ public class DocumentToProtoConverter {
 
     String dummyDesc = "A value indicating that the enum field is not set.";
     // For the enum name start with uppercase letter, remove the last underscore '_' character.
-    String dummyFieldName = Name.anyCamel("Undefined", (name.endsWith("_") ? name.substring(0, name.length() - 1): name)).toUpperUnderscore();
+    String dummyFieldName =
+        Name.anyCamel(
+                "Undefined", (name.endsWith("_") ? name.substring(0, name.length() - 1) : name))
+            .toUpperUnderscore();
     Message emptyType = Message.PRIMITIVES.get("");
     Field dummyField =
         new Field(dummyFieldName, emptyType, false, false, null, sanitizeDescr(dummyDesc), true);
