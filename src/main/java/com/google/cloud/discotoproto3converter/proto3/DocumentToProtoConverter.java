@@ -459,7 +459,7 @@ public class DocumentToProtoConverter {
         if (sch.isEnum() && !"".equals(sch.getIdentifier())) {
           valueType =
               constructEnumMessage(
-                  getMessageName(sch), description, sch.enumValues(), sch.enumDescriptions());
+                  getMessageName(sch, true), description, sch.enumValues(), sch.enumDescriptions());
         } else {
           switch (sch.format()) {
             case INT64:
@@ -546,7 +546,8 @@ public class DocumentToProtoConverter {
     Message enumMessage = new Message(name, false, true, sanitizeDescr(description));
 
     String dummyDesc = "A value indicating that the enum field is not set.";
-    String dummyFieldName = Name.anyCamel("Undefined", name).toUpperUnderscore();
+    // For the enum name start with uppercase letter, remove the last underscore '_' character.
+    String dummyFieldName = Name.anyCamel("Undefined", (name.endsWith("_") ? name.substring(0, name.length() - 1): name)).toUpperUnderscore();
     Message emptyType = Message.PRIMITIVES.get("");
     Field dummyField =
         new Field(dummyFieldName, emptyType, false, false, null, sanitizeDescr(dummyDesc), true);
@@ -572,6 +573,15 @@ public class DocumentToProtoConverter {
       messageName = Name.anyCamel(messageName).toUpperCamel();
     }
     return messageName;
+  }
+
+  private String getMessageName(Schema sch, Boolean isEnum) {
+    String messageName = sch.getIdentifier();
+    // For the enum name start with uppercase letter, add the underscore '_' suffix.
+    if (isEnum && Character.isUpperCase(messageName.charAt(0))) {
+      return Name.anyCamel(messageName).toUpperCamel() + '_';
+    }
+    return getMessageName(sch);
   }
 
   private void readResources(Document document) {

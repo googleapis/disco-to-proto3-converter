@@ -106,6 +106,7 @@ public class Name {
 
   private static void validateCamel(String identifier, CheckCase check) {
     if (!isCamel(identifier, check)) {
+      System.out.println("identifier:: " + identifier);
       String casingDescription = check + " camel";
       throw new IllegalArgumentException(
           "Name: identifier not in " + casingDescription + ": '" + identifier + "'");
