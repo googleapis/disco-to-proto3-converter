@@ -70,9 +70,9 @@ message Address {
   }
 
   // IP Protocol.
-  enum IPProtocol_ {
+  enum IPProtocolEnum {
     // A value indicating that the enum field is not set.
-    UNDEFINED_I_P_PROTOCOL = 0;
+    UNDEFINED_I_P_PROTOCOL_ENUM = 0;
 
     AH = 2087;
 
@@ -147,7 +147,7 @@ message Address {
   }
 
   // IP Protocol.
-  optional IPProtocol_ I_p_protocol = 488094525;
+  optional IPProtocolEnum I_p_protocol = 488094525;
 
   // The static IP address represented by this resource.
   optional string address = 462920692;
