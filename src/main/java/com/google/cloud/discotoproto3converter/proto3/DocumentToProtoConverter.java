@@ -459,7 +459,7 @@ public class DocumentToProtoConverter {
         if (sch.isEnum() && !"".equals(sch.getIdentifier())) {
           valueType =
               constructEnumMessage(
-                  getMessageName(sch), description, sch.enumValues(), sch.enumDescriptions());
+                  getMessageName(sch, true), description, sch.enumValues(), sch.enumDescriptions());
         } else {
           switch (sch.format()) {
             case INT64:
@@ -572,6 +572,15 @@ public class DocumentToProtoConverter {
       messageName = Name.anyCamel(messageName).toUpperCamel();
     }
     return messageName;
+  }
+
+  private String getMessageName(Schema sch, Boolean isEnum) {
+    String messageName = sch.getIdentifier();
+    // For the enum name start with uppercase letter, add the "Enum" suffix.
+    if (isEnum && Character.isUpperCase(messageName.charAt(0))) {
+      return Name.anyCamel(messageName).toUpperCamel() + "Enum";
+    }
+    return getMessageName(sch);
   }
 
   private void readResources(Document document) {
