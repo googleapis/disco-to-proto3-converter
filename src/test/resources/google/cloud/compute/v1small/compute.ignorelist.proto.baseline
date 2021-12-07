@@ -69,6 +69,25 @@ message Address {
 
   }
 
+  // IP Protocol.
+  enum IPProtocolEnum {
+    // A value indicating that the enum field is not set.
+    UNDEFINED_I_P_PROTOCOL_ENUM = 0;
+
+    AH = 2087;
+
+    ESP = 68962;
+
+    ICMP = 2241597;
+
+    SCTP = 2539724;
+
+    TCP = 82881;
+
+    UDP = 83873;
+
+  }
+
   // The IP version that will be used by this address. Valid options are IPV4 or IPV6. This can only be specified for a global address.
   enum IpVersion {
     // A value indicating that the enum field is not set.
@@ -127,8 +146,8 @@ message Address {
 
   }
 
-  // IP address.
-  optional string I_p_address = 42976943;
+  // IP Protocol.
+  optional IPProtocolEnum I_p_protocol = 488094525;
 
   // The static IP address represented by this resource.
   optional string address = 462920692;

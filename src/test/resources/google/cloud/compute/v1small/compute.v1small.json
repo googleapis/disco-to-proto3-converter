@@ -358,9 +358,25 @@
             ""
           ]
         },
-        "IPAddress": {
+        "IPProtocol": {
           "type": "string",
-          "description": "IP address."
+          "description": "IP Protocol.",
+          "enum": [
+            "AH",
+            "ESP",
+            "ICMP",
+            "SCTP",
+            "TCP",
+            "UDP"
+          ],
+          "enumDescriptions": [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ]
         },
         "kind": {
           "type": "string",
