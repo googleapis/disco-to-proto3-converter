@@ -26,7 +26,7 @@ repository root:
 ```sh
 java \
   -jar target/disco-to-proto3-converter-0.0.1-SNAPSHOT-jar-with-dependencies.jar \
-  --discovery_doc_path=src/test/resources/compute.v1.json \
+  --discovery_doc_path=src/test/resources/google/cloud/compute/v1/compute.v1.json \
   --output_file_path=google/cloud/compute/v1/compute.proto
 ``` 
 
