@@ -44,7 +44,7 @@ def _proto_from_disco_impl(ctx):
 proto_from_disco = rule(
     attrs = {
         "src": attr.label(mandatory = True, allow_single_file = True),
-        "previous_proto": attr.label(mandatory = false, allow_single_file = True),
+        "previous_proto": attr.label(mandatory = False, allow_single_file = True),
         "service_ignorelist": attr.string_list(allow_empty = True, default = []),
         "message_ignorelist": attr.string_list(allow_empty = True, default = []),
         "relative_link_prefix": attr.string(mandatory = False, default = ""),
