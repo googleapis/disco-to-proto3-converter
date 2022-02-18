@@ -44,11 +44,13 @@ public class DiscoToProto3ConverterAppTest {
 
     app.convert(
         discoveryDocPath.toString(),
+        null,
         generatedFilePath.toString(),
         "",
         "",
         "https://cloud.google.com",
-        "false");
+        "false",
+        "true");
 
     String actualBody = readFile(generatedFilePath);
 
@@ -68,6 +70,7 @@ public class DiscoToProto3ConverterAppTest {
     Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute.proto");
     app.convert(
         discoveryDocPath.toString(),
+        null,
         generatedFilePath.toString(),
         "Addresses,RegionOperations",
         "Operation,AddressList,AddressesScopedList,Warning,Warnings,Data,Error,"
@@ -75,7 +78,8 @@ public class DiscoToProto3ConverterAppTest {
             + "InsertAddressRequest,ListAddressesRequest,InsertAddressRequest,"
             + "GetRegionOperationRequest",
         "",
-        "false");
+        "false",
+        "true");
 
     String actualBody = readFile(generatedFilePath);
 
@@ -96,10 +100,12 @@ public class DiscoToProto3ConverterAppTest {
 
     app.convert(
         discoveryDocPath.toString(),
+        null,
         generatedFilePath.toString(),
         "",
         "",
         "https://cloud.google.com",
+        "true",
         "true");
 
     String actualBody = readFile(generatedFilePath);
@@ -109,6 +115,46 @@ public class DiscoToProto3ConverterAppTest {
     String baselineBody = readFile(baselineFilePath);
 
     assertEquals(baselineBody, actualBody);
+  }
+
+  @Test
+  public void protoParserRoundtripSmallWithComments() throws IOException {
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoPath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.json");
+    Path baselinePath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.proto.baseline");
+
+    Path convPath = Paths.get(outputDir.toString(), prefix.toString(), "compute_converted.proto");
+    app.convert(discoPath.toString(), null, convPath.toString(), "", "", null, "false", "false");
+
+    Path parsedPath = Paths.get(outputDir.toString(), prefix.toString(), "compute_parsed.proto");
+    app.convert(
+        null, baselinePath.toString(), parsedPath.toString(), "", "", null, "false", "false");
+
+    String convertedBody = readFile(convPath);
+    String parsedBody = readFile(parsedPath);
+    assertEquals(convertedBody, parsedBody);
+  }
+
+  @Test
+  public void protoParserRoundtripBigNoComments() throws IOException {
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1");
+    Path discoPath = Paths.get("src", "test", "resources", prefix.toString(), "compute.v1.json");
+
+    Path convPath =
+        Paths.get(outputDir.toString(), prefix.toString(), "compute_big_converted.proto");
+    app.convert(discoPath.toString(), null, convPath.toString(), "", "", null, "false", "false");
+
+    Path parsedPath =
+        Paths.get(outputDir.toString(), prefix.toString(), "compute_big_parsed.proto");
+    app.convert(null, convPath.toString(), parsedPath.toString(), "", "", null, "false", "false");
+
+    String convertedBody = readFile(convPath);
+    String parsedBody = readFile(parsedPath);
+    assertEquals(convertedBody, parsedBody);
   }
 
   private static String readFile(Path path) throws IOException {

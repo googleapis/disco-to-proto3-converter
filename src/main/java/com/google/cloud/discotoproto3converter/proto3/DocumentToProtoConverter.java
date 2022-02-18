@@ -31,7 +31,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,14 +40,11 @@ public class DocumentToProtoConverter {
 
   private static final Pattern RELATIVE_LINK = Pattern.compile("(?<linkName>\\[[\\w\\s]+])\\(/");
 
-  private final ProtoFile protoFile;
-  private final Map<String, Message> allMessages = new TreeMap<>();
-  private final Map<String, GrpcService> allServices = new TreeMap<>();
+  private final ProtoFile protoFile = new ProtoFile();
   private final Set<String> serviceIgnoreSet;
   private final Set<String> messageIgnoreSet;
   private final String relativeLinkPrefix;
   private final boolean enumsAsStrings;
-  private final boolean lroConfigPresent;
 
   public DocumentToProtoConverter(
       Document document,
@@ -60,12 +56,12 @@ public class DocumentToProtoConverter {
     this.serviceIgnoreSet = serviceIgnoreSet;
     this.messageIgnoreSet = messageIgnoreSet;
     this.relativeLinkPrefix = relativeLinkPrefix;
-    this.protoFile = readDocumentMetadata(document, documentFileName);
+    this.protoFile.setMetadata(readDocumentMetadata(document, documentFileName));
     this.enumsAsStrings = enumsAsStrings;
     readSchema(document);
     readResources(document);
     cleanupEnumNamingConflicts();
-    this.lroConfigPresent = applyLroConfiguration();
+    this.protoFile.setHasLroDefinitions(applyLroConfiguration());
     convertEnumFieldsToStrings();
   }
 
@@ -73,20 +69,8 @@ public class DocumentToProtoConverter {
     return protoFile;
   }
 
-  public Map<String, Message> getAllMessages() {
-    return Collections.unmodifiableMap(allMessages);
-  }
-
-  public Map<String, GrpcService> getAllServices() {
-    return Collections.unmodifiableMap(allServices);
-  }
-
-  public boolean isLroConfigPresent() {
-    return lroConfigPresent;
-  }
-
-  private ProtoFile readDocumentMetadata(Document document, String documentFileName) {
-    return new ProtoFile(
+  private ProtoFileMetadata readDocumentMetadata(Document document, String documentFileName) {
+    return new ProtoFileMetadata(
         documentFileName,
         document.name(),
         document.version(),
@@ -100,7 +84,7 @@ public class DocumentToProtoConverter {
     for (Map.Entry<String, Schema> entry : document.schemas().entrySet()) {
       schemaToField(entry.getValue(), true);
     }
-    for (Message message : allMessages.values()) {
+    for (Message message : protoFile.getMessages().values()) {
       resolveReferences(message);
     }
   }
@@ -109,7 +93,7 @@ public class DocumentToProtoConverter {
     for (Field field : message.getFields()) {
       Message valueType = field.getValueType();
       if (valueType.isRef()) {
-        field.setValueType(allMessages.get(valueType.getName()));
+        field.setValueType(protoFile.getMessages().get(valueType.getName()));
       } else {
         resolveReferences(valueType);
       }
@@ -120,7 +104,7 @@ public class DocumentToProtoConverter {
   // enum types to strings (happens rarely, but happens).
   private void cleanupEnumNamingConflicts() {
     Message stringType = Message.PRIMITIVES.get("string");
-    for (Message message : allMessages.values()) {
+    for (Message message : protoFile.getMessages().values()) {
       int enumFieldsCount = 0;
       Set<String> enumFieldsNames = new HashSet<>();
       Set<String> enumNames = new HashSet<>();
@@ -163,7 +147,7 @@ public class DocumentToProtoConverter {
     }
 
     Message stringType = Message.PRIMITIVES.get("string");
-    for (Message message : allMessages.values()) {
+    for (Message message : protoFile.getMessages().values()) {
       SortedSet<Field> enumFields = new TreeSet<>();
       for (Field field : message.getFields()) {
         // Enums declared in Operation must remain intact
@@ -205,7 +189,7 @@ public class DocumentToProtoConverter {
     //
     // 1. Set `operation_field` annotations (Operation fields essential for LRO).
     //
-    Message operation = allMessages.get("Operation");
+    Message operation = protoFile.getMessages().get("Operation");
     if (operation == null) {
       // This service does not have LRO - do nothing;
       return false;
@@ -251,7 +235,7 @@ public class DocumentToProtoConverter {
     Map<String, Map<String, Field>> pollingServiceMessageFieldsMap = new HashMap<>();
 
     String noMatchPollingServiceName = null;
-    for (GrpcService service : allServices.values()) {
+    for (GrpcService service : protoFile.getServices().values()) {
       for (GrpcMethod method : service.getMethods()) {
         if (!operation.equals(method.getOutput())) {
           continue;
@@ -316,7 +300,7 @@ public class DocumentToProtoConverter {
     // 3. Set `operation_request_field` and `operation_service` annotation. Find the LRO methods
     // (the ones which start Operation within the API).
     //
-    for (GrpcService service : allServices.values()) {
+    for (GrpcService service : protoFile.getServices().values()) {
       for (GrpcMethod method : service.getMethods()) {
         if (!operation.equals(method.getOutput())) {
           continue;
@@ -505,7 +489,7 @@ public class DocumentToProtoConverter {
       return field;
     }
 
-    Message existingMessage = allMessages.get(valueType.getName());
+    Message existingMessage = protoFile.getMessages().get(valueType.getName());
 
     if (existingMessage == null || existingMessage.isRef()) {
       putAllMessages(valueType.getName(), valueType);
@@ -658,7 +642,7 @@ public class DocumentToProtoConverter {
             .put(method.httpMethod().toLowerCase(), endpointSuffix + "/" + httpOptionPath);
 
         if (method.request() != null) {
-          Message request = allMessages.get(method.request().reference());
+          Message request = protoFile.getMessages().get(method.request().reference());
           String requestFieldName =
               Name.anyCamel(request.getName(), "resource").toLowerUnderscore();
           String description = getMessageBodyDescription();
@@ -678,7 +662,7 @@ public class DocumentToProtoConverter {
         // Response
         Message output;
         if (method.response() != null) {
-          output = allMessages.get(method.response().reference());
+          output = protoFile.getMessages().get(method.response().reference());
         } else {
           String responseName = getRpcMessageName(method, "response").toUpperCamel();
           String outputDescription = getOutputMessageDescription(grpcServiceName, methodname);
@@ -703,13 +687,13 @@ public class DocumentToProtoConverter {
       service
           .getOptions()
           .add(createOption("google.api.oauth_scopes", String.join(",", authScopes)));
-      allServices.put(service.getName(), service);
+      protoFile.getServices().put(service.getName(), service);
     }
   }
 
   private void putAllMessages(String messageName, Message message) {
     if (!messageIgnoreSet.contains(messageName)) {
-      allMessages.put(messageName, message);
+      protoFile.getMessages().put(messageName, message);
     }
   }
 
@@ -771,6 +755,7 @@ public class DocumentToProtoConverter {
       m = RELATIVE_LINK.matcher(sanitizedDescription);
     }
 
-    return sanitizedDescription.replace("{$api_version}", protoFile.getProtoPkgVersion());
+    return sanitizedDescription.replace(
+        "{$api_version}", protoFile.getMetadata().getProtoPkgVersion());
   }
 }
