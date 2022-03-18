@@ -46,11 +46,13 @@ public class ServiceConfigGeneratorAppTest {
 
     app.convert(
         discoveryDocPath.toString(),
+        null,
         generatedFilePath.toString(),
         "",
         "",
         "https://cloud.google.com",
-        "false");
+        "false",
+        "true");
 
     String actualBody = readFile(generatedFilePath);
 

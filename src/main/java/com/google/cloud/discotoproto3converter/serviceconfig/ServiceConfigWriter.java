@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.discotoproto3converter.proto3.ConverterWriter;
 import com.google.cloud.discotoproto3converter.proto3.GrpcMethod;
 import com.google.cloud.discotoproto3converter.proto3.GrpcService;
-import com.google.cloud.discotoproto3converter.proto3.Message;
 import com.google.cloud.discotoproto3converter.proto3.Option;
 import com.google.cloud.discotoproto3converter.proto3.ProtoFile;
 import com.google.cloud.discotoproto3converter.serviceconfig.ServiceConfig.MethodConfig;
@@ -28,28 +27,22 @@ import com.google.cloud.discotoproto3converter.serviceconfig.ServiceConfig.Retry
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Optional;
 
 public class ServiceConfigWriter implements ConverterWriter {
   @Override
-  public void writeToFile(
-      PrintWriter writer,
-      ProtoFile protoFile,
-      Collection<Message> messages,
-      Collection<GrpcService> services,
-      boolean hasLroDefinitions)
+  public void writeToFile(PrintWriter writer, ProtoFile protoFile, boolean outputComments)
       throws IOException {
 
     ServiceConfig serviceConfig = new ServiceConfig();
-    String protoPkg = protoFile.getProtoPkg();
+    String protoPkg = protoFile.getMetadata().getProtoPkg();
 
     RetryPolicy idempotentRetryPolicy =
         new RetryPolicy("0.100s", "60s", 1.3D, Arrays.asList("DEADLINE_EXCEEDED", "UNAVAILABLE"));
     MethodConfig idempotentMethodConfig = new MethodConfig("600s", idempotentRetryPolicy);
     MethodConfig nonidempotentMethodConfig = new MethodConfig("600s", null);
 
-    for (GrpcService service : services) {
+    for (GrpcService service : protoFile.getServices().values()) {
       for (GrpcMethod method : service.getMethods()) {
         Optional<Option> opt =
             method

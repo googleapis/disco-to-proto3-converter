@@ -25,10 +25,12 @@ def _proto_from_disco_impl(ctx):
 
     attr = ctx.attr
     _set_args(attr.src, "--discovery_doc_path=", arguments, inputs)
+    _set_args(attr.previous_proto, "--previous_proto_file_path=", arguments)
     _set_args(",".join(attr.service_ignorelist), "--service_ignorelist=", arguments)
     _set_args(",".join(attr.message_ignorelist), "--message_ignorelist=", arguments)
     _set_args(attr.relative_link_prefix, "--relative_link_prefix=", arguments)
     _set_args(attr.enums_as_strings, "--enums_as_strings=", arguments)
+    _set_args(attr.output_comments, "--output_comments=", arguments)
 
     converter = ctx.executable.converter
     ctx.actions.run(
@@ -42,10 +44,12 @@ def _proto_from_disco_impl(ctx):
 proto_from_disco = rule(
     attrs = {
         "src": attr.label(mandatory = True, allow_single_file = True),
+        "previous_proto": attr.label(mandatory = False, allow_single_file = True),
         "service_ignorelist": attr.string_list(allow_empty = True, default = []),
         "message_ignorelist": attr.string_list(allow_empty = True, default = []),
         "relative_link_prefix": attr.string(mandatory = False, default = ""),
         "enums_as_strings": attr.bool(mandatory = False, default = False),
+        "output_comments": attr.bool(mandatory = False, default = False),
         "converter": attr.label(
             default = Label("//:disco_to_proto3_converter"),
             executable = True,

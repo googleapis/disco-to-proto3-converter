@@ -17,14 +17,8 @@ package com.google.cloud.discotoproto3converter.proto3;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Collection;
 
 public interface ConverterWriter {
-  void writeToFile(
-      PrintWriter writer,
-      ProtoFile protoFile,
-      Collection<Message> messages,
-      Collection<GrpcService> services,
-      boolean hasLroDefinitions)
+  void writeToFile(PrintWriter writer, ProtoFile protoFile, boolean outputComments)
       throws IOException;
 }

@@ -21,6 +21,8 @@ import com.google.cloud.discotoproto3converter.disco.DiscoveryNode;
 import com.google.cloud.discotoproto3converter.disco.Document;
 import com.google.cloud.discotoproto3converter.proto3.ConverterWriter;
 import com.google.cloud.discotoproto3converter.proto3.DocumentToProtoConverter;
+import com.google.cloud.discotoproto3converter.proto3.ProtoFile;
+import com.google.cloud.discotoproto3converter.proto3.ProtoParser;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -29,6 +31,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -45,28 +49,47 @@ public abstract class ConverterApp {
 
   public void convert(
       String discoveryDocPath,
+      String previousProtoPath,
       String outputFilePath,
       String serviceIgnorelist,
       String messageIgnorelist,
       String relativeLinkPrefix,
-      String enumsAsStrings)
+      String enumsAsStrings,
+      String outputComments)
       throws IOException {
-    Document document = createDocument(discoveryDocPath);
-    DocumentToProtoConverter converter =
-        new DocumentToProtoConverter(
-            document,
-            Paths.get(discoveryDocPath).getFileName().toString(),
-            new HashSet<>(Arrays.asList(serviceIgnorelist.split(","))),
-            new HashSet<>(Arrays.asList(messageIgnorelist.split(","))),
-            relativeLinkPrefix,
-            Boolean.valueOf(enumsAsStrings));
-    try (PrintWriter pw = makeDefaultDirsAndWriter(outputFilePath)) {
-      writer.writeToFile(
-          pw,
-          converter.getProtoFile(),
-          converter.getAllMessages().values(),
-          converter.getAllServices().values(),
-          converter.isLroConfigPresent());
+
+    ProtoFile newProtoFile = null;
+    if (discoveryDocPath != null) {
+      Document document = createDocument(discoveryDocPath);
+      DocumentToProtoConverter converter =
+          new DocumentToProtoConverter(
+              document,
+              Paths.get(discoveryDocPath).getFileName().toString(),
+              new HashSet<>(Arrays.asList(serviceIgnorelist.split(","))),
+              new HashSet<>(Arrays.asList(messageIgnorelist.split(","))),
+              relativeLinkPrefix,
+              Boolean.valueOf(enumsAsStrings));
+      newProtoFile = converter.getProtoFile();
+    }
+
+    ProtoFile previousProtoFile = null;
+    if (previousProtoPath != null) {
+      ProtoParser parser = new ProtoParser(readProtoFile(previousProtoPath));
+      previousProtoFile = new ProtoParser(readProtoFile(previousProtoPath)).getProtoFile();
+    }
+
+    if (newProtoFile != null) {
+      ProtoFile mergedProtoFile = newProtoFile;
+      if (previousProtoFile != null) {
+        // TODO: merge previousProtoFile and newProtoFile and assign to mergedProtoFile
+      }
+      try (PrintWriter pw = makeDefaultDirsAndWriter(outputFilePath)) {
+        writer.writeToFile(pw, mergedProtoFile, Boolean.valueOf(outputComments));
+      }
+    } else if (previousProtoFile != null) {
+      try (PrintWriter pw = makeDefaultDirsAndWriter(outputFilePath)) {
+        writer.writeToFile(pw, previousProtoFile, Boolean.valueOf(outputComments));
+      }
     }
   }
 
@@ -74,11 +97,13 @@ public abstract class ConverterApp {
     Map<String, String> parsedArgs = parseArgs(args);
     convert(
         parsedArgs.get("--discovery_doc_path"),
+        parsedArgs.get("--previous_proto_file_path"),
         parsedArgs.get("--output_file_path"),
         parsedArgs.get("--service_ignorelist"),
         parsedArgs.get("--message_ignorelist"),
         parsedArgs.get("--relative_link_prefix"),
-        parsedArgs.get("--enums_as_strings"));
+        parsedArgs.get("--enums_as_strings"),
+        parsedArgs.get("--output_comments"));
   }
 
   private Map<String, String> parseArgs(String[] args) {
@@ -88,6 +113,7 @@ public abstract class ConverterApp {
     parsedArgs.put("--service_ignorelist", "");
     parsedArgs.put("--message_ignorelist", "");
     parsedArgs.put("--enums_as_strings", "false");
+    parsedArgs.put("--output_comments", "true");
 
     for (String arg : args) {
       String[] argNameVal = arg.split("=");
@@ -113,5 +139,9 @@ public abstract class ConverterApp {
     ObjectMapper mapper = new ObjectMapper();
     JsonNode root = mapper.readTree(reader);
     return Document.from(new DiscoveryNode(root));
+  }
+
+  protected static String readProtoFile(String protoFilePath) throws IOException {
+    return new String(Files.readAllBytes(Paths.get(protoFilePath)), StandardCharsets.UTF_8);
   }
 }
