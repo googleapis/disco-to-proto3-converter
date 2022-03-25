@@ -25,7 +25,7 @@ def _proto_from_disco_impl(ctx):
 
     attr = ctx.attr
     _set_args(attr.src, "--discovery_doc_path=", arguments, inputs)
-    _set_args(attr.previous_proto, "--previous_proto_file_path=", arguments)
+    _set_args(attr.previous_proto, "--previous_proto_file_path=", arguments, inputs)
     _set_args(",".join(attr.service_ignorelist), "--service_ignorelist=", arguments)
     _set_args(",".join(attr.message_ignorelist), "--message_ignorelist=", arguments)
     _set_args(attr.relative_link_prefix, "--relative_link_prefix=", arguments)
@@ -66,6 +66,7 @@ proto_from_disco = rule(
 def grpc_service_config_from_disco(
         name,
         src,
+        previous_proto = None,
         service_ignorelist = None,
         message_ignorelist = None,
         relative_link_prefix = None,
@@ -74,6 +75,7 @@ def grpc_service_config_from_disco(
     proto_from_disco(
         name = name,
         src = src,
+        previous_proto = previous_proto,
         service_ignorelist = service_ignorelist,
         message_ignorelist = message_ignorelist,
         relative_link_prefix = relative_link_prefix,
@@ -85,6 +87,7 @@ def grpc_service_config_from_disco(
 def gapic_yaml_from_disco(
         name,
         src,
+        previous_proto = None,
         service_ignorelist = None,
         message_ignorelist = None,
         relative_link_prefix = None,
@@ -93,6 +96,7 @@ def gapic_yaml_from_disco(
     proto_from_disco(
         name = name,
         src = src,
+        previous_proto = previous_proto,
         service_ignorelist = service_ignorelist,
         message_ignorelist = message_ignorelist,
         relative_link_prefix = relative_link_prefix,
