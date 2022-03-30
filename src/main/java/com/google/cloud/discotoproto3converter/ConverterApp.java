@@ -22,6 +22,7 @@ import com.google.cloud.discotoproto3converter.disco.Document;
 import com.google.cloud.discotoproto3converter.proto3.ConverterWriter;
 import com.google.cloud.discotoproto3converter.proto3.DocumentToProtoConverter;
 import com.google.cloud.discotoproto3converter.proto3.ProtoFile;
+import com.google.cloud.discotoproto3converter.proto3.ProtoMerger;
 import com.google.cloud.discotoproto3converter.proto3.ProtoParser;
 import java.io.File;
 import java.io.FileInputStream;
@@ -74,17 +75,15 @@ public abstract class ConverterApp {
 
     ProtoFile previousProtoFile = null;
     if (previousProtoPath != null) {
-      ProtoParser parser = new ProtoParser(readProtoFile(previousProtoPath));
       previousProtoFile = new ProtoParser(readProtoFile(previousProtoPath)).getProtoFile();
     }
 
     if (newProtoFile != null) {
-      ProtoFile mergedProtoFile = newProtoFile;
       if (previousProtoFile != null) {
-        // TODO: merge previousProtoFile and newProtoFile and assign to mergedProtoFile
+        new ProtoMerger().merge(newProtoFile, previousProtoFile);
       }
       try (PrintWriter pw = makeDefaultDirsAndWriter(outputFilePath)) {
-        writer.writeToFile(pw, mergedProtoFile, Boolean.valueOf(outputComments));
+        writer.writeToFile(pw, newProtoFile, Boolean.valueOf(outputComments));
       }
     } else if (previousProtoFile != null) {
       try (PrintWriter pw = makeDefaultDirsAndWriter(outputFilePath)) {
