@@ -161,7 +161,6 @@ public class DocumentToProtoConverter {
 
         message.getFields().clear();
         message.getFields().addAll(newFields);
-        System.out.println(message.getName());
       }
     }
   }
