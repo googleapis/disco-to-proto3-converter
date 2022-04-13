@@ -204,7 +204,7 @@ public class ProtoParser {
     }
     Message keyType = Message.PRIMITIVES.get(m.group("keyType"));
     boolean repeated = m.group("repeated") != null || keyType != null;
-    boolean optional = m.group("optional") != null;
+    boolean optional = repeated || m.group("optional") != null;
 
     Field parsedField =
         new Field(m.group("name"), valueType, repeated, optional, keyType, null, false);

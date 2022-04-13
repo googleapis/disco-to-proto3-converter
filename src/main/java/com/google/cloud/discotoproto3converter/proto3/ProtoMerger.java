@@ -19,12 +19,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 // This class does not intend to do a fully-functional merge of two proto models, instead it focuses
 // on merging currently known potential discrepancies between old and new proto files:
-// - Missing field in a new proto file
-// - Missing values in enums
-// - Mismatching service method google.api.method_signature option values
+// - missing field in a new proto file;
+// - missing values in enums;
+// - mismatching service method google.api.method_signature option values (old overwrite new);
+// - mismatching field annotations (old overwrite new).
 //
 // Additional merging functionality is expected to be added to this class as needed.
 public class ProtoMerger {
@@ -79,24 +81,42 @@ public class ProtoMerger {
       mergeFields(newMessage, oldMessage, newMessages);
 
       // Merge enums
-      Map<String, Message> newEnumsMap = new HashMap<>();
-      for (Message nestedEnum : newMessage.getEnums()) {
-        newEnumsMap.put(nestedEnum.getName(), nestedEnum);
-      }
-      for (Message oldEnum : oldMessage.getEnums()) {
-        Message newEnum = newEnumsMap.get(oldEnum.getName());
-        mergeFields(newEnum, oldEnum, newMessages);
-      }
+      mergeEnums(newMessages, oldMessage, newMessage);
+    }
+  }
+
+  private void mergeEnums(
+      Map<String, Message> newMessages, Message oldMessage, Message newMessage) {
+    Map<String, Message> newEnumsMap = new HashMap<>();
+    for (Message nestedEnum : newMessage.getEnums()) {
+      newEnumsMap.put(nestedEnum.getName(), nestedEnum);
+    }
+    for (Message oldEnum : oldMessage.getEnums()) {
+      Message newEnum = newEnumsMap.get(oldEnum.getName());
+      mergeFields(newEnum, oldEnum, newMessages);
     }
   }
 
   private void mergeFields(
       Message newMessage, Message oldMessage, Map<String, Message> newMessages) {
     // Merge fields
+    Map<String, Field> newFieldsMap =
+        newMessage.getFields().stream().collect(Collectors.toMap(ProtoElement::getName, f -> f));
+
     for (Field oldField : oldMessage.getFields()) {
       // compareTo() will be used by contains() to search for the field, not equals().
       if (!newMessage.getFields().contains(oldField)) {
-        newMessage.getFields().add(copyField(oldField, newMessages));
+        // Copy removed field
+        newMessage.getFields().add(copyField(null, oldField, newMessages));
+      } else {
+        Field newField = newFieldsMap.get(oldField.getName());
+        // Copy missing options if a new field has less options than old field.
+        // This is a very primitive merge logic. Add a proper merge logic if ever needed.
+        if (oldField.getOptions().size() > newField.getOptions().size()
+            || oldField.isOptional() != newField.isOptional()) {
+          newMessage.getFields().remove(oldField);
+          newMessage.getFields().add(copyField(newField, oldField, newMessages));
+        }
       }
     }
   }
@@ -104,7 +124,7 @@ public class ProtoMerger {
   // We need to replace references for message types from oldMessages to newMessages.
   // Despite message types having the same names, they are two independently created
   // sets of objects.
-  private Field copyField(Field oldField, Map<String, Message> newMessages) {
+  private Field copyField(Field newField, Field oldField, Map<String, Message> newMessages) {
     Message valueType = Message.PRIMITIVES.get(oldField.getValueType().getName());
     if (valueType == null) {
       valueType = newMessages.get(oldField.getValueType().getName());
@@ -123,7 +143,7 @@ public class ProtoMerger {
             oldField.isRepeated(),
             oldField.isOptional(),
             keyType,
-            oldField.getDescription(),
+            newField != null ? newField.getDescription() : oldField.getDescription(),
             oldField.isFirstInOrder());
 
     // Do not do deep copy for options because they are all generic immutable objects (strings or
