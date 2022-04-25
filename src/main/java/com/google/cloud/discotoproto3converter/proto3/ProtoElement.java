@@ -20,8 +20,8 @@ import java.util.Objects;
 // compareTo() == 0 and equals are inconsistent for this implementation
 // The ProtoElement objects are expected to be stored in SortedMap/SortedSet containers
 public class ProtoElement<T extends ProtoElement<T>> implements Comparable<T> {
-  private final String description;
   private final String name;
+  private String description;
 
   public ProtoElement(String name, String description) {
     this.name = name;
@@ -39,6 +39,10 @@ public class ProtoElement<T extends ProtoElement<T>> implements Comparable<T> {
 
   public String getDescription() {
     return description;
+  }
+
+  public void appendDescription(String extraDescription) {
+    description += extraDescription;
   }
 
   @Override

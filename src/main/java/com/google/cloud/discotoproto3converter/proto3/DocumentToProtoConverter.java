@@ -34,7 +34,6 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class DocumentToProtoConverter {
 
@@ -108,13 +107,38 @@ public class DocumentToProtoConverter {
       int enumFieldsCount = 0;
       Set<String> enumFieldsNames = new HashSet<>();
       Set<String> enumNames = new HashSet<>();
-      for (Message nestedMessage : message.getEnums()) {
-        enumNames.add(nestedMessage.getName());
-        List<String> enumFields =
-            nestedMessage.getFields().stream().map(Field::getName).collect(Collectors.toList());
-        enumFieldsCount += enumFields.size();
-        enumFieldsNames.addAll(enumFields);
+      Set<String> duplicatedEnumFields = new HashSet<>();
+
+      for (Message nestedEnum : message.getEnums()) {
+        for (Field enumField : nestedEnum.getFields()) {
+          if (!enumFieldsNames.add(enumField.getName())) {
+            duplicatedEnumFields.add(enumField.getName());
+          }
+        }
       }
+      for (Message nestedEnum : message.getEnums()) {
+        enumNames.add(nestedEnum.getName());
+        // Set<String> removed = new HashSet<>();
+        StringBuilder extraValues = new StringBuilder();
+        nestedEnum
+            .getFields()
+            .removeIf(
+                a -> {
+                  if (duplicatedEnumFields.contains(a.getName())) {
+                    extraValues.append('\n').append(a.getName());
+                    return true;
+                  }
+                  return false;
+                });
+
+        if (extraValues.length() > 0) {
+          nestedEnum.appendDescription(
+              "\nAdditional supported values which may be not listed in the enum directly due"
+                  + " to technical reasons:"
+                  + extraValues);
+        }
+      }
+
       if (enumFieldsCount > enumFieldsNames.size()) {
         message.getEnums().clear();
         SortedSet<Field> newFields = new TreeSet<>();

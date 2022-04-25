@@ -157,6 +157,36 @@ public class DiscoToProto3ConverterAppTest {
     assertEquals(convertedBody, parsedBody);
   }
 
+  @Test
+  public void convertWithMerge() throws IOException {
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.json");
+    Path previousProtoPath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.proto");
+
+    Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute.proto");
+
+    app.convert(
+        discoveryDocPath.toString(),
+        previousProtoPath.toString(),
+        generatedFilePath.toString(),
+        "",
+        "",
+        "https://cloud.google.com",
+        "false",
+        "true");
+
+    String actualBody = readFile(generatedFilePath);
+
+    Path baselineFilePath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.merge.proto.baseline");
+    String baselineBody = readFile(baselineFilePath);
+
+    assertEquals(baselineBody, actualBody);
+  }
+
   private static String readFile(Path path) throws IOException {
     return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
   }
