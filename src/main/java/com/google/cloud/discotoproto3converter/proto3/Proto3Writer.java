@@ -26,12 +26,14 @@ import java.util.stream.Collectors;
 public class Proto3Writer implements ConverterWriter {
   private static final String GO_CLOUD_PREFIX = "google.cloud.";
 
-  private static final Pattern SEMANTIC_VERSION_REGEX_PATTERN = Pattern.compile("^(?<majorversion>v?"
-      + "(?<majornumber>\\d+)"
-      + "((?<releaselevelname>[a-zA-Z_]+)"
-      + "(?<releaselevelnumber>[0-9]*)"
-      + "(?<releaseleveltrailing>[a-zA-Z_]\\w*)?)?)"
-      + "(\\.\\d+){0,2}$");
+  private static final Pattern SEMANTIC_VERSION_REGEX_PATTERN =
+      Pattern.compile(
+          "^(?<majorversion>v?"
+              + "(?<majornumber>\\d+)"
+              + "((?<releaselevelname>[a-zA-Z_]+)"
+              + "(?<releaselevelnumber>[0-9]*)"
+              + "(?<releaseleveltrailing>[a-zA-Z_]\\w*)?)?)"
+              + "(\\.\\d+){0,2}$");
 
   @Override
   public void writeToFile(PrintWriter writer, ProtoFile protoFile, boolean outputComments) {
@@ -78,12 +80,13 @@ public class Proto3Writer implements ConverterWriter {
   // TODO: include helper method to build strings for options
   private void printOptions(String pkg, PrintWriter writer) {
     String[] tokens = pkg.split("\\.");
-    List<String> capitalized = Arrays.stream(tokens).map(this::capitalize).collect(Collectors.toList());
+    List<String> capitalized =
+        Arrays.stream(tokens).map(this::capitalize).collect(Collectors.toList());
 
-    List<String> csharpCapitalized = Arrays
-        .stream(String.join(".", capitalized).split("(?<=\\d)|(?<=\\d\\d)|(?<=\\d\\d\\d)"))
-        .map(this::capitalize)
-        .collect(Collectors.toList());
+    List<String> csharpCapitalized =
+        Arrays.stream(String.join(".", capitalized).split("(?<=\\d)|(?<=\\d\\d)|(?<=\\d\\d\\d)"))
+            .map(this::capitalize)
+            .collect(Collectors.toList());
 
     writer.println("option csharp_namespace = \"" + String.join("", csharpCapitalized) + "\";");
     writer.println("option go_package = \"" + getGoPackage(pkg) + "\";");
