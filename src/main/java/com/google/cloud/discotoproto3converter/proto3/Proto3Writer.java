@@ -20,9 +20,19 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Proto3Writer implements ConverterWriter {
+  private static final String GO_CLOUD_PREFIX = "google.cloud.";
+
+  private static final Pattern SEMANTIC_VERSION_REGEX_PATTERN = Pattern.compile("^(?<majorversion>v?"
+      + "(?<majornumber>\\d+)"
+      + "((?<releaselevelname>[a-zA-Z_]+)"
+      + "(?<releaselevelnumber>[0-9]*)"
+      + "(?<releaseleveltrailing>[a-zA-Z_]\\w*)?)?)"
+      + "(\\.\\d+){0,2}$");
+
   @Override
   public void writeToFile(PrintWriter writer, ProtoFile protoFile, boolean outputComments) {
 
@@ -68,23 +78,43 @@ public class Proto3Writer implements ConverterWriter {
   // TODO: include helper method to build strings for options
   private void printOptions(String pkg, PrintWriter writer) {
     String[] tokens = pkg.split("\\.");
-    List<String> capitalized =
-        Arrays.stream(tokens).map(this::capitalize).collect(Collectors.toList());
+    List<String> capitalized = Arrays.stream(tokens).map(this::capitalize).collect(Collectors.toList());
 
-    List<String> csharpCapitalized =
-        Arrays.stream(String.join(".", capitalized).split("(?<=\\d)|(?<=\\d\\d)|(?<=\\d\\d\\d)"))
-            .map(this::capitalize)
-            .collect(Collectors.toList());
+    List<String> csharpCapitalized = Arrays
+        .stream(String.join(".", capitalized).split("(?<=\\d)|(?<=\\d\\d)|(?<=\\d\\d\\d)"))
+        .map(this::capitalize)
+        .collect(Collectors.toList());
 
     writer.println("option csharp_namespace = \"" + String.join("", csharpCapitalized) + "\";");
-    String goPkg1 = Arrays.stream(tokens).skip(1).collect(Collectors.joining("/"));
-    String goPkg2 = tokens[tokens.length - 2];
-    String goPkg = "google.golang.org/genproto/googleapis/" + goPkg1 + ";" + goPkg2;
-    writer.println("option go_package = \"" + goPkg + "\";");
+    writer.println("option go_package = \"" + getGoPackage(pkg) + "\";");
     writer.println("option java_multiple_files = true;");
     writer.println("option java_package = \"" + "com." + pkg + "\";");
     writer.println("option php_namespace = \"" + String.join("\\\\", capitalized) + "\";");
     writer.println("option ruby_package = \"" + String.join("::", capitalized) + "\";\n");
+  }
+
+  private String getGoPackage(String protoPkg) {
+    String[] segments;
+    if (protoPkg.startsWith(GO_CLOUD_PREFIX)) {
+      segments = protoPkg.substring(GO_CLOUD_PREFIX.length()).split("\\.");
+    } else {
+      segments = protoPkg.substring(protoPkg.indexOf('.', 0)).split("\\.");
+    }
+
+    int pkgNameIndex = segments.length - 1;
+    for (int i = 0; i < segments.length; i++) {
+      if (SEMANTIC_VERSION_REGEX_PATTERN.matcher(segments[i]).matches()) {
+        segments[i] = "api" + segments[i];
+        if (pkgNameIndex == i) {
+          pkgNameIndex--;
+        }
+        break;
+      }
+    }
+    String goImportPath = String.join("/", segments);
+    return String.format(
+        "cloud.google.com/go/%s/%spb;%spb",
+        goImportPath, segments[pkgNameIndex], segments[pkgNameIndex]);
   }
 
   private String capitalize(String name) {
@@ -100,7 +130,8 @@ public class Proto3Writer implements ConverterWriter {
       writer.println("service " + service + " {");
 
       for (Option opt : service.getOptions()) {
-        // Support only scalar service-level options for now (there are not use-cases for vector
+        // Support only scalar service-level options for now (there are not use-cases
+        // for vector
         // ones).
         String comaSeparatedScalar = (String) opt.getProperties().get("");
         if (comaSeparatedScalar == null) {
@@ -214,7 +245,8 @@ public class Proto3Writer implements ConverterWriter {
     }
 
     String comments = description.replace("\n", "\n" + prefix + "// ");
-    // This is to get rid of end of line whitespaces, which are often removed by text editors
+    // This is to get rid of end of line whitespaces, which are often removed by
+    // text editors
     // automatically.
     comments = comments.replaceAll(" *\n", "\n");
     return prefix + "// " + comments;
