@@ -81,7 +81,7 @@ public class DocumentToProtoConverter {
 
   private void readSchema(Document document) {
     for (Map.Entry<String, Schema> entry : document.schemas().entrySet()) {
-      schemaToField(entry.getValue(), true);
+      schemaToField(entry.getValue(), true, "readSchema:  ");
     }
     for (Message message : protoFile.getMessages().values()) {
       resolveReferences(message);
@@ -405,15 +405,19 @@ public class DocumentToProtoConverter {
     return option;
   }
 
-  private Field schemaToField(Schema sch, boolean optional) {
+  private Field schemaToField(Schema sch, boolean optional, String debugPreviousPath) {
     String name = Name.anyCamel(sch.key()).toCapitalizedLowerUnderscore();
     String description = sch.description();
     Message valueType = null;
     boolean repeated = false;
     Message keyType = null;
+    String debugCurentPath = debugPreviousPath + String.format("SCHEMA: %s\n%s\n----\n", name, description);
+
+
 
     switch (sch.type()) {
       case ANY:
+        System.err.printf("*** vchudnov: ERROR trace:\n%s", debugCurentPath);
         throw new IllegalArgumentException("Any type detected in schema: " + sch);
       case ARRAY:
         repeated = true;
@@ -489,7 +493,7 @@ public class DocumentToProtoConverter {
 
     if (repeated) {
       Field subField =
-          schemaToField(keyType == null ? sch.items() : sch.additionalProperties(), true);
+          schemaToField(keyType == null ? sch.items() : sch.additionalProperties(), true, debugCurentPath);
       valueType = subField.getValueType();
     }
 
@@ -501,7 +505,7 @@ public class DocumentToProtoConverter {
     }
 
     for (Map.Entry<String, Schema> entry : sch.properties().entrySet()) {
-      Field valueTypeField = schemaToField(entry.getValue(), true);
+      Field valueTypeField = schemaToField(entry.getValue(), true, debugCurentPath);
       valueType.getFields().add(valueTypeField);
       if (valueTypeField.getValueType().isEnum()) {
         valueType.getEnums().add(valueTypeField.getValueType());
@@ -633,7 +637,7 @@ public class DocumentToProtoConverter {
 
         for (Schema pathParam : method.pathParams().values()) {
           boolean required = methodSignatureParamNames.containsKey(pathParam.getIdentifier());
-          Field pathField = schemaToField(pathParam, !required);
+          Field pathField = schemaToField(pathParam, !required, "readResources:A:  ");
           if (required) {
             Option opt = createOption("google.api.field_behavior", ProtoOptionValues.REQUIRED);
             pathField.getOptions().add(opt);
@@ -647,7 +651,7 @@ public class DocumentToProtoConverter {
 
         for (Schema queryParam : method.queryParams().values()) {
           boolean required = methodSignatureParamNames.containsKey(queryParam.getIdentifier());
-          Field queryField = schemaToField(queryParam, !required);
+          Field queryField = schemaToField(queryParam, !required, "readResources:B:  ");
           if (required) {
             Option opt = createOption("google.api.field_behavior", ProtoOptionValues.REQUIRED);
             queryField.getOptions().add(opt);

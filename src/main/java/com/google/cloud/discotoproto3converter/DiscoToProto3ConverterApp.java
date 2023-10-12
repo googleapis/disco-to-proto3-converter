@@ -26,6 +26,7 @@ public class DiscoToProto3ConverterApp extends ConverterApp {
 
   public static void main(String[] args) throws IOException {
     DiscoToProto3ConverterApp converterApp = new DiscoToProto3ConverterApp();
+    System.err.println("*** vchudnov: In main!\n");
     converterApp.convert(args);
   }
 }
