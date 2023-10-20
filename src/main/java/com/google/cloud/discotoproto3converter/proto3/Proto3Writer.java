@@ -57,6 +57,8 @@ public class Proto3Writer implements ConverterWriter {
       writer.println();
     }
 
+    // TODO(vchudnov): Add protoFile.HasAnyFields()
+
     // File Options
     writer.println("//");
     writer.println("// File Options");

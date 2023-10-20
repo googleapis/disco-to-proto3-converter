@@ -61,6 +61,7 @@ public class DocumentToProtoConverter {
     readResources(document);
     cleanupEnumNamingConflicts();
     this.protoFile.setHasLroDefinitions(applyLroConfiguration());
+    checkAnyFields();
     convertEnumFieldsToStrings();
   }
 
@@ -81,7 +82,7 @@ public class DocumentToProtoConverter {
 
   private void readSchema(Document document) {
     for (Map.Entry<String, Schema> entry : document.schemas().entrySet()) {
-      schemaToField(entry.getValue(), true, "readSchema:  ");
+      schemaToField(entry.getValue(), true, "*** readSchema\n");
     }
     for (Message message : protoFile.getMessages().values()) {
       resolveReferences(message);
@@ -91,10 +92,32 @@ public class DocumentToProtoConverter {
   private void resolveReferences(Message message) {
     for (Field field : message.getFields()) {
       Message valueType = field.getValueType();
-      if (valueType.isRef()) {
+      if (valueType.isRef()) { // replace the field object with a link to the message it references by name
         field.setValueType(protoFile.getMessages().get(valueType.getName()));
-      } else {
+      } else { // recurse in
         resolveReferences(valueType);
+      }
+    }
+  }
+
+  private void checkForAllowedAnyFields(Message message) {
+    checkForAllowedAnyFields(message, message.getName());
+  }
+
+  private void checkForAllowedAnyFields(Message message, String previousFieldPath) {
+    for (Field field : message.getFields()) {
+      Message valueType = field.getValueType();
+      String currentFieldPath = previousFieldPath + "." + field.getName();
+      // System.err.printf("**-- currentFieldPath: %s\n", currentFieldPath);
+      if (valueType == Message.PRIMITIVES.get("any")) {
+        if (currentFieldPath.endsWith("error.details")) {
+          System.err.printf("Found ANY field at %s\n", currentFieldPath);
+        } else {
+          // throw new IllegalArgumentException("illegal ANY type not under \"*.error.details\": " + currentFieldPath);
+          System.err.println("*** illegal ANY type not under \"*.error.details\": " + currentFieldPath);
+        }
+      } else {
+        checkForAllowedAnyFields(field.getValueType(), currentFieldPath);
       }
     }
   }
@@ -189,11 +212,10 @@ public class DocumentToProtoConverter {
 
       message.getFields().removeAll(enumFields);
       for (Field f : enumFields) {
-        String desc =
-            f.getDescription()
-                + "\nCheck the "
-                + f.getValueType().getName()
-                + " enum for the list of possible values.";
+        String desc = f.getDescription()
+            + "\nCheck the "
+            + f.getValueType().getName()
+            + " enum for the list of possible values.";
         message
             .getFields()
             .add(
@@ -205,6 +227,17 @@ public class DocumentToProtoConverter {
                     f.getKeyType(),
                     desc,
                     f.isFirstInOrder()));
+      }
+    }
+  }
+
+  private void checkAnyFields() {
+    // Note that we only check for Any fields for messages rooted in requests and responses. We
+    // don't want to initiate the request in submessages that will be included in those.
+    for (GrpcService service : protoFile.getServices().values()) {
+      for (GrpcMethod method : service.getMethods()) {
+        checkForAllowedAnyFields(method.getInput());  // should we disallow error.details.Any on inputs
+        checkForAllowedAnyFields(method.getOutput());
       }
     }
   }
@@ -265,12 +298,11 @@ public class DocumentToProtoConverter {
           continue;
         }
 
-        Optional<Option> optHttp =
-            method
-                .getOptions()
-                .stream()
-                .filter(a -> "google.api.http".equals(a.getName()))
-                .findFirst();
+        Optional<Option> optHttp = method
+            .getOptions()
+            .stream()
+            .filter(a -> "google.api.http".equals(a.getName()))
+            .findFirst();
 
         if (!optHttp.isPresent()
             || !optHttp.get().getProperties().containsKey("get")
@@ -330,12 +362,11 @@ public class DocumentToProtoConverter {
           continue;
         }
 
-        Optional<Option> optHttp =
-            method
-                .getOptions()
-                .stream()
-                .filter(a -> "google.api.http".equals(a.getName()))
-                .findFirst();
+        Optional<Option> optHttp = method
+            .getOptions()
+            .stream()
+            .filter(a -> "google.api.http".equals(a.getName()))
+            .findFirst();
 
         if (!optHttp.isPresent()
             || optHttp.get().getProperties().containsKey("get")
@@ -351,14 +382,13 @@ public class DocumentToProtoConverter {
         String pollingServiceCandidate = null;
         int matchingFieldPairsMax = 0;
 
-        for (Map.Entry<String, Map<String, Field>> entry :
-            pollingServiceMessageFieldsMap.entrySet()) {
+        for (Map.Entry<String, Map<String, Field>> entry : pollingServiceMessageFieldsMap.entrySet()) {
           List<Field[]> matchingFieldPairs = new ArrayList<>();
           Map<String, Field> pollingMessageFields = entry.getValue();
           for (Field initiatingMessageField : method.getInput().getFieldsWithNumbers().values()) {
             Field pollingMessageField = pollingMessageFields.get(initiatingMessageField.getName());
             if (pollingMessageField != null && pollingMessageField.equals(initiatingMessageField)) {
-              matchingFieldPairs.add(new Field[] {initiatingMessageField, pollingMessageField});
+              matchingFieldPairs.add(new Field[] { initiatingMessageField, pollingMessageField });
             }
           }
 
@@ -413,12 +443,12 @@ public class DocumentToProtoConverter {
     Message keyType = null;
     String debugCurentPath = debugPreviousPath + String.format("SCHEMA: %s\n%s\n----\n", name, description);
 
-
-
     switch (sch.type()) {
       case ANY:
         System.err.printf("*** vchudnov: ERROR trace:\n%s", debugCurentPath);
-        throw new IllegalArgumentException("Any type detected in schema: " + sch);
+        valueType = Message.PRIMITIVES.get("any");
+        break;
+      // throw new IllegalArgumentException("Any type detected in schema: " + sch);
       case ARRAY:
         repeated = true;
         break;
@@ -469,9 +499,8 @@ public class DocumentToProtoConverter {
         break;
       case STRING:
         if (sch.isEnum() && !"".equals(sch.getIdentifier())) {
-          valueType =
-              constructEnumMessage(
-                  getMessageName(sch, true), description, sch.enumValues(), sch.enumDescriptions());
+          valueType = constructEnumMessage(
+              getMessageName(sch, true), description, sch.enumValues(), sch.enumDescriptions());
         } else {
           switch (sch.format()) {
             case INT64:
@@ -492,18 +521,17 @@ public class DocumentToProtoConverter {
     }
 
     if (repeated) {
-      Field subField =
-          schemaToField(keyType == null ? sch.items() : sch.additionalProperties(), true, debugCurentPath);
+      Field subField = schemaToField(keyType == null ? sch.items() : sch.additionalProperties(), true, debugCurentPath);
       valueType = subField.getValueType();
     }
 
-    Field field =
-        new Field(name, valueType, repeated, optional, keyType, sanitizeDescr(description), false);
+    Field field = new Field(name, valueType, repeated, optional, keyType, sanitizeDescr(description), false);
     if (sch.type() == Schema.Type.EMPTY) {
     } else if (Message.PRIMITIVES.containsKey(valueType.getName())) {
       return field;
     }
 
+    // this is where we recurse for OBJECT
     for (Map.Entry<String, Schema> entry : sch.properties().entrySet()) {
       Field valueTypeField = schemaToField(entry.getValue(), true, debugCurentPath);
       valueType.getFields().add(valueTypeField);
@@ -524,6 +552,7 @@ public class DocumentToProtoConverter {
     } else if (!valueType.isRef()) {
       if (valueType.getDescription() != null
           && existingMessage.getDescription() != null
+          // not clear on the reason for this
           && valueType.getDescription().length() < existingMessage.getDescription().length()) {
         putAllMessages(valueType.getName(), valueType);
       }
@@ -560,8 +589,7 @@ public class DocumentToProtoConverter {
     String dummyDesc = "A value indicating that the enum field is not set.";
     String dummyFieldName = Name.anyCamel("Undefined", name).toUpperUnderscore();
     Message emptyType = Message.PRIMITIVES.get("");
-    Field dummyField =
-        new Field(dummyFieldName, emptyType, false, false, null, sanitizeDescr(dummyDesc), true);
+    Field dummyField = new Field(dummyFieldName, emptyType, false, false, null, sanitizeDescr(dummyDesc), true);
     enumMessage.getFields().add(dummyField);
 
     Iterator<String> valIter = enumVals.iterator();
@@ -603,8 +631,7 @@ public class DocumentToProtoConverter {
 
     for (Map.Entry<String, List<Method>> entry : document.resources().entrySet()) {
       String grpcServiceName = Name.anyCamel(entry.getKey()).toUpperCamel();
-      GrpcService service =
-          new GrpcService(grpcServiceName, getServiceDescription(grpcServiceName));
+      GrpcService service = new GrpcService(grpcServiceName, getServiceDescription(grpcServiceName));
       if (serviceIgnoreSet.contains(service.getName())) {
         // Ignore the service (as early as possible to avoid dependency failures on previously
         // ignored request messages used in this service).
@@ -644,9 +671,8 @@ public class DocumentToProtoConverter {
             methodSignatureParamNames.put(pathParam.getIdentifier(), pathField.getName());
           }
           input.getFields().add(pathField);
-          httpOptionPath =
-              httpOptionPath.replace(
-                  "{" + pathParam.getIdentifier() + "}", "{" + pathField.getName() + "}");
+          httpOptionPath = httpOptionPath.replace(
+              "{" + pathParam.getIdentifier() + "}", "{" + pathField.getName() + "}");
         }
 
         for (Schema queryParam : method.queryParams().values()) {
@@ -671,12 +697,10 @@ public class DocumentToProtoConverter {
 
         if (method.request() != null) {
           Message request = protoFile.getMessages().get(method.request().reference());
-          String requestFieldName =
-              Name.anyCamel(request.getName(), "resource").toLowerUnderscore();
+          String requestFieldName = Name.anyCamel(request.getName(), "resource").toLowerUnderscore();
           String description = getMessageBodyDescription();
-          Field bodyField =
-              new Field(
-                  requestFieldName, request, false, false, null, sanitizeDescr(description), false);
+          Field bodyField = new Field(
+              requestFieldName, request, false, false, null, sanitizeDescr(description), false);
           bodyField
               .getOptions()
               .add(createOption("google.api.field_behavior", ProtoOptionValues.REQUIRED));
@@ -699,13 +723,11 @@ public class DocumentToProtoConverter {
         }
 
         // Method
-        GrpcMethod grpcMethod =
-            new GrpcMethod(methodname, input, output, sanitizeDescr(method.description()));
+        GrpcMethod grpcMethod = new GrpcMethod(methodname, input, output, sanitizeDescr(method.description()));
         grpcMethod.getOptions().add(methodHttpOption);
-        Option requiredMethodSignatureOption =
-            createOption(
-                "google.api.method_signature",
-                String.join(",", methodSignatureParamNames.values()));
+        Option requiredMethodSignatureOption = createOption(
+            "google.api.method_signature",
+            String.join(",", methodSignatureParamNames.values()));
         grpcMethod.getOptions().add(requiredMethodSignatureOption);
         // TODO: design heuristic for other useful method signatures with optional fields
 
