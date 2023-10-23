@@ -61,7 +61,7 @@ public class DocumentToProtoConverter {
     readResources(document);
     cleanupEnumNamingConflicts();
     this.protoFile.setHasLroDefinitions(applyLroConfiguration());
-    checkAnyFields();
+    this.protoFile.setHasAnyFields(checkAnyFields());
     convertEnumFieldsToStrings();
   }
 
@@ -100,11 +100,15 @@ public class DocumentToProtoConverter {
     }
   }
 
-  private void checkForAllowedAnyFields(Message message) {
-    checkForAllowedAnyFields(message, message.getName());
+  private boolean checkForAllowedAnyFields(Message message) {
+    return checkForAllowedAnyFields(message, message.getName());
   }
 
-  private void checkForAllowedAnyFields(Message message, String previousFieldPath) {
+  private boolean checkForAllowedAnyFields(Message message, String previousFieldPath) {
+    // We want to we recursively check every child and don't short-circuit when haveAny becomes
+    // true, as we rely on the side effect (exception) to signal a google.protobuf.Any in an
+    // unsuported location.
+    boolean haveAny = false;
     for (Field field : message.getFields()) {
       Message valueType = field.getValueType();
       String currentFieldPath = previousFieldPath + "." + field.getName();
@@ -112,14 +116,15 @@ public class DocumentToProtoConverter {
       if (valueType == Message.PRIMITIVES.get("any")) {
         if (currentFieldPath.endsWith("error.details")) {
           System.err.printf("Found ANY field at %s\n", currentFieldPath);
+          haveAny = true;
         } else {
-          // throw new IllegalArgumentException("illegal ANY type not under \"*.error.details\": " + currentFieldPath);
-          System.err.println("*** illegal ANY type not under \"*.error.details\": " + currentFieldPath);
+          throw new IllegalArgumentException("illegal ANY type not under \"*.error.details\": " + currentFieldPath);
         }
       } else {
-        checkForAllowedAnyFields(field.getValueType(), currentFieldPath);
+        haveAny = checkForAllowedAnyFields(field.getValueType(), currentFieldPath) || haveAny;
       }
     }
+    return haveAny;
   }
 
   // If there is a naming conflict between two or more enums in the same message, convert all
@@ -231,15 +236,19 @@ public class DocumentToProtoConverter {
     }
   }
 
-  private void checkAnyFields() {
+  private boolean checkAnyFields() {
+    boolean haveAny = false;
     // Note that we only check for Any fields for messages rooted in requests and responses. We
     // don't want to initiate the request in submessages that will be included in those.
     for (GrpcService service : protoFile.getServices().values()) {
       for (GrpcMethod method : service.getMethods()) {
-        checkForAllowedAnyFields(method.getInput());  // should we disallow error.details.Any on inputs
-        checkForAllowedAnyFields(method.getOutput());
+        // It's important these checks are not short-circuited!
+        boolean inInput = checkForAllowedAnyFields(method.getInput());  // should we disallow error.details.Any on inputs?
+        boolean inOutput = checkForAllowedAnyFields(method.getOutput());
+        haveAny = haveAny || inInput || inOutput;
       }
     }
+    return haveAny;
   }
 
   private boolean applyLroConfiguration() {
