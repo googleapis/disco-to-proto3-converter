@@ -455,7 +455,7 @@ public class DocumentToProtoConverter {
     switch (sch.type()) {
       case ANY:
         System.err.printf("*** vchudnov: ERROR trace:\n%s", debugCurentPath);
-        valueType = Message.PRIMITIVES.get("any");
+        valueType = Message.PRIMITIVES.get("google.protobuf.Any");
         break;
       // throw new IllegalArgumentException("Any type detected in schema: " + sch);
       case ARRAY:

@@ -40,7 +40,7 @@ public class Message extends ProtoElement<Message> {
 
     // This isn't technically a primitive, but it is a fundamental well-known-type with no a priori
     // structure.
-    PRIMITIVES.put("any", new Message("google.protobuf.Any", false, false, null));
+    PRIMITIVES.put("google.protobuf.Any", new Message("google.protobuf.Any", false, false, null));
   }
 
   private final SortedSet<Field> fields = new TreeSet<>();
