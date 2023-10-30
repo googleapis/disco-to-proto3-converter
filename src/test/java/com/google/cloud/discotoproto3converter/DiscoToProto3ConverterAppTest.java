@@ -16,6 +16,7 @@
 package com.google.cloud.discotoproto3converter;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -75,9 +76,9 @@ public class DiscoToProto3ConverterAppTest {
         generatedFilePath.toString(),
         "Addresses,RegionOperations",
         "Operation,AddressList,AddressesScopedList,Warning,Warnings,Data,Error,"
-            + "Errors,AddressAggregatedList,AggregatedListAddressesRequest,"
-            + "InsertAddressRequest,ListAddressesRequest,InsertAddressRequest,"
-            + "GetRegionOperationRequest",
+        + "Errors,AddressAggregatedList,AggregatedListAddressesRequest,"
+        + "InsertAddressRequest,ListAddressesRequest,InsertAddressRequest,"
+        + "GetRegionOperationRequest",
         "",
         "false",
         "true");
@@ -118,7 +119,7 @@ public class DiscoToProto3ConverterAppTest {
     assertEquals(baselineBody, actualBody);
   }
 
-    @Test
+  @Test
   public void convertAnyFieldInError() throws IOException {
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
@@ -144,6 +145,27 @@ public class DiscoToProto3ConverterAppTest {
     String baselineBody = readFile(baselineFilePath);
 
     assertEquals(baselineBody, actualBody);
+  }
+
+  @Test
+  public void convertAnyFieldOutsideError() throws IOException {
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.nonerror-any.json");
+    Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute.nonerror-any.proto");
+    System.out.printf("*** output path: %s\n", generatedFilePath.toString());
+
+    assertThrows(java.lang.IllegalArgumentException.class,
+        () -> app.convert(
+            discoveryDocPath.toString(),
+            null,
+            generatedFilePath.toString(),
+            "",
+            "",
+            "https://cloud.google.com",
+            "true",
+            "true"));
   }
 
   @Test

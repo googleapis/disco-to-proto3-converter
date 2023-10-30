@@ -113,8 +113,8 @@ public class DocumentToProtoConverter {
       Message valueType = field.getValueType();
       String currentFieldPath = previousFieldPath + "." + field.getName();
       // System.err.printf("**-- currentFieldPath: %s\n", currentFieldPath);
-      if (valueType == Message.PRIMITIVES.get("any")) {
-        if (currentFieldPath.endsWith("error.details")) {
+      if (valueType.getName() == Message.PRIMITIVES.get("google.protobuf.Any").getName()) {
+        if (currentFieldPath.endsWith(".error.details")) {
           System.err.printf("Found ANY field at %s\n", currentFieldPath);
           haveAny = true;
         } else {
@@ -149,21 +149,21 @@ public class DocumentToProtoConverter {
         // Set<String> removed = new HashSet<>();
         StringBuilder extraValues = new StringBuilder();
         nestedEnum
-            .getFields()
-            .removeIf(
-                a -> {
-                  if (duplicatedEnumFields.contains(a.getName())) {
-                    extraValues.append('\n').append(a.getName());
-                    return true;
-                  }
-                  return false;
-                });
+                .getFields()
+                .removeIf(
+                    a -> {
+                      if (duplicatedEnumFields.contains(a.getName())) {
+                        extraValues.append('\n').append(a.getName());
+                        return true;
+                      }
+                      return false;
+                    });
 
         if (extraValues.length() > 0) {
           nestedEnum.appendDescription(
               "\nAdditional supported values which may be not listed in the enum directly due"
-                  + " to technical reasons:"
-                  + extraValues);
+              + " to technical reasons:"
+              + extraValues);
         }
       }
 
@@ -218,20 +218,20 @@ public class DocumentToProtoConverter {
       message.getFields().removeAll(enumFields);
       for (Field f : enumFields) {
         String desc = f.getDescription()
-            + "\nCheck the "
-            + f.getValueType().getName()
-            + " enum for the list of possible values.";
+                      + "\nCheck the "
+                      + f.getValueType().getName()
+                      + " enum for the list of possible values.";
         message
-            .getFields()
-            .add(
-                new Field(
-                    f.getName(),
-                    stringType,
-                    f.isRepeated(),
-                    f.isOptional(),
-                    f.getKeyType(),
-                    desc,
-                    f.isFirstInOrder()));
+                .getFields()
+                .add(
+                    new Field(
+                        f.getName(),
+                        stringType,
+                        f.isRepeated(),
+                        f.isOptional(),
+                        f.getKeyType(),
+                        desc,
+                        f.isFirstInOrder()));
       }
     }
   }
@@ -289,9 +289,9 @@ public class DocumentToProtoConverter {
 
     for (Map.Entry<ProtoOptionValues, Field> entry : opFields.entrySet()) {
       entry
-          .getValue()
-          .getOptions()
-          .add(createOption("google.cloud.operation_field", entry.getKey()));
+              .getValue()
+              .getOptions()
+              .add(createOption("google.cloud.operation_field", entry.getKey()));
     }
 
     //
@@ -308,10 +308,10 @@ public class DocumentToProtoConverter {
         }
 
         Optional<Option> optHttp = method
-            .getOptions()
-            .stream()
-            .filter(a -> "google.api.http".equals(a.getName()))
-            .findFirst();
+                                   .getOptions()
+                                   .stream()
+                                   .filter(a -> "google.api.http".equals(a.getName()))
+                                   .findFirst();
 
         if (!optHttp.isPresent()
             || !optHttp.get().getProperties().containsKey("get")
@@ -334,11 +334,11 @@ public class DocumentToProtoConverter {
             // this field will be populated from the response (Operation) message, thus adding
             // `operation_response_field` option to it.
             pollingMessageField
-                .getOptions()
-                .add(
-                    createOption(
-                        "google.cloud.operation_response_field",
-                        opFields.get(ProtoOptionValues.NAME).getName()));
+                    .getOptions()
+                    .add(
+                        createOption(
+                            "google.cloud.operation_response_field",
+                            opFields.get(ProtoOptionValues.NAME).getName()));
           } else {
             // These fields will be populated from initial request message, thus putting them in
             // pollingServiceMessageFields map, which will be used to populate
@@ -372,10 +372,10 @@ public class DocumentToProtoConverter {
         }
 
         Optional<Option> optHttp = method
-            .getOptions()
-            .stream()
-            .filter(a -> "google.api.http".equals(a.getName()))
-            .findFirst();
+                                   .getOptions()
+                                   .stream()
+                                   .filter(a -> "google.api.http".equals(a.getName()))
+                                   .findFirst();
 
         if (!optHttp.isPresent()
             || optHttp.get().getProperties().containsKey("get")
@@ -425,12 +425,12 @@ public class DocumentToProtoConverter {
         }
 
         method
-            .getOptions()
-            .add(createOption("google.cloud.operation_service", pollingServiceCandidate));
+                .getOptions()
+                .add(createOption("google.cloud.operation_service", pollingServiceCandidate));
         for (Field[] fieldPair : matchingFieldPairsCandidate) {
           fieldPair[0]
-              .getOptions()
-              .add(createOption("google.cloud.operation_request_field", fieldPair[1].getName()));
+                  .getOptions()
+                  .add(createOption("google.cloud.operation_request_field", fieldPair[1].getName()));
         }
       }
     }
@@ -457,7 +457,7 @@ public class DocumentToProtoConverter {
         System.err.printf("*** vchudnov: ERROR trace:\n%s", debugCurentPath);
         valueType = Message.PRIMITIVES.get("google.protobuf.Any");
         break;
-      // throw new IllegalArgumentException("Any type detected in schema: " + sch);
+        // throw new IllegalArgumentException("Any type detected in schema: " + sch);
       case ARRAY:
         repeated = true;
         break;
@@ -582,9 +582,9 @@ public class DocumentToProtoConverter {
           // now.
           throw new IllegalArgumentException(
               "Message collision detected. Existing message = "
-                  + existingMessage
-                  + ", new message = "
-                  + valueType);
+              + existingMessage
+              + ", new message = "
+              + valueType);
         }
       }
     }
@@ -701,8 +701,8 @@ public class DocumentToProtoConverter {
         // TODO: add logic to determine non-required method_signature options
         Option methodHttpOption = new Option("google.api.http");
         methodHttpOption
-            .getProperties()
-            .put(method.httpMethod().toLowerCase(), endpointSuffix + "/" + httpOptionPath);
+                .getProperties()
+                .put(method.httpMethod().toLowerCase(), endpointSuffix + "/" + httpOptionPath);
 
         if (method.request() != null) {
           Message request = protoFile.getMessages().get(method.request().reference());
@@ -711,8 +711,8 @@ public class DocumentToProtoConverter {
           Field bodyField = new Field(
               requestFieldName, request, false, false, null, sanitizeDescr(description), false);
           bodyField
-              .getOptions()
-              .add(createOption("google.api.field_behavior", ProtoOptionValues.REQUIRED));
+                  .getOptions()
+                  .add(createOption("google.api.field_behavior", ProtoOptionValues.REQUIRED));
           input.getFields().add(bodyField);
           methodHttpOption.getProperties().put("body", requestFieldName);
           methodSignatureParamNames.put("", requestFieldName);
@@ -744,8 +744,8 @@ public class DocumentToProtoConverter {
       }
 
       service
-          .getOptions()
-          .add(createOption("google.api.oauth_scopes", String.join(",", authScopes)));
+              .getOptions()
+              .add(createOption("google.api.oauth_scopes", String.join(",", authScopes)));
       protoFile.getServices().put(service.getName(), service);
     }
   }
