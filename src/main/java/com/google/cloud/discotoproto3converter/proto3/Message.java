@@ -40,6 +40,9 @@ public class Message extends ProtoElement<Message> {
 
     // This isn't technically a primitive, but it is a fundamental well-known-type with no a priori
     // structure.
+    //
+    // TODO: If we start accepting additional well-known types, create a specific data structure for
+    // those rather than overloading "PRIMITIVES".
     PRIMITIVES.put("google.protobuf.Any", new Message("google.protobuf.Any", false, false, null));
   }
 

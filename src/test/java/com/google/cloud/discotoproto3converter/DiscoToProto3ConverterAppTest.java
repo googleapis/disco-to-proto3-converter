@@ -26,14 +26,13 @@ import java.nio.file.Paths;
 import org.junit.Before;
 import org.junit.Test;
 
-
 public class DiscoToProto3ConverterAppTest {
   private Path outputDir;
 
   @Before
   public void setUp() throws IOException {
     outputDir = Files.createTempDirectory("disco-to-proto3-converter");
-    // outputDir.toFile().deleteOnExit();
+    outputDir.toFile().deleteOnExit();
   }
 
   @Test
@@ -126,7 +125,6 @@ public class DiscoToProto3ConverterAppTest {
     Path discoveryDocPath =
         Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.error-any.json");
     Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute.error-any.proto");
-    System.out.printf("*** output path: %s\n", generatedFilePath.toString());
 
     app.convert(
         discoveryDocPath.toString(),
@@ -139,11 +137,9 @@ public class DiscoToProto3ConverterAppTest {
         "true");
 
     String actualBody = readFile(generatedFilePath);
-
     Path baselineFilePath =
         Paths.get("src", "test", "resources", prefix.toString(), "compute.error-any.proto.baseline");
     String baselineBody = readFile(baselineFilePath);
-
     assertEquals(baselineBody, actualBody);
   }
 
@@ -154,7 +150,6 @@ public class DiscoToProto3ConverterAppTest {
     Path discoveryDocPath =
         Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.nonerror-any.json");
     Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute.nonerror-any.proto");
-    System.out.printf("*** output path: %s\n", generatedFilePath.toString());
 
     assertThrows(java.lang.IllegalArgumentException.class,
         () -> app.convert(
