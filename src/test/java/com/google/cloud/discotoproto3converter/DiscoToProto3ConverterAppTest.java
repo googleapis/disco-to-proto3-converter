@@ -75,9 +75,9 @@ public class DiscoToProto3ConverterAppTest {
         generatedFilePath.toString(),
         "Addresses,RegionOperations",
         "Operation,AddressList,AddressesScopedList,Warning,Warnings,Data,Error,"
-        + "Errors,AddressAggregatedList,AggregatedListAddressesRequest,"
-        + "InsertAddressRequest,ListAddressesRequest,InsertAddressRequest,"
-        + "GetRegionOperationRequest",
+            + "Errors,AddressAggregatedList,AggregatedListAddressesRequest,"
+            + "InsertAddressRequest,ListAddressesRequest,InsertAddressRequest,"
+            + "GetRegionOperationRequest",
         "",
         "false",
         "true");
@@ -124,7 +124,8 @@ public class DiscoToProto3ConverterAppTest {
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
     Path discoveryDocPath =
         Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.error-any.json");
-    Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute.error-any.proto");
+    Path generatedFilePath =
+        Paths.get(outputDir.toString(), prefix.toString(), "compute.error-any.proto");
 
     app.convert(
         discoveryDocPath.toString(),
@@ -138,7 +139,8 @@ public class DiscoToProto3ConverterAppTest {
 
     String actualBody = readFile(generatedFilePath);
     Path baselineFilePath =
-        Paths.get("src", "test", "resources", prefix.toString(), "compute.error-any.proto.baseline");
+        Paths.get(
+            "src", "test", "resources", prefix.toString(), "compute.error-any.proto.baseline");
     String baselineBody = readFile(baselineFilePath);
     assertEquals(baselineBody, actualBody);
   }
@@ -148,19 +150,23 @@ public class DiscoToProto3ConverterAppTest {
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
     Path discoveryDocPath =
-        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.nonerror-any.json");
-    Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute.nonerror-any.proto");
+        Paths.get(
+            "src", "test", "resources", prefix.toString(), "compute.v1small.nonerror-any.json");
+    Path generatedFilePath =
+        Paths.get(outputDir.toString(), prefix.toString(), "compute.nonerror-any.proto");
 
-    assertThrows(java.lang.IllegalArgumentException.class,
-        () -> app.convert(
-            discoveryDocPath.toString(),
-            null,
-            generatedFilePath.toString(),
-            "",
-            "",
-            "https://cloud.google.com",
-            "true",
-            "true"));
+    assertThrows(
+        java.lang.IllegalArgumentException.class,
+        () ->
+            app.convert(
+                discoveryDocPath.toString(),
+                null,
+                generatedFilePath.toString(),
+                "",
+                "",
+                "https://cloud.google.com",
+                "true",
+                "true"));
   }
 
   @Test

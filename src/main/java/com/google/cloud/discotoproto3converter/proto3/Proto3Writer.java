@@ -53,7 +53,7 @@ public class Proto3Writer implements ConverterWriter {
     if (protoFile.isHasLroDefinitions()) {
       writer.println("import \"google/cloud/extended_operations.proto\";");
     }
-    if (protoFile.HasAnyFields()){
+    if (protoFile.HasAnyFields()) {
       writer.println("import \"google/protobuf/any.proto\";");
     }
     writer.println();

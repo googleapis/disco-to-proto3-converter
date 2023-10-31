@@ -49,7 +49,6 @@ public class DocumentToProtoConverter {
   // "false" for production code.
   private final boolean trace = false;
 
-
   public DocumentToProtoConverter(
       Document document,
       String documentFileName,
@@ -124,7 +123,8 @@ public class DocumentToProtoConverter {
             System.err.printf("Found ANY field at %s\n", currentFieldPath);
           }
         } else {
-          throw new IllegalArgumentException("illegal ANY type not under \"*.error.details\": " + currentFieldPath);
+          throw new IllegalArgumentException(
+              "illegal ANY type not under \"*.error.details\": " + currentFieldPath);
         }
       } else {
         // order matters here: we want to not ensure the first check happens
@@ -156,21 +156,21 @@ public class DocumentToProtoConverter {
         // Set<String> removed = new HashSet<>();
         StringBuilder extraValues = new StringBuilder();
         nestedEnum
-                .getFields()
-                .removeIf(
-                    a -> {
-                      if (duplicatedEnumFields.contains(a.getName())) {
-                        extraValues.append('\n').append(a.getName());
-                        return true;
-                      }
-                      return false;
-                    });
+            .getFields()
+            .removeIf(
+                a -> {
+                  if (duplicatedEnumFields.contains(a.getName())) {
+                    extraValues.append('\n').append(a.getName());
+                    return true;
+                  }
+                  return false;
+                });
 
         if (extraValues.length() > 0) {
           nestedEnum.appendDescription(
               "\nAdditional supported values which may be not listed in the enum directly due"
-              + " to technical reasons:"
-              + extraValues);
+                  + " to technical reasons:"
+                  + extraValues);
         }
       }
 
@@ -224,21 +224,22 @@ public class DocumentToProtoConverter {
 
       message.getFields().removeAll(enumFields);
       for (Field f : enumFields) {
-        String desc = f.getDescription()
-                      + "\nCheck the "
-                      + f.getValueType().getName()
-                      + " enum for the list of possible values.";
+        String desc =
+            f.getDescription()
+                + "\nCheck the "
+                + f.getValueType().getName()
+                + " enum for the list of possible values.";
         message
-                .getFields()
-                .add(
-                    new Field(
-                        f.getName(),
-                        stringType,
-                        f.isRepeated(),
-                        f.isOptional(),
-                        f.getKeyType(),
-                        desc,
-                        f.isFirstInOrder()));
+            .getFields()
+            .add(
+                new Field(
+                    f.getName(),
+                    stringType,
+                    f.isRepeated(),
+                    f.isOptional(),
+                    f.getKeyType(),
+                    desc,
+                    f.isFirstInOrder()));
       }
     }
   }
@@ -301,9 +302,9 @@ public class DocumentToProtoConverter {
 
     for (Map.Entry<ProtoOptionValues, Field> entry : opFields.entrySet()) {
       entry
-              .getValue()
-              .getOptions()
-              .add(createOption("google.cloud.operation_field", entry.getKey()));
+          .getValue()
+          .getOptions()
+          .add(createOption("google.cloud.operation_field", entry.getKey()));
     }
 
     //
@@ -319,11 +320,12 @@ public class DocumentToProtoConverter {
           continue;
         }
 
-        Optional<Option> optHttp = method
-                                   .getOptions()
-                                   .stream()
-                                   .filter(a -> "google.api.http".equals(a.getName()))
-                                   .findFirst();
+        Optional<Option> optHttp =
+            method
+                .getOptions()
+                .stream()
+                .filter(a -> "google.api.http".equals(a.getName()))
+                .findFirst();
 
         if (!optHttp.isPresent()
             || !optHttp.get().getProperties().containsKey("get")
@@ -346,11 +348,11 @@ public class DocumentToProtoConverter {
             // this field will be populated from the response (Operation) message, thus adding
             // `operation_response_field` option to it.
             pollingMessageField
-                    .getOptions()
-                    .add(
-                        createOption(
-                            "google.cloud.operation_response_field",
-                            opFields.get(ProtoOptionValues.NAME).getName()));
+                .getOptions()
+                .add(
+                    createOption(
+                        "google.cloud.operation_response_field",
+                        opFields.get(ProtoOptionValues.NAME).getName()));
           } else {
             // These fields will be populated from initial request message, thus putting them in
             // pollingServiceMessageFields map, which will be used to populate
@@ -383,11 +385,12 @@ public class DocumentToProtoConverter {
           continue;
         }
 
-        Optional<Option> optHttp = method
-                                   .getOptions()
-                                   .stream()
-                                   .filter(a -> "google.api.http".equals(a.getName()))
-                                   .findFirst();
+        Optional<Option> optHttp =
+            method
+                .getOptions()
+                .stream()
+                .filter(a -> "google.api.http".equals(a.getName()))
+                .findFirst();
 
         if (!optHttp.isPresent()
             || optHttp.get().getProperties().containsKey("get")
@@ -403,13 +406,14 @@ public class DocumentToProtoConverter {
         String pollingServiceCandidate = null;
         int matchingFieldPairsMax = 0;
 
-        for (Map.Entry<String, Map<String, Field>> entry : pollingServiceMessageFieldsMap.entrySet()) {
+        for (Map.Entry<String, Map<String, Field>> entry :
+            pollingServiceMessageFieldsMap.entrySet()) {
           List<Field[]> matchingFieldPairs = new ArrayList<>();
           Map<String, Field> pollingMessageFields = entry.getValue();
           for (Field initiatingMessageField : method.getInput().getFieldsWithNumbers().values()) {
             Field pollingMessageField = pollingMessageFields.get(initiatingMessageField.getName());
             if (pollingMessageField != null && pollingMessageField.equals(initiatingMessageField)) {
-              matchingFieldPairs.add(new Field[] { initiatingMessageField, pollingMessageField });
+              matchingFieldPairs.add(new Field[] {initiatingMessageField, pollingMessageField});
             }
           }
 
@@ -437,12 +441,12 @@ public class DocumentToProtoConverter {
         }
 
         method
-                .getOptions()
-                .add(createOption("google.cloud.operation_service", pollingServiceCandidate));
+            .getOptions()
+            .add(createOption("google.cloud.operation_service", pollingServiceCandidate));
         for (Field[] fieldPair : matchingFieldPairsCandidate) {
           fieldPair[0]
-                  .getOptions()
-                  .add(createOption("google.cloud.operation_request_field", fieldPair[1].getName()));
+              .getOptions()
+              .add(createOption("google.cloud.operation_request_field", fieldPair[1].getName()));
         }
       }
     }
@@ -462,11 +466,13 @@ public class DocumentToProtoConverter {
     Message valueType = null;
     boolean repeated = false;
     Message keyType = null;
-    String debugCurrentPath = debugPreviousPath + String.format("SCHEMA: %s\n%s\n----\n", name, description);
+    String debugCurrentPath =
+        debugPreviousPath + String.format("SCHEMA: %s\n%s\n----\n", name, description);
 
     if (trace) {
       System.err.printf("*** schemaToField: \n%s", debugCurrentPath);
-    };
+    }
+    ;
 
     switch (sch.type()) {
       case ANY:
@@ -522,8 +528,9 @@ public class DocumentToProtoConverter {
         break;
       case STRING:
         if (sch.isEnum() && !"".equals(sch.getIdentifier())) {
-          valueType = constructEnumMessage(
-              getMessageName(sch, true), description, sch.enumValues(), sch.enumDescriptions());
+          valueType =
+              constructEnumMessage(
+                  getMessageName(sch, true), description, sch.enumValues(), sch.enumDescriptions());
         } else {
           switch (sch.format()) {
             case INT64:
@@ -544,11 +551,14 @@ public class DocumentToProtoConverter {
     }
 
     if (repeated) {
-      Field subField = schemaToField(keyType == null ? sch.items() : sch.additionalProperties(), true, debugCurrentPath);
+      Field subField =
+          schemaToField(
+              keyType == null ? sch.items() : sch.additionalProperties(), true, debugCurrentPath);
       valueType = subField.getValueType();
     }
 
-    Field field = new Field(name, valueType, repeated, optional, keyType, sanitizeDescr(description), false);
+    Field field =
+        new Field(name, valueType, repeated, optional, keyType, sanitizeDescr(description), false);
     if (sch.type() == Schema.Type.EMPTY) {
     } else if (Message.PRIMITIVES.containsKey(valueType.getName())) {
       return field;
@@ -596,9 +606,9 @@ public class DocumentToProtoConverter {
           // now.
           throw new IllegalArgumentException(
               "Message collision detected. Existing message = "
-              + existingMessage
-              + ", new message = "
-              + valueType);
+                  + existingMessage
+                  + ", new message = "
+                  + valueType);
         }
       }
     }
@@ -612,7 +622,8 @@ public class DocumentToProtoConverter {
     String dummyDesc = "A value indicating that the enum field is not set.";
     String dummyFieldName = Name.anyCamel("Undefined", name).toUpperUnderscore();
     Message emptyType = Message.PRIMITIVES.get("");
-    Field dummyField = new Field(dummyFieldName, emptyType, false, false, null, sanitizeDescr(dummyDesc), true);
+    Field dummyField =
+        new Field(dummyFieldName, emptyType, false, false, null, sanitizeDescr(dummyDesc), true);
     enumMessage.getFields().add(dummyField);
 
     Iterator<String> valIter = enumVals.iterator();
@@ -654,7 +665,8 @@ public class DocumentToProtoConverter {
 
     for (Map.Entry<String, List<Method>> entry : document.resources().entrySet()) {
       String grpcServiceName = Name.anyCamel(entry.getKey()).toUpperCamel();
-      GrpcService service = new GrpcService(grpcServiceName, getServiceDescription(grpcServiceName));
+      GrpcService service =
+          new GrpcService(grpcServiceName, getServiceDescription(grpcServiceName));
       if (serviceIgnoreSet.contains(service.getName())) {
         // Ignore the service (as early as possible to avoid dependency failures on previously
         // ignored request messages used in this service).
@@ -694,8 +706,9 @@ public class DocumentToProtoConverter {
             methodSignatureParamNames.put(pathParam.getIdentifier(), pathField.getName());
           }
           input.getFields().add(pathField);
-          httpOptionPath = httpOptionPath.replace(
-              "{" + pathParam.getIdentifier() + "}", "{" + pathField.getName() + "}");
+          httpOptionPath =
+              httpOptionPath.replace(
+                  "{" + pathParam.getIdentifier() + "}", "{" + pathField.getName() + "}");
         }
 
         for (Schema queryParam : method.queryParams().values()) {
@@ -715,18 +728,20 @@ public class DocumentToProtoConverter {
         // TODO: add logic to determine non-required method_signature options
         Option methodHttpOption = new Option("google.api.http");
         methodHttpOption
-                .getProperties()
-                .put(method.httpMethod().toLowerCase(), endpointSuffix + "/" + httpOptionPath);
+            .getProperties()
+            .put(method.httpMethod().toLowerCase(), endpointSuffix + "/" + httpOptionPath);
 
         if (method.request() != null) {
           Message request = protoFile.getMessages().get(method.request().reference());
-          String requestFieldName = Name.anyCamel(request.getName(), "resource").toLowerUnderscore();
+          String requestFieldName =
+              Name.anyCamel(request.getName(), "resource").toLowerUnderscore();
           String description = getMessageBodyDescription();
-          Field bodyField = new Field(
-              requestFieldName, request, false, false, null, sanitizeDescr(description), false);
+          Field bodyField =
+              new Field(
+                  requestFieldName, request, false, false, null, sanitizeDescr(description), false);
           bodyField
-                  .getOptions()
-                  .add(createOption("google.api.field_behavior", ProtoOptionValues.REQUIRED));
+              .getOptions()
+              .add(createOption("google.api.field_behavior", ProtoOptionValues.REQUIRED));
           input.getFields().add(bodyField);
           methodHttpOption.getProperties().put("body", requestFieldName);
           methodSignatureParamNames.put("", requestFieldName);
@@ -746,11 +761,13 @@ public class DocumentToProtoConverter {
         }
 
         // Method
-        GrpcMethod grpcMethod = new GrpcMethod(methodname, input, output, sanitizeDescr(method.description()));
+        GrpcMethod grpcMethod =
+            new GrpcMethod(methodname, input, output, sanitizeDescr(method.description()));
         grpcMethod.getOptions().add(methodHttpOption);
-        Option requiredMethodSignatureOption = createOption(
-            "google.api.method_signature",
-            String.join(",", methodSignatureParamNames.values()));
+        Option requiredMethodSignatureOption =
+            createOption(
+                "google.api.method_signature",
+                String.join(",", methodSignatureParamNames.values()));
         grpcMethod.getOptions().add(requiredMethodSignatureOption);
         // TODO: design heuristic for other useful method signatures with optional fields
 
@@ -758,8 +775,8 @@ public class DocumentToProtoConverter {
       }
 
       service
-              .getOptions()
-              .add(createOption("google.api.oauth_scopes", String.join(",", authScopes)));
+          .getOptions()
+          .add(createOption("google.api.oauth_scopes", String.join(",", authScopes)));
       protoFile.getServices().put(service.getName(), service);
     }
   }
