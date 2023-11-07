@@ -127,8 +127,10 @@ public class DocumentToProtoConverter {
               "illegal ANY type not under \"*.error.details\": " + currentFieldPath);
         }
       } else {
-        // order matters here: we want to not ensure the first check happens
-        haveAny = checkForAllowedAnyFields(field.getValueType(), currentFieldPath) || haveAny;
+        // Check for Any fields in this field's children, even if we already determined
+        // that its siblings contain Any fields.
+        boolean childrenHaveAny = checkForAllowedAnyFields(field.getValueType(), currentFieldPath);
+        haveAny = childrenHaveAny || haveAny;
       }
     }
     return haveAny;
@@ -472,7 +474,6 @@ public class DocumentToProtoConverter {
     if (trace) {
       System.err.printf("*** schemaToField: \n%s", debugCurrentPath);
     }
-    ;
 
     switch (sch.type()) {
       case ANY:
