@@ -51,11 +51,12 @@ public class Proto3Writer implements ConverterWriter {
     writer.println("import \"google/api/resource.proto\";");
 
     if (protoFile.isHasLroDefinitions()) {
-      // LRO
-      writer.println("import \"google/cloud/extended_operations.proto\";\n");
-    } else {
-      writer.println();
+      writer.println("import \"google/cloud/extended_operations.proto\";");
     }
+    if (protoFile.HasAnyFields()) {
+      writer.println("import \"google/protobuf/any.proto\";");
+    }
+    writer.println();
 
     // File Options
     writer.println("//");

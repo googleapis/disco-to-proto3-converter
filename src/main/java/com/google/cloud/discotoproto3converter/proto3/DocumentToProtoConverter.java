@@ -45,6 +45,10 @@ public class DocumentToProtoConverter {
   private final String relativeLinkPrefix;
   private final boolean enumsAsStrings;
 
+  // Set this to "true" to get some tracing output on stderr during development. Leave this as
+  // "false" for production code.
+  private final boolean trace = false;
+
   public DocumentToProtoConverter(
       Document document,
       String documentFileName,
@@ -61,6 +65,7 @@ public class DocumentToProtoConverter {
     readResources(document);
     cleanupEnumNamingConflicts();
     this.protoFile.setHasLroDefinitions(applyLroConfiguration());
+    this.protoFile.setHasAnyFields(checkAnyFields());
     convertEnumFieldsToStrings();
   }
 
@@ -81,7 +86,7 @@ public class DocumentToProtoConverter {
 
   private void readSchema(Document document) {
     for (Map.Entry<String, Schema> entry : document.schemas().entrySet()) {
-      schemaToField(entry.getValue(), true);
+      schemaToField(entry.getValue(), true, "*** readSchema\n");
     }
     for (Message message : protoFile.getMessages().values()) {
       resolveReferences(message);
@@ -91,12 +96,44 @@ public class DocumentToProtoConverter {
   private void resolveReferences(Message message) {
     for (Field field : message.getFields()) {
       Message valueType = field.getValueType();
-      if (valueType.isRef()) {
+      if (valueType.isRef()) { // replace the field object with a link to the message it references
         field.setValueType(protoFile.getMessages().get(valueType.getName()));
       } else {
         resolveReferences(valueType);
       }
     }
+  }
+
+  private boolean checkForAllowedAnyFields(Message message) {
+    return checkForAllowedAnyFields(message, message.getName());
+  }
+
+  private boolean checkForAllowedAnyFields(Message message, String previousFieldPath) {
+    // We want to we recursively check every child and don't short-circuit when haveAny becomes
+    // true, as we rely on the side effect (exception) to signal a google.protobuf.Any in an
+    // unsupported location.
+    boolean haveAny = false;
+    for (Field field : message.getFields()) {
+      Message valueType = field.getValueType();
+      String currentFieldPath = previousFieldPath + "." + field.getName();
+      if (valueType.getName() == Message.PRIMITIVES.get("google.protobuf.Any").getName()) {
+        if (currentFieldPath.endsWith(".error.details")) {
+          haveAny = true;
+          if (trace) {
+            System.err.printf("Found ANY field at %s\n", currentFieldPath);
+          }
+        } else {
+          throw new IllegalArgumentException(
+              "illegal ANY type not under \"*.error.details\": " + currentFieldPath);
+        }
+      } else {
+        // Check for Any fields in this field's children, even if we already determined
+        // that its siblings contain Any fields.
+        boolean childrenHaveAny = checkForAllowedAnyFields(field.getValueType(), currentFieldPath);
+        haveAny = childrenHaveAny || haveAny;
+      }
+    }
+    return haveAny;
   }
 
   // If there is a naming conflict between two or more enums in the same message, convert all
@@ -207,6 +244,26 @@ public class DocumentToProtoConverter {
                     f.isFirstInOrder()));
       }
     }
+  }
+
+  private boolean checkAnyFields() {
+    boolean haveAny = false;
+    // Note that we only check for Any fields for messages rooted in requests and responses. We
+    // don't want to initiate the check in sub-messages that will be included in those, because then
+    // the path to the Any field may incorrectly fail to match where it's actually included and
+    // we'll get an erroneous exception about incorrect usage of Any
+    for (GrpcService service : protoFile.getServices().values()) {
+      for (GrpcMethod method : service.getMethods()) {
+        // It's important these checks are not short-circuited!
+
+        // TODO: Decide whether should we disallow error.details.Any on inputs. The only use case
+        // would seem to be somehow echoing the error message back to the server?
+        boolean inInput = checkForAllowedAnyFields(method.getInput());
+        boolean inOutput = checkForAllowedAnyFields(method.getOutput());
+        haveAny = haveAny || inInput || inOutput;
+      }
+    }
+    return haveAny;
   }
 
   private boolean applyLroConfiguration() {
@@ -405,16 +462,23 @@ public class DocumentToProtoConverter {
     return option;
   }
 
-  private Field schemaToField(Schema sch, boolean optional) {
+  private Field schemaToField(Schema sch, boolean optional, String debugPreviousPath) {
     String name = Name.anyCamel(sch.key()).toCapitalizedLowerUnderscore();
     String description = sch.description();
     Message valueType = null;
     boolean repeated = false;
     Message keyType = null;
+    String debugCurrentPath =
+        debugPreviousPath + String.format("SCHEMA: %s\n%s\n----\n", name, description);
+
+    if (trace) {
+      System.err.printf("*** schemaToField: \n%s", debugCurrentPath);
+    }
 
     switch (sch.type()) {
       case ANY:
-        throw new IllegalArgumentException("Any type detected in schema: " + sch);
+        valueType = Message.PRIMITIVES.get("google.protobuf.Any");
+        break;
       case ARRAY:
         repeated = true;
         break;
@@ -489,7 +553,8 @@ public class DocumentToProtoConverter {
 
     if (repeated) {
       Field subField =
-          schemaToField(keyType == null ? sch.items() : sch.additionalProperties(), true);
+          schemaToField(
+              keyType == null ? sch.items() : sch.additionalProperties(), true, debugCurrentPath);
       valueType = subField.getValueType();
     }
 
@@ -500,8 +565,9 @@ public class DocumentToProtoConverter {
       return field;
     }
 
+    // Recurse for nested messages
     for (Map.Entry<String, Schema> entry : sch.properties().entrySet()) {
-      Field valueTypeField = schemaToField(entry.getValue(), true);
+      Field valueTypeField = schemaToField(entry.getValue(), true, debugCurrentPath);
       valueType.getFields().add(valueTypeField);
       if (valueTypeField.getValueType().isEnum()) {
         valueType.getEnums().add(valueTypeField.getValueType());
@@ -520,6 +586,7 @@ public class DocumentToProtoConverter {
     } else if (!valueType.isRef()) {
       if (valueType.getDescription() != null
           && existingMessage.getDescription() != null
+          // TODO: not clear on the reason this was originally put in
           && valueType.getDescription().length() < existingMessage.getDescription().length()) {
         putAllMessages(valueType.getName(), valueType);
       }
@@ -633,7 +700,7 @@ public class DocumentToProtoConverter {
 
         for (Schema pathParam : method.pathParams().values()) {
           boolean required = methodSignatureParamNames.containsKey(pathParam.getIdentifier());
-          Field pathField = schemaToField(pathParam, !required);
+          Field pathField = schemaToField(pathParam, !required, "readResources(A):)  ");
           if (required) {
             Option opt = createOption("google.api.field_behavior", ProtoOptionValues.REQUIRED);
             pathField.getOptions().add(opt);
@@ -647,7 +714,7 @@ public class DocumentToProtoConverter {
 
         for (Schema queryParam : method.queryParams().values()) {
           boolean required = methodSignatureParamNames.containsKey(queryParam.getIdentifier());
-          Field queryField = schemaToField(queryParam, !required);
+          Field queryField = schemaToField(queryParam, !required, "readResources(B):  ");
           if (required) {
             Option opt = createOption("google.api.field_behavior", ProtoOptionValues.REQUIRED);
             queryField.getOptions().add(opt);
