@@ -44,11 +44,15 @@ public class DocumentToProtoConverter {
   private final Set<String> messageIgnoreSet;
   private final String relativeLinkPrefix;
   private final boolean enumsAsStrings;
+  private boolean schemaRead;
 
   // Set this to "true" to get some tracing output on stderr during development. Leave this as
   // "false" for production code.
   private final boolean trace = false;
 
+  // Note that serviceIgnoreSet should contain the names of services as they would be naively
+  // derived from the Discovery document (i.e. before disambiguation if they conflict with any of
+  // the messages).
   public DocumentToProtoConverter(
       Document document,
       String documentFileName,
@@ -91,6 +95,7 @@ public class DocumentToProtoConverter {
     for (Message message : protoFile.getMessages().values()) {
       resolveReferences(message);
     }
+    schemaRead = true;
   }
 
   private void resolveReferences(Message message) {
@@ -109,7 +114,7 @@ public class DocumentToProtoConverter {
   }
 
   private boolean checkForAllowedAnyFields(Message message, String previousFieldPath) {
-    // We want to we recursively check every child and don't short-circuit when haveAny becomes
+    // We want to recursively check every child so we don't short-circuit when haveAny becomes
     // true, as we rely on the side effect (exception) to signal a google.protobuf.Any in an
     // unsupported location.
     boolean haveAny = false;
@@ -127,13 +132,66 @@ public class DocumentToProtoConverter {
               "illegal ANY type not under \"*.error.details\": " + currentFieldPath);
         }
       } else {
-        // Check for Any fields in this field's children, even if we already determined
-        // that its siblings contain Any fields.
+        // Check for Any fields in this field's children, even if we already determined that its
+        // siblings contain Any fields. This allows us to raise an exception if we have an Any in an
+        // unsupported location.
         boolean childrenHaveAny = checkForAllowedAnyFields(field.getValueType(), currentFieldPath);
         haveAny = childrenHaveAny || haveAny;
       }
     }
     return haveAny;
+  }
+
+  // Tries to resolve name collisions between an intended service name and already-registered
+  // messages. Returns a non-conflicting service name to use, or throws an exception if the
+  // collision could not be resolved.
+  private String avoidNameCollisions(String originalServiceName) {
+    String newServiceName = originalServiceName;
+    Map<String, Message> messages = protoFile.getMessages();
+    if (messages.containsKey(originalServiceName)) {
+      newServiceName = originalServiceName + "Service";
+      if (messages.containsKey(newServiceName)) {
+        throw new IllegalArgumentException(
+            "could not resolve name collision for service \""
+                + originalServiceName
+                + "\": "
+                + "messages \""
+                + originalServiceName
+                + "\" and \""
+                + newServiceName
+                + "\" both exist");
+      }
+    }
+
+    // We need to verify that newServiceName, whether it was modified above or not, does not
+    // conflict with a previously registered service name. This could happen if either this service
+    // or a previously registered service were modified to avoid a name collision.
+    if (protoFile.getServices().containsKey(newServiceName)) {
+      if (newServiceName.endsWith("Service")) {
+        int index = newServiceName.lastIndexOf("Service");
+        String possibleMessage = newServiceName.substring(0, index);
+        if (messages.containsKey(possibleMessage)) {
+          throw new IllegalArgumentException(
+              "could not resolve name collision for service \""
+                  + originalServiceName
+                  + "\": "
+                  + "message \""
+                  + possibleMessage
+                  + "\" "
+                  + "and service \""
+                  + newServiceName
+                  + "\" both exist");
+        }
+      }
+
+      if (messages.containsKey(newServiceName)) {
+        // We should never reach here because the Discovery document should never have two
+        // identically named services (resources), but we have this code to verify our assumptions.
+        throw new IllegalArgumentException(
+            "multiple definitions of services named \"" + newServiceName + "\"");
+      }
+    }
+    return newServiceName;
   }
 
   // If there is a naming conflict between two or more enums in the same message, convert all
@@ -363,7 +421,7 @@ public class DocumentToProtoConverter {
           }
         }
 
-        // A temprorary workaround to detect polling service to use if there is no match.
+        // A temporary workaround to detect polling service to use if there is no match.
         if (pollingServiceMessageFields.size() == 1
             && pollingServiceMessageFields.containsKey("parent_id")) {
           noMatchPollingServiceName = service.getName();
@@ -659,20 +717,26 @@ public class DocumentToProtoConverter {
   }
 
   private void readResources(Document document) {
+    if (!schemaRead) {
+      throw new IllegalStateException(
+          "schema should be read in before resources in order to avoid name collisions");
+    }
+
     String endpointSuffix = document.baseUrl().substring(document.rootUrl().length());
     endpointSuffix = endpointSuffix.startsWith("/") ? endpointSuffix : '/' + endpointSuffix;
     endpointSuffix = endpointSuffix.replaceAll("/$", "");
     String endpoint = document.rootUrl().replaceAll("(^https://)|(/$)", "");
 
     for (Map.Entry<String, List<Method>> entry : document.resources().entrySet()) {
-      String grpcServiceName = Name.anyCamel(entry.getKey()).toUpperCamel();
-      GrpcService service =
-          new GrpcService(grpcServiceName, getServiceDescription(grpcServiceName));
-      if (serviceIgnoreSet.contains(service.getName())) {
+      String originalGrpcServiceName = Name.anyCamel(entry.getKey()).toUpperCamel();
+      if (serviceIgnoreSet.contains(originalGrpcServiceName)) {
         // Ignore the service (as early as possible to avoid dependency failures on previously
         // ignored request messages used in this service).
         continue;
       }
+      String grpcServiceName = avoidNameCollisions(originalGrpcServiceName);
+      GrpcService service =
+          new GrpcService(grpcServiceName, getServiceDescription(originalGrpcServiceName));
       service.getOptions().add(createOption("google.api.default_host", endpoint));
 
       Set<String> authScopes = new HashSet<>();
