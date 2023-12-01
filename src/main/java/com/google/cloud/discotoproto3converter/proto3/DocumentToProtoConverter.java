@@ -147,13 +147,19 @@ public class DocumentToProtoConverter {
   // collision could not be resolved.
   private String avoidNameCollisions(String originalServiceName) {
     String newServiceName = originalServiceName;
-    Map<String,Message> messages = protoFile.getMessages();
+    Map<String, Message> messages = protoFile.getMessages();
     if (messages.containsKey(originalServiceName)) {
       newServiceName = originalServiceName + "Service";
       if (messages.containsKey(newServiceName)) {
         throw new IllegalArgumentException(
-            "could not resolve name collision for service \"" + originalServiceName +"\": " +
-            "messages \"" + originalServiceName + "\" and \"" + newServiceName + "\" both exist");
+            "could not resolve name collision for service \""
+                + originalServiceName
+                + "\": "
+                + "messages \""
+                + originalServiceName
+                + "\" and \""
+                + newServiceName
+                + "\" both exist");
       }
     }
 
@@ -166,9 +172,15 @@ public class DocumentToProtoConverter {
         String possibleMessage = newServiceName.substring(0, index);
         if (messages.containsKey(possibleMessage)) {
           throw new IllegalArgumentException(
-              "could not resolve name collision for service \"" + originalServiceName +"\": " +
-              "message \"" + possibleMessage + "\" " +
-              "and service \"" + newServiceName + "\" both exist");
+              "could not resolve name collision for service \""
+                  + originalServiceName
+                  + "\": "
+                  + "message \""
+                  + possibleMessage
+                  + "\" "
+                  + "and service \""
+                  + newServiceName
+                  + "\" both exist");
         }
       }
 
