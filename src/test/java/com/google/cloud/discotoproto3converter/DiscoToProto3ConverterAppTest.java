@@ -119,13 +119,13 @@ public class DiscoToProto3ConverterAppTest {
   }
 
   @Test
-  public void avoidSingleNameCollision() throws IOException {
+  public void nameCollisionAvoidanceSuccessOneMessageOneService() throws IOException {
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
     Path discoveryDocPath =
-        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.collision-1.json");
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.collision.message-1.service-1.json");
     Path generatedFilePath =
-        Paths.get(outputDir.toString(), prefix.toString(), "compute.v1small.collision-1.proto");
+        Paths.get(outputDir.toString(), prefix.toString(), "compute.v1small.collision.message-1.service-1.proto");
 
     app.convert(
         discoveryDocPath.toString(),
@@ -139,20 +139,20 @@ public class DiscoToProto3ConverterAppTest {
 
     String actualBody = readFile(generatedFilePath);
     Path baselineFilePath =
-        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.collision-1.proto.baseline");
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.collision.message-1.service-1.proto.baseline");
     String baselineBody = readFile(baselineFilePath);
     assertEquals(baselineBody, actualBody);
   }
 
   @Test
-  public void failNameCollisionTwoMessages() throws IOException {
+  public void nameCollisionAvoidanceFailureTwoMessagesOneService() throws IOException {
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
     Path discoveryDocPath =
         Paths.get(
-            "src", "test", "resources", prefix.toString(), "compute.v1small.collision-2.json");
+            "src", "test", "resources", prefix.toString(), "compute.v1small.collision.message-2.service-1.json");
     Path generatedFilePath =
-        Paths.get(outputDir.toString(), prefix.toString(), "compute.v1small.collision-2.proto");
+        Paths.get(outputDir.toString(), prefix.toString(), "compute.v1small.collision.message-2.service-1.proto");
 
     assertThrows(
         java.lang.IllegalArgumentException.class,
@@ -169,14 +169,14 @@ public class DiscoToProto3ConverterAppTest {
   }
 
   @Test
-  public void failNameCollisionTwoServices() throws IOException {
+  public void nameCollisionAvoidanceFailureOneMessageTwoServices() throws IOException {
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
     Path discoveryDocPath =
         Paths.get(
-            "src", "test", "resources", prefix.toString(), "compute.v1small.collision-3.json");
+            "src", "test", "resources", prefix.toString(), "compute.v1small.collision.message-1.service-2.json");
     Path generatedFilePath =
-        Paths.get(outputDir.toString(), prefix.toString(), "compute.v1small.collision-3.proto");
+        Paths.get(outputDir.toString(), prefix.toString(), "compute.v1small.collision.message-1.service-2.proto");
 
     assertThrows(
         java.lang.IllegalArgumentException.class,
