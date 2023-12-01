@@ -156,6 +156,29 @@ public class DocumentToProtoConverter {
             "messages \"" + originalServiceName + "\" and \"" + newServiceName + "\" both exist");
       }
     }
+
+    // We need to verify that newServiceName, whether it was modified above or not, does not
+    // conflict with a previously registered service name. This could happen if either this service
+    // or a previously registered service were modified to avoid a name collision.
+    if (protoFile.getServices().containsKey(newServiceName)) {
+      if (newServiceName.endsWith("Service")) {
+        int index = newServiceName.lastIndexOf("Service");
+        String possibleMessage = newServiceName.substring(0, index);
+        if (messages.containsKey(possibleMessage)) {
+          throw new IllegalArgumentException(
+              "could not resolve name collision for service \"" + originalServiceName +"\": " +
+              "message \"" + possibleMessage + "\" " +
+              "and service \"" + newServiceName + "\" both exist");
+        }
+      }
+
+      if (messages.containsKey(newServiceName)) {
+        // We should never reach here because the Discovery document should never have two
+        // identically named services (resources), but we have this code to verify our assumptions.
+        throw new IllegalArgumentException(
+            "multiple definitions of services named \"" + newServiceName + "\"");
+      }
+    }
     return newServiceName;
   }
 
