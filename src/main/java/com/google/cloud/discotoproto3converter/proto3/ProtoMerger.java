@@ -125,9 +125,12 @@ public class ProtoMerger {
   // Despite message types having the same names, they are two independently created
   // sets of objects.
   private Field copyField(Field newField, Field oldField, Map<String, Message> newMessages) {
-    Message valueType = Message.PRIMITIVES.get(oldField.getValueType().getName());
-    if (valueType == null) {
-      valueType = newMessages.get(oldField.getValueType().getName());
+    Message valueType = null;
+    if (oldField.getValueType() != null) {
+      valueType = Message.PRIMITIVES.get(oldField.getValueType().getName());
+      if (valueType == null) {
+        valueType = newMessages.get(oldField.getValueType().getName());
+      }
     }
     Message keyType = null;
     if (oldField.getKeyType() != null) {
