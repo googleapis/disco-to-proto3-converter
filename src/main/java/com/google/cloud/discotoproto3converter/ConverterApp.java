@@ -48,6 +48,9 @@ public abstract class ConverterApp {
     this.writer = writer;
   }
 
+  // Note that serviceIgnoreList should contain the names of services as they would be naively
+  // derived from the Discovery document (i.e. before disambiguation if they conflict with any of
+  // the messages).
   public void convert(
       String discoveryDocPath,
       String previousProtoPath,
