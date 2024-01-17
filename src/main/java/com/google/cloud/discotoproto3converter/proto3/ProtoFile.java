@@ -23,6 +23,7 @@ public class ProtoFile {
   private final Map<String, Message> messages = new TreeMap<>();
   private final Map<String, GrpcService> services = new TreeMap<>();
   private boolean hasLroDefinitions;
+  private boolean hasAnyFields;
 
   public ProtoFileMetadata getMetadata() {
     return metadata;
@@ -46,5 +47,13 @@ public class ProtoFile {
 
   public void setHasLroDefinitions(boolean hasLroDefinitions) {
     this.hasLroDefinitions = hasLroDefinitions;
+  }
+
+  public boolean HasAnyFields() {
+    return hasAnyFields;
+  }
+
+  public void setHasAnyFields(boolean hasAnyFields) {
+    this.hasAnyFields = hasAnyFields;
   }
 }
