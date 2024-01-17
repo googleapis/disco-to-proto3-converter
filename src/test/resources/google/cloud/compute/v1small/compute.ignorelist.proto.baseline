@@ -31,7 +31,7 @@ import "google/api/resource.proto";
 // File Options
 //
 option csharp_namespace = "Google.Cloud.Compute.V1Small";
-option go_package = "google.golang.org/genproto/googleapis/cloud/compute/v1small;compute";
+option go_package = "cloud.google.com/go/compute/apiv1small/computepb;computepb";
 option java_multiple_files = true;
 option java_package = "com.google.cloud.compute.v1small";
 option php_namespace = "Google\\Cloud\\Compute\\V1small";
