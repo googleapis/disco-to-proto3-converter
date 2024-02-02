@@ -15,12 +15,10 @@
  */
 package com.google.cloud.discotoproto3converter;
 
-import java.util.Arrays;
-import java.util.Map;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
+import java.util.Map;
 import org.junit.Test;
 
 public class ConverterAppTest {
@@ -28,15 +26,18 @@ public class ConverterAppTest {
   @Test
   public void parseArgsFull() {
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
-    Map<String, String> parsedArgs = app.parseArgs(new String[] {
-          "--discovery_doc_path=alpha",
-          "--previous_proto_file_path=beta",
-          "--output_file_path=gamma",
-          "--service_ignorelist=delta",
-          "--message_ignorelist=epsilon",
-          "--relative_link_prefix=zeta",
-          "--enums_as_strings=eta",
-          "--output_comments=theta"});
+    Map<String, String> parsedArgs =
+        app.parseArgs(
+            new String[] {
+              "--discovery_doc_path=alpha",
+              "--previous_proto_file_path=beta",
+              "--output_file_path=gamma",
+              "--service_ignorelist=delta",
+              "--message_ignorelist=epsilon",
+              "--relative_link_prefix=zeta",
+              "--enums_as_strings=eta",
+              "--output_comments=theta"
+            });
 
     assertEquals("alpha", parsedArgs.get("--discovery_doc_path"));
     assertEquals("beta", parsedArgs.get("--previous_proto_file_path"));
@@ -51,11 +52,14 @@ public class ConverterAppTest {
   @Test
   public void parseArgsDefault() {
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
-    Map<String, String> parsedArgs = app.parseArgs(new String[] {
-          "--discovery_doc_path=alpha",
-          "--previous_proto_file_path=beta",
-          "--output_file_path=gamma",
-          "--relative_link_prefix=zeta"});
+    Map<String, String> parsedArgs =
+        app.parseArgs(
+            new String[] {
+              "--discovery_doc_path=alpha",
+              "--previous_proto_file_path=beta",
+              "--output_file_path=gamma",
+              "--relative_link_prefix=zeta"
+            });
 
     assertEquals("alpha", parsedArgs.get("--discovery_doc_path"));
     assertEquals("beta", parsedArgs.get("--previous_proto_file_path"));
@@ -72,12 +76,14 @@ public class ConverterAppTest {
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     assertThrows(
         java.lang.IllegalArgumentException.class,
-        () -> app.parseArgs(new String[] {
-          "--discovery_doc_path=alpha",
-          "--unsupported_arg=omega",
-          "--previous_proto_file_path=beta",
-          "--output_file_path=gamma",
-          "--relative_link_prefix=zeta"}));
+        () ->
+            app.parseArgs(
+                new String[] {
+                  "--discovery_doc_path=alpha",
+                  "--unsupported_arg=omega",
+                  "--previous_proto_file_path=beta",
+                  "--output_file_path=gamma",
+                  "--relative_link_prefix=zeta"
+                }));
   }
-
 }

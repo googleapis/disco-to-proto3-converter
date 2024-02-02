@@ -45,15 +45,17 @@ import java.util.Set;
 public abstract class ConverterApp {
   private final ConverterWriter writer;
 
-  private final Set<String> allowed_commands = new HashSet<>(Arrays.asList(
-      "--discovery_doc_path",
-      "--previous_proto_file_path",
-      "--output_file_path",
-      "--service_ignorelist",
-      "--message_ignorelist",
-      "--relative_link_prefix",
-      "--enums_as_strings",
-      "--output_comments"));
+  private final Set<String> allowed_commands =
+      new HashSet<>(
+          Arrays.asList(
+              "--discovery_doc_path",
+              "--previous_proto_file_path",
+              "--output_file_path",
+              "--service_ignorelist",
+              "--message_ignorelist",
+              "--relative_link_prefix",
+              "--enums_as_strings",
+              "--output_comments"));
 
   protected ConverterApp(ConverterWriter writer) {
     this.writer = writer;
