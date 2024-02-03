@@ -247,7 +247,7 @@ public class DiscoToProto3ConverterAppTest {
   }
 
   @Test
-  public void convertWithMerge() throws IOException {
+  public void convertWithIdempotentMerge() throws IOException {
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
     Path discoveryDocPath =
