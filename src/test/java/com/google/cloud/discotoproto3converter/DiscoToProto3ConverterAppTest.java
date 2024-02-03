@@ -273,8 +273,9 @@ public class DiscoToProto3ConverterAppTest {
 
     String baselineBody = readFile(baselineFilePath);
 
-    // TODO: Investigate why this assertion fails, fix, and re-enable. In short, it appears merging
-    // is not idempotent.
+    // TODO(https://github.com/googleapis/disco-to-proto3-converter/issues/114): Investigate why
+    // this assertion fails, fix, and re-enable. In short, it appears merging protos created from
+    // the exact same source is not a no-op, as one would expect.
     //
     // assertEquals(baselineBody, actualBody);
   }

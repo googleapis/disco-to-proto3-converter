@@ -147,7 +147,8 @@ public class ProtoMerger {
     }
 
     if (valueType == null && keyType == null) {
-      // TODO: Investigate how this happens. It seems to be related to messages with `Any` fields.
+      // TODO(https://github.com/googleapis/disco-to-proto3-converter/issues/113): Investigate how
+      // this happens. It seems to be related to messages with `Any` fields.
       return null;
     }
 
