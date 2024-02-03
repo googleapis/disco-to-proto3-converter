@@ -63,6 +63,35 @@ public class DiscoToProto3ConverterAppTest {
   }
 
   @Test
+  public void convertWithMerge() throws IOException {
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.error-any.json");
+    Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute.proto");
+    Path baselineFilePath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.error-any.proto.baseline");
+
+    // This tests that merging a proto with the a proto created from the same inputs yields the same
+    // result.
+    app.convert(
+        discoveryDocPath.toString(),
+        baselineFilePath.toString(),
+        generatedFilePath.toString(),
+        "",
+        "",
+        "https://cloud.google.com",
+        "false",
+        "true");
+
+    String actualBody = readFile(generatedFilePath);
+
+    String baselineBody = readFile(baselineFilePath);
+
+    assertEquals(baselineBody, actualBody);
+  }
+
+  @Test
   public void convertWithIgnorelist() throws IOException {
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
