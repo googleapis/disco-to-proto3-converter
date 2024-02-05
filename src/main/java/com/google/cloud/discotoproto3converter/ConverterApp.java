@@ -45,7 +45,7 @@ import java.util.Set;
 public abstract class ConverterApp {
   private final ConverterWriter writer;
 
-  private final Set<String> allowed_commands =
+  static final Set<String> ALLOWED_ARGUMENTS =
       new HashSet<>(
           Arrays.asList(
               "--discovery_doc_path",
@@ -133,7 +133,7 @@ public abstract class ConverterApp {
     for (String arg : args) {
       String[] argNameVal = arg.split("=");
       String argName = argNameVal[0];
-      if (!allowed_commands.contains(argName)) {
+      if (!ALLOWED_ARGUMENTS.contains(argName)) {
         throw new IllegalArgumentException(String.format("unrecognized argument \"%s\"", argName));
       }
       parsedArgs.put(argName, argNameVal[1]);
