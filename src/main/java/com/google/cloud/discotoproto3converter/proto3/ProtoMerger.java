@@ -107,15 +107,21 @@ public class ProtoMerger {
       // compareTo() will be used by contains() to search for the field, not equals().
       if (!newMessage.getFields().contains(oldField)) {
         // Copy removed field
-        newMessage.getFields().add(copyField(null, oldField, newMessages));
+        Field copiedField = copyField(null, oldField, newMessages);
+        if (copiedField != null) {
+          newMessage.getFields().add(copiedField);
+        }
       } else {
         Field newField = newFieldsMap.get(oldField.getName());
-        // Copy missing options if a new field has less options than old field.
+        // Copy missing options if a new field has fewer options than old field.
         // This is a very primitive merge logic. Add a proper merge logic if ever needed.
         if (oldField.getOptions().size() > newField.getOptions().size()
             || oldField.isOptional() != newField.isOptional()) {
-          newMessage.getFields().remove(oldField);
-          newMessage.getFields().add(copyField(newField, oldField, newMessages));
+          Field copiedField = copyField(newField, oldField, newMessages);
+          if (copiedField != null) {
+            newMessage.getFields().remove(newField);
+            newMessage.getFields().add(copiedField);
+          }
         }
       }
     }
@@ -125,9 +131,12 @@ public class ProtoMerger {
   // Despite message types having the same names, they are two independently created
   // sets of objects.
   private Field copyField(Field newField, Field oldField, Map<String, Message> newMessages) {
-    Message valueType = Message.PRIMITIVES.get(oldField.getValueType().getName());
-    if (valueType == null) {
-      valueType = newMessages.get(oldField.getValueType().getName());
+    Message valueType = null;
+    if (oldField.getValueType() != null) {
+      valueType = Message.PRIMITIVES.get(oldField.getValueType().getName());
+      if (valueType == null) {
+        valueType = newMessages.get(oldField.getValueType().getName());
+      }
     }
     Message keyType = null;
     if (oldField.getKeyType() != null) {
@@ -136,6 +145,13 @@ public class ProtoMerger {
         keyType = newMessages.get(oldField.getKeyType().getName());
       }
     }
+
+    if (valueType == null && keyType == null) {
+      // TODO(https://github.com/googleapis/disco-to-proto3-converter/issues/113): Investigate how
+      // this happens. It seems to be related to messages with `Any` fields.
+      return null;
+    }
+
     Field mergedField =
         new Field(
             oldField.getName(),
