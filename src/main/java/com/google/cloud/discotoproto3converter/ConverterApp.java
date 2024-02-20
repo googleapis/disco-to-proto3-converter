@@ -40,14 +40,30 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public abstract class ConverterApp {
   private final ConverterWriter writer;
+
+  static final Set<String> ALLOWED_ARGUMENTS =
+      new HashSet<>(
+          Arrays.asList(
+              "--discovery_doc_path",
+              "--previous_proto_file_path",
+              "--output_file_path",
+              "--service_ignorelist",
+              "--message_ignorelist",
+              "--relative_link_prefix",
+              "--enums_as_strings",
+              "--output_comments"));
 
   protected ConverterApp(ConverterWriter writer) {
     this.writer = writer;
   }
 
+  // Note that serviceIgnoreList should contain the names of services as they would be naively
+  // derived from the Discovery document (i.e. before disambiguation if they conflict with any of
+  // the messages).
   public void convert(
       String discoveryDocPath,
       String previousProtoPath,
@@ -105,7 +121,7 @@ public abstract class ConverterApp {
         parsedArgs.get("--output_comments"));
   }
 
-  private Map<String, String> parseArgs(String[] args) {
+  protected Map<String, String> parseArgs(String[] args) {
     Map<String, String> parsedArgs = new HashMap<>();
 
     // Optional Parameters
@@ -116,7 +132,11 @@ public abstract class ConverterApp {
 
     for (String arg : args) {
       String[] argNameVal = arg.split("=");
-      parsedArgs.put(argNameVal[0], argNameVal[1]);
+      String argName = argNameVal[0];
+      if (!ALLOWED_ARGUMENTS.contains(argName)) {
+        throw new IllegalArgumentException(String.format("unrecognized argument \"%s\"", argName));
+      }
+      parsedArgs.put(argName, argNameVal[1]);
     }
 
     return parsedArgs;

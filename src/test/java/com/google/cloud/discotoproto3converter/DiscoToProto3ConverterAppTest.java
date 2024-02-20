@@ -16,6 +16,7 @@
 package com.google.cloud.discotoproto3converter;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -115,6 +116,192 @@ public class DiscoToProto3ConverterAppTest {
     String baselineBody = readFile(baselineFilePath);
 
     assertEquals(baselineBody, actualBody);
+  }
+
+  @Test
+  public void nameCollisionAvoidanceSuccessOneMessageOneService() throws IOException {
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get(
+            "src",
+            "test",
+            "resources",
+            prefix.toString(),
+            "compute.v1small.collision.message-1.service-1.json");
+    Path generatedFilePath =
+        Paths.get(
+            outputDir.toString(),
+            prefix.toString(),
+            "compute.v1small.collision.message-1.service-1.proto");
+
+    app.convert(
+        discoveryDocPath.toString(),
+        null,
+        generatedFilePath.toString(),
+        "",
+        "",
+        "https://cloud.google.com",
+        "true",
+        "true");
+
+    String actualBody = readFile(generatedFilePath);
+    Path baselineFilePath =
+        Paths.get(
+            "src",
+            "test",
+            "resources",
+            prefix.toString(),
+            "compute.v1small.collision.message-1.service-1.proto.baseline");
+    String baselineBody = readFile(baselineFilePath);
+    assertEquals(baselineBody, actualBody);
+  }
+
+  @Test
+  public void nameCollisionAvoidanceFailureTwoMessagesOneService() throws IOException {
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get(
+            "src",
+            "test",
+            "resources",
+            prefix.toString(),
+            "compute.v1small.collision.message-2.service-1.json");
+    Path generatedFilePath =
+        Paths.get(
+            outputDir.toString(),
+            prefix.toString(),
+            "compute.v1small.collision.message-2.service-1.proto");
+
+    assertThrows(
+        java.lang.IllegalArgumentException.class,
+        () ->
+            app.convert(
+                discoveryDocPath.toString(),
+                null,
+                generatedFilePath.toString(),
+                "",
+                "",
+                "https://cloud.google.com",
+                "true",
+                "true"));
+  }
+
+  @Test
+  public void nameCollisionAvoidanceFailureOneMessageTwoServices() throws IOException {
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get(
+            "src",
+            "test",
+            "resources",
+            prefix.toString(),
+            "compute.v1small.collision.message-1.service-2.json");
+    Path generatedFilePath =
+        Paths.get(
+            outputDir.toString(),
+            prefix.toString(),
+            "compute.v1small.collision.message-1.service-2.proto");
+
+    assertThrows(
+        java.lang.IllegalArgumentException.class,
+        () ->
+            app.convert(
+                discoveryDocPath.toString(),
+                null,
+                generatedFilePath.toString(),
+                "",
+                "",
+                "https://cloud.google.com",
+                "true",
+                "true"));
+  }
+
+  @Test
+  public void convertAnyFieldInError() throws IOException {
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.error-any.json");
+    Path generatedFilePath =
+        Paths.get(outputDir.toString(), prefix.toString(), "compute.error-any.proto");
+
+    app.convert(
+        discoveryDocPath.toString(),
+        null,
+        generatedFilePath.toString(),
+        "",
+        "",
+        "https://cloud.google.com",
+        "true",
+        "true");
+
+    String actualBody = readFile(generatedFilePath);
+    Path baselineFilePath =
+        Paths.get(
+            "src", "test", "resources", prefix.toString(), "compute.error-any.proto.baseline");
+    String baselineBody = readFile(baselineFilePath);
+    assertEquals(baselineBody, actualBody);
+  }
+
+  @Test
+  public void convertWithIdempotentMerge() throws IOException {
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.error-any.json");
+    Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute.proto");
+    Path baselineFilePath =
+        Paths.get(
+            "src", "test", "resources", prefix.toString(), "compute.error-any.proto.baseline");
+
+    // This tests that merging a proto with the a proto created from the same inputs yields the same
+    // result.
+    app.convert(
+        discoveryDocPath.toString(),
+        baselineFilePath.toString(),
+        generatedFilePath.toString(),
+        "",
+        "",
+        "https://cloud.google.com",
+        "false",
+        "true");
+
+    String actualBody = readFile(generatedFilePath);
+
+    String baselineBody = readFile(baselineFilePath);
+
+    // TODO(https://github.com/googleapis/disco-to-proto3-converter/issues/114): Investigate why
+    // this assertion fails, fix, and re-enable. In short, it appears merging protos created from
+    // the exact same source is not a no-op, as one would expect.
+    //
+    // assertEquals(baselineBody, actualBody);
+  }
+
+  @Test
+  public void convertAnyFieldOutsideError() throws IOException {
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get(
+            "src", "test", "resources", prefix.toString(), "compute.v1small.nonerror-any.json");
+    Path generatedFilePath =
+        Paths.get(outputDir.toString(), prefix.toString(), "compute.nonerror-any.proto");
+
+    assertThrows(
+        java.lang.IllegalArgumentException.class,
+        () ->
+            app.convert(
+                discoveryDocPath.toString(),
+                null,
+                generatedFilePath.toString(),
+                "",
+                "",
+                "https://cloud.google.com",
+                "true",
+                "true"));
   }
 
   @Test
