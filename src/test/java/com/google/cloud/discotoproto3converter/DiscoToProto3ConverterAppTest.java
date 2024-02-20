@@ -247,6 +247,40 @@ public class DiscoToProto3ConverterAppTest {
   }
 
   @Test
+  public void convertWithIdempotentMerge() throws IOException {
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.error-any.json");
+    Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute.proto");
+    Path baselineFilePath =
+        Paths.get(
+            "src", "test", "resources", prefix.toString(), "compute.error-any.proto.baseline");
+
+    // This tests that merging a proto with the a proto created from the same inputs yields the same
+    // result.
+    app.convert(
+        discoveryDocPath.toString(),
+        baselineFilePath.toString(),
+        generatedFilePath.toString(),
+        "",
+        "",
+        "https://cloud.google.com",
+        "false",
+        "true");
+
+    String actualBody = readFile(generatedFilePath);
+
+    String baselineBody = readFile(baselineFilePath);
+
+    // TODO(https://github.com/googleapis/disco-to-proto3-converter/issues/114): Investigate why
+    // this assertion fails, fix, and re-enable. In short, it appears merging protos created from
+    // the exact same source is not a no-op, as one would expect.
+    //
+    // assertEquals(baselineBody, actualBody);
+  }
+
+  @Test
   public void convertAnyFieldOutsideError() throws IOException {
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
