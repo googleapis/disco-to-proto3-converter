@@ -46,6 +46,7 @@ public abstract class Method implements Comparable<Method>, Node {
     String id = root.getString("id");
     String path = root.getString("path");
     String flatPath = root.has("flatPath") ? root.getString("flatPath") : path;
+    String apiVersion = root.getString("apiVersion");
 
     DiscoveryNode parametersNode = root.getObject("parameters");
     Map<String, Schema> parameters = new LinkedHashMap<>();
@@ -105,7 +106,8 @@ public abstract class Method implements Comparable<Method>, Node {
             response,
             scopes,
             supportsMediaDownload,
-            supportsMediaUpload);
+            supportsMediaUpload,
+            apiVersion);
 
     thisMethod.parent = parent;
     if (request != null) {
@@ -181,6 +183,9 @@ public abstract class Method implements Comparable<Method>, Node {
 
   /** @return whether or not the method supports media upload. */
   public abstract boolean supportsMediaUpload();
+
+  /** @return the API version for this method. */
+  public abstract String apiVersion();
 
   /**
    * @return if the method acts on a set of resources whose size may be greater than 1, e.g. List

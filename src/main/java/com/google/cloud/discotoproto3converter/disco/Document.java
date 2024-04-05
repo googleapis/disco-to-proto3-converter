@@ -127,6 +127,10 @@ public abstract class Document implements Node {
     return thisDocument;
   }
 
+  // This method returns the same as parseMethods(), but returns all methods in a map indexed by
+  // method name.
+  //
+  // TODO: Combine with parseMethods?
   private static Map<String, List<Method>> parseResources(DiscoveryNode root) {
     List<Method> methods = new ArrayList<>();
     DiscoveryNode methodsNode = root.getObject("methods");
@@ -143,6 +147,9 @@ public abstract class Document implements Node {
     return resources;
   }
 
+  // This method returns the same as parseResources(), but returns all methods in a flat list.
+  //
+  // TODO: Combine with parseResources?
   private static List<Method> parseMethods(DiscoveryNode root) {
     List<Method> methods = new ArrayList<>();
     DiscoveryNode methodsNode = root.getObject("methods");

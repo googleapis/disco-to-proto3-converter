@@ -34,6 +34,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class DocumentToProtoConverter {
 
@@ -738,6 +739,8 @@ public class DocumentToProtoConverter {
       GrpcService service =
           new GrpcService(grpcServiceName, getServiceDescription(originalGrpcServiceName));
       service.getOptions().add(createOption("google.api.default_host", endpoint));
+      Set<String> methodApiVersions = new HashSet<>();
+      String serviceApiVersion = "";
 
       Set<String> authScopes = new HashSet<>();
 
@@ -747,6 +750,10 @@ public class DocumentToProtoConverter {
         } else {
           authScopes.retainAll(method.scopes());
         }
+
+        // Record all methods' API versions so we can report them in case of error.
+        serviceApiVersion = method.apiVersion().trim();
+        methodApiVersions.add(serviceApiVersion);
 
         // Request
         String requestName = getRpcMessageName(method, "request").toUpperCamel();
@@ -839,9 +846,16 @@ public class DocumentToProtoConverter {
         service.getMethods().add(grpcMethod);
       }
 
-      service
-          .getOptions()
-          .add(createOption("google.api.oauth_scopes", String.join(",", authScopes)));
+      // Check that all the method API versions match.
+      if (methodApiVersions.size() != 1) {
+        throw new InconsistentAPIVersionsException(service.getName(), methodApiVersions);
+      }
+
+      List<Option> serviceOptions = service.getOptions();
+      serviceOptions.add(createOption("google.api.oauth_scopes", String.join(",", authScopes)));
+      if (!serviceApiVersion.isEmpty()) {
+        serviceOptions.add(createOption("google.api.api_version", serviceApiVersion));
+      }
       protoFile.getServices().put(service.getName(), service);
     }
   }
@@ -901,8 +915,7 @@ public class DocumentToProtoConverter {
     }
 
     // It is an inefficient way of doing it, but it does not really matter for all possible
-    // practical
-    // applications of this converter app.
+    // practical applications of this converter app.
     Matcher m = RELATIVE_LINK.matcher(description);
     String sanitizedDescription = description;
     while (m.find()) {
@@ -912,5 +925,17 @@ public class DocumentToProtoConverter {
 
     return sanitizedDescription.replace(
         "{$api_version}", protoFile.getMetadata().getProtoPkgVersion());
+  }
+
+  public class InconsistentAPIVersionsException extends IllegalArgumentException {
+    public InconsistentAPIVersionsException(String serviceName, Set<String> methodVersions) {
+      super(String.format("methods for service \"%s\" have inconsistent API version designators: [%s]",
+              serviceName,
+                String.join(" ",
+                    methodVersions
+                    .stream()
+                    .map(version -> String.format("\"%s\"", version))
+                    .collect(Collectors.toList()))));
+    }
   }
 }

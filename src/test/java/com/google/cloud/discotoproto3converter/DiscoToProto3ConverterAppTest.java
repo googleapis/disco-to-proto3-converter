@@ -23,6 +23,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import com.google.cloud.discotoproto3converter.proto3.DocumentToProtoConverter;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -58,6 +61,112 @@ public class DiscoToProto3ConverterAppTest {
     Path baselineFilePath =
         Paths.get("src", "test", "resources", prefix.toString(), "compute.proto.baseline");
     String baselineBody = readFile(baselineFilePath);
+
+    assertEquals(baselineBody, actualBody);
+  }
+
+  @Test
+  public void convertVersioned() throws IOException {
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small-versioned.json");
+    Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute-versioned.proto");
+
+    app.convert(
+        discoveryDocPath.toString(),
+        null,
+        generatedFilePath.toString(),
+        "",
+        "",
+        "https://cloud.google.com",
+        "false",
+        "true");
+
+    String actualBody = readFile(generatedFilePath);
+
+    Path baselineFilePath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute-versioned.proto.baseline");
+    String baselineBody = readFile(baselineFilePath);
+    System.out.printf("*** @Test:convertVersioned():\n*** Discovery path: %s\n*** Generated file: %s\n*** Baseline file: %s\n",
+        discoveryDocPath.toAbsolutePath(),
+        generatedFilePath.toAbsolutePath(),
+        baselineFilePath.toAbsolutePath());
+
+    assertEquals(baselineBody, actualBody);
+  }
+
+  @Test
+  public void convertVersionedInconsistent() throws IOException {
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small-versioned-inconsistent.json");
+    Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute-versioned-inconsistent.proto");
+
+    assertThrows(
+        DocumentToProtoConverter.InconsistentAPIVersionsException.class,
+        () ->
+        app.convert(
+            discoveryDocPath.toString(),
+            null,
+            generatedFilePath.toString(),
+            "",
+            "",
+            "https://cloud.google.com",
+            "true",
+            "true"));
+  }
+
+  @Test
+  public void convertVersionedInconsistentEmpty() throws IOException {
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small-versioned-inconsistent-empty.json");
+    Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute-versioned-inconsistent-empty.proto");
+
+    assertThrows(
+        DocumentToProtoConverter.InconsistentAPIVersionsException.class,
+        () ->
+        app.convert(
+            discoveryDocPath.toString(),
+            null,
+            generatedFilePath.toString(),
+            "",
+            "",
+            "https://cloud.google.com",
+            "true",
+            "true"));
+  }
+
+  @Test
+  public void convertVersionedTwoServices() throws IOException {
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small-versioned-two-services.json");
+    Path generatedFilePath = Paths.get(outputDir.toString(), prefix.toString(), "compute-versioned-two-services.proto");
+
+    app.convert(
+        discoveryDocPath.toString(),
+        null,
+        generatedFilePath.toString(),
+        "",
+        "",
+        "https://cloud.google.com",
+        "false",
+        "true");
+
+    String actualBody = readFile(generatedFilePath);
+
+    Path baselineFilePath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute-versioned-two-services.proto.baseline");
+    String baselineBody = readFile(baselineFilePath);
+    System.out.printf("*** @Test:convertVersionedTwoServices():\n*** Discovery path: %s\n*** Generated file: %s\n*** Baseline file: %s\n",
+        discoveryDocPath.toAbsolutePath(),
+        generatedFilePath.toAbsolutePath(),
+        baselineFilePath.toAbsolutePath());
 
     assertEquals(baselineBody, actualBody);
   }
