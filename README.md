@@ -27,7 +27,8 @@ repository root:
 java \
   -jar target/disco-to-proto3-converter-0.0.1-SNAPSHOT-jar-with-dependencies.jar \
   --discovery_doc_path=src/test/resources/google/cloud/compute/v1/compute.v1.json \
-  --output_file_path=google/cloud/compute/v1/compute.proto
+  --output_file_path=google/cloud/compute/v1/compute.proto \
+  --enums_as_strings=True
 ``` 
 
 Check the `google/cloud/compute/v1` directory for the converted `compute.proto` 
