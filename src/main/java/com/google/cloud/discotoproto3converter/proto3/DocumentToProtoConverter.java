@@ -929,13 +929,16 @@ public class DocumentToProtoConverter {
 
   public class InconsistentAPIVersionsException extends IllegalArgumentException {
     public InconsistentAPIVersionsException(String serviceName, Set<String> methodVersions) {
-      super(String.format("methods for service \"%s\" have inconsistent API version designators: [%s]",
+      super(
+          String.format(
+              "methods for service \"%s\" have inconsistent API version designators: [%s]",
               serviceName,
-                String.join(" ",
-                    methodVersions
-                    .stream()
-                    .map(version -> String.format("\"%s\"", version))
-                    .collect(Collectors.toList()))));
+              String.join(
+                  " ",
+                  methodVersions
+                      .stream()
+                      .map(version -> String.format("\"%s\"", version))
+                      .collect(Collectors.toList()))));
     }
   }
 }
