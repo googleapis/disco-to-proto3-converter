@@ -127,6 +127,8 @@ public abstract class Document implements Node {
     return thisDocument;
   }
 
+  // TODO: Combine with parseMethods(). See
+  //       https://github.com/googleapis/disco-to-proto3-converter/issues/123
   private static Map<String, List<Method>> parseResources(DiscoveryNode root) {
     List<Method> methods = new ArrayList<>();
     DiscoveryNode methodsNode = root.getObject("methods");
@@ -143,6 +145,8 @@ public abstract class Document implements Node {
     return resources;
   }
 
+  // TODO: Combine with parseResources(). See
+  //       https://github.com/googleapis/disco-to-proto3-converter/issues/123
   private static List<Method> parseMethods(DiscoveryNode root) {
     List<Method> methods = new ArrayList<>();
     DiscoveryNode methodsNode = root.getObject("methods");
