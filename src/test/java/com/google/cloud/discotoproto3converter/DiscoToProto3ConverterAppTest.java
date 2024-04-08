@@ -65,6 +65,10 @@ public class DiscoToProto3ConverterAppTest {
 
   @Test
   public void convertVersioned() throws IOException {
+    // Tests that when all the methods for a single service have identical, non-empty "apiVersion"
+    // fields in the Discovery file, the proto service gets annotated with the corresponding
+    // "api_version" annotation.
+
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
     Path discoveryDocPath =
@@ -99,6 +103,9 @@ public class DiscoToProto3ConverterAppTest {
 
   @Test
   public void convertVersionedInconsistent() throws IOException {
+    // Tests that when all the methods in a service have inconsistent non-empty "apiVersion" fields
+    // in the Discovery file, generation fails.
+
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
     Path discoveryDocPath =
@@ -127,6 +134,9 @@ public class DiscoToProto3ConverterAppTest {
 
   @Test
   public void convertVersionedInconsistentEmpty() throws IOException {
+    // Tests that when all the methods in a service have inconsistent "apiVersion" fields in the
+    // Discovery file, including empty values, generation fails.
+
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
     Path discoveryDocPath =
@@ -156,6 +166,10 @@ public class DiscoToProto3ConverterAppTest {
 
   @Test
   public void convertVersionedTwoServices() throws IOException {
+    // Tests that when methods for two services have consistent "apiVersion" fields in the Discovery
+    // file, the proto services get the correct "api_version" annotation, even if the versions of
+    // the two services differ.
+
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
     Path discoveryDocPath =
