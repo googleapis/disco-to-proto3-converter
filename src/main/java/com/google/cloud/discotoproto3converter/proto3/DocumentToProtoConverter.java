@@ -546,6 +546,7 @@ public class DocumentToProtoConverter {
         break;
       case EMPTY:
         valueType = new Message(sch.reference(), true, false, null);
+	break;
       case INTEGER:
         switch (sch.format()) {
           case INT32:
