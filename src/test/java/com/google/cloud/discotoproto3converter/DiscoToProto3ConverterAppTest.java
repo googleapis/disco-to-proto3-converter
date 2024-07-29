@@ -523,6 +523,34 @@ public class DiscoToProto3ConverterAppTest {
     assertEquals(baselineBody, actualBody);
   }
 
+  @Test
+  public void convertAnyFieldWithFormat() throws IOException {
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.any-format.json");
+    Path generatedFilePath =
+        Paths.get(outputDir.toString(), prefix.toString(), "compute.any-format.proto");
+
+    app.convert(
+        discoveryDocPath.toString(),
+        null,
+        generatedFilePath.toString(),
+        "",
+        "",
+        "https://cloud.google.com",
+        "true",
+        "true");
+
+    String actualBody = readFile(generatedFilePath);
+    Path baselineFilePath =
+        Paths.get(
+            "src", "test", "resources", prefix.toString(), "compute.any-format.proto.baseline");
+    String baselineBody = readFile(baselineFilePath);
+    assertEquals(baselineBody, actualBody);
+  }
+
+
   private static String readFile(Path path) throws IOException {
     return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
   }
