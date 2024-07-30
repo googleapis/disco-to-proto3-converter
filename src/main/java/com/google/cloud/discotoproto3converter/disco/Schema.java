@@ -262,7 +262,8 @@ public abstract class Schema implements Node {
     UINT32("uint32"),
     UINT64("uint64"),
     FIXED32("fixed32"),
-    FIXED64("fixed64");
+    FIXED64("fixed64"),
+    VALUE("google.protobuf.Value");
 
     private String text;
 

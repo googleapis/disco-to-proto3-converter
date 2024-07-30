@@ -46,6 +46,7 @@ public class DocumentToProtoConverter {
   private final String relativeLinkPrefix;
   private final boolean enumsAsStrings;
   private boolean schemaRead;
+  private boolean usesStructProto;
 
   // Set this to "true" to get some tracing output on stderr during development. Leave this as
   // "false" for production code.
@@ -66,11 +67,14 @@ public class DocumentToProtoConverter {
     this.relativeLinkPrefix = relativeLinkPrefix;
     this.protoFile.setMetadata(readDocumentMetadata(document, documentFileName));
     this.enumsAsStrings = enumsAsStrings;
+    this.usesStructProto = false;
+
     readSchema(document);
     readResources(document);
     cleanupEnumNamingConflicts();
     this.protoFile.setHasLroDefinitions(applyLroConfiguration());
     this.protoFile.setHasAnyFields(checkAnyFields());
+    this.protoFile.setUsesStructProto(this.usesStructProto);
     convertEnumFieldsToStrings();
   }
 
@@ -536,7 +540,14 @@ public class DocumentToProtoConverter {
 
     switch (sch.type()) {
       case ANY:
-        valueType = Message.PRIMITIVES.get("google.protobuf.Any");
+        switch (sch.format()) {
+          case VALUE:
+            valueType = Message.PRIMITIVES.get("Value");
+            this.usesStructProto = true;
+            break;
+          default:
+            valueType = Message.PRIMITIVES.get("google.protobuf.Any");
+        }
         break;
       case ARRAY:
         repeated = true;

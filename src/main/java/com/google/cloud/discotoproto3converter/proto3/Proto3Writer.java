@@ -48,8 +48,12 @@ public class Proto3Writer implements ConverterWriter {
     // TODO: Place this import in the right alphabetical order. We are placing it here for now to
     // work around an apparent bug in protobuf.js, where having this particular import be the last
     // one makes the file not actually be imported.
+    // FIXME: --^
     if (protoFile.HasAnyFields()) {
       writer.println("import \"google/protobuf/any.proto\";");
+    }
+    if (protoFile.UsesStructProto()) {
+      writer.println("import \"google/protobuf/struct.proto\";");
     }
 
     writer.println("import \"google/api/annotations.proto\";");

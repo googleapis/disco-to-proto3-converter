@@ -44,6 +44,7 @@ public class Message extends ProtoElement<Message> {
     // TODO: If we start accepting additional well-known types, create a specific data structure for
     // those rather than overloading "PRIMITIVES".
     PRIMITIVES.put("google.protobuf.Any", new Message("google.protobuf.Any", false, false, null));
+    PRIMITIVES.put("Value", new Message("google.protobuf.Value", false, false, null));
   }
 
   private final SortedSet<Field> fields = new TreeSet<>();
