@@ -93,7 +93,7 @@ public class DiscoToProto3ConverterAppTest {
             "src", "test", "resources", prefix.toString(), "compute-versioned.proto.baseline");
     String baselineBody = readFile(baselineFilePath);
     System.out.printf(
-        "*** @Test:convertVersioned():\n*** Discovery path: %s\n*** Generated file: %s\n*** Baseline file: %s\n",
+        "*** @Test:convertVersioned():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
         discoveryDocPath.toAbsolutePath(),
         generatedFilePath.toAbsolutePath(),
         baselineFilePath.toAbsolutePath());
@@ -203,7 +203,7 @@ public class DiscoToProto3ConverterAppTest {
             "compute-versioned-two-services.proto.baseline");
     String baselineBody = readFile(baselineFilePath);
     System.out.printf(
-        "*** @Test:convertVersionedTwoServices():\n*** Discovery path: %s\n*** Generated file: %s\n*** Baseline file: %s\n",
+        "*** @Test:convertVersionedTwoServices():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
         discoveryDocPath.toAbsolutePath(),
         generatedFilePath.toAbsolutePath(),
         baselineFilePath.toAbsolutePath());
@@ -549,7 +549,7 @@ public class DiscoToProto3ConverterAppTest {
     String baselineBody = readFile(baselineFilePath);
 
     System.out.printf(
-        "*** @Test:convertAnyFieldWithFormat():\n*** Discovery path: %s\n*** Generated file: %s\n*** Baseline file: %s\n",
+        "*** @Test:convertAnyFieldWithFormat():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
         discoveryDocPath.toAbsolutePath(),
         generatedFilePath.toAbsolutePath(),
         baselineFilePath.toAbsolutePath());
