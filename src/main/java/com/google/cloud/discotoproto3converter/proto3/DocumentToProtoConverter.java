@@ -542,9 +542,19 @@ public class DocumentToProtoConverter {
       case ANY:
         switch (sch.format()) {
           case VALUE:
-            valueType = Message.PRIMITIVES.get("Value");
+            valueType = Message.PRIMITIVES.get("google.protobuf.Value");
             this.usesStructProto = true;
             break;
+          case LISTVALUE:
+            valueType = Message.PRIMITIVES.get("google.protobuf.ListValue");
+            this.usesStructProto = true;
+            break;
+          case STRUCT:
+            valueType = Message.PRIMITIVES.get("google.protobuf.Struct");
+            this.usesStructProto = true;
+            break;
+          case ANY:
+            // intentional fall-through
           default:
             valueType = Message.PRIMITIVES.get("google.protobuf.Any");
         }

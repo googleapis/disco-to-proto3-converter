@@ -374,16 +374,14 @@
           "type": "string"
         },
         "details": {
-          "description": "A list of messages that carry the error details. There is a common set of message types for APIs to use.",
+          "description": "A different representation of google.protobuf.Any.",
           "type": "array",
           "items": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "any",
-              "description": "Properties of the object. Contains field @type with type URL."
-            }
+            "type": "any",
+            "format": "google.protobuf.Any",
+            "description": "Properties of the object. Contains field @type with type URL."
           }
-        }
+        }        
       }
     },
     "Address": {
@@ -478,7 +476,17 @@
         "metadataValue": {
           "type": "any",
           "format": "google.protobuf.Value",
-          "description": "This is a field to test that we can create google.protobuf.Value"
+          "description": "This is a field to test that we can create google.protobuf.Value."
+        },
+        "metadataListValue": {
+          "type": "any",
+          "format": "google.protobuf.ListValue",
+          "description": "This is a field to test that we can create google.protobuf.ListValue."
+        },
+        "metadataStruct": {
+          "type": "any",
+          "format": "google.protobuf.Struct",
+          "description": "This is a field to test that we can create google.protobuf.Struct."
         },
         "networkTier": {
           "type": "string",
