@@ -45,17 +45,6 @@ public class Proto3Writer implements ConverterWriter {
 
     writer.println("package " + metadata.getProtoPkg() + ";\n");
 
-    // TODO: Place this import in the right alphabetical order. We are placing it here for now to
-    // work around an apparent bug in protobuf.js, where having this particular import be the last
-    // one makes the file not actually be imported.
-    // FIXME: --^
-    if (protoFile.HasAnyFields()) {
-      writer.println("import \"google/protobuf/any.proto\";");
-    }
-    if (protoFile.UsesStructProto()) {
-      writer.println("import \"google/protobuf/struct.proto\";");
-    }
-
     writer.println("import \"google/api/annotations.proto\";");
     writer.println("import \"google/api/client.proto\";");
     writer.println("import \"google/api/field_behavior.proto\";");
@@ -64,6 +53,14 @@ public class Proto3Writer implements ConverterWriter {
     if (protoFile.isHasLroDefinitions()) {
       writer.println("import \"google/cloud/extended_operations.proto\";");
     }
+
+    if (protoFile.HasAnyFields()) {
+      writer.println("import \"google/protobuf/any.proto\";");
+    }
+    if (protoFile.UsesStructProto()) {
+      writer.println("import \"google/protobuf/struct.proto\";");
+    }
+
     writer.println();
 
     // File Options

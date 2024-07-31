@@ -392,6 +392,13 @@ public class DiscoToProto3ConverterAppTest {
         Paths.get(
             "src", "test", "resources", prefix.toString(), "compute.error-any.proto.baseline");
     String baselineBody = readFile(baselineFilePath);
+
+    System.out.printf(
+        "*** @Test:convertAnyFieldInError():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
+        discoveryDocPath.toAbsolutePath(),
+        generatedFilePath.toAbsolutePath(),
+        baselineFilePath.toAbsolutePath());
+
     assertEquals(baselineBody, actualBody);
   }
 
