@@ -20,6 +20,8 @@ import com.google.cloud.discotoproto3converter.disco.Inflector;
 import com.google.cloud.discotoproto3converter.disco.Method;
 import com.google.cloud.discotoproto3converter.disco.Name;
 import com.google.cloud.discotoproto3converter.disco.Schema;
+import com.google.cloud.discotoproto3converter.disco.Schema.Format;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -545,14 +547,6 @@ public class DocumentToProtoConverter {
             valueType = Message.PRIMITIVES.get("google.protobuf.Value");
             this.usesStructProto = true;
             break;
-          case LISTVALUE:
-            valueType = Message.PRIMITIVES.get("google.protobuf.ListValue");
-            this.usesStructProto = true;
-            break;
-          case STRUCT:
-            valueType = Message.PRIMITIVES.get("google.protobuf.Struct");
-            this.usesStructProto = true;
-            break;
           case ANY:
             // intentional fall-through
           default:
@@ -560,12 +554,19 @@ public class DocumentToProtoConverter {
         }
         break;
       case ARRAY:
-        repeated = true;
+        if (sch.format()==Format.LISTVALUE) {
+            valueType = Message.PRIMITIVES.get("google.protobuf.ListValue");
+            this.usesStructProto = true;
+            // the repeated semantics are inherent in the ListValue proto field type.
+        } else {
+          repeated = true;
+        }
         break;
       case BOOLEAN:
         valueType = Message.PRIMITIVES.get("bool");
         break;
       case EMPTY:
+        // This handles schemas with an "$ref" field
         valueType = new Message(sch.reference(), true, false, null);
       case INTEGER:
         switch (sch.format()) {
@@ -587,6 +588,7 @@ public class DocumentToProtoConverter {
           case FIXED64:
             valueType = Message.PRIMITIVES.get("fixed64");
             break;
+            // handle default
         }
         break;
       case NUMBER:
@@ -597,14 +599,22 @@ public class DocumentToProtoConverter {
           case DOUBLE:
             valueType = Message.PRIMITIVES.get("double");
             break;
+            // handle default
         }
         break;
       case OBJECT:
-        if (sch.additionalProperties() != null) {
-          repeated = true;
-          keyType = Message.PRIMITIVES.get("string");
+        if (sch.format()==Format.STRUCT) {
+            valueType = Message.PRIMITIVES.get("google.protobuf.Struct");
+            this.usesStructProto = true;
+            // `additionalProperties' in the schema further specified the JSON format, but
+            // "google.protobuf.Struct" is enough for specifying the proto message field type.
         } else {
-          valueType = new Message(getMessageName(sch), false, false, sanitizeDescr(description));
+          if (sch.additionalProperties() != null) {
+            repeated = true;
+            keyType = Message.PRIMITIVES.get("string");
+          } else {
+            valueType = new Message(getMessageName(sch), false, false, sanitizeDescr(description));
+          }
         }
         break;
       case STRING:
@@ -634,7 +644,9 @@ public class DocumentToProtoConverter {
     if (repeated) {
       Field subField =
           schemaToField(
-              keyType == null ? sch.items() : sch.additionalProperties(), true, debugCurrentPath);
+              keyType == null ? sch.items() /* array */ : sch.additionalProperties() /* object */,
+              true,
+              debugCurrentPath);
       valueType = subField.getValueType();
     }
 
