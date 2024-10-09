@@ -617,7 +617,7 @@ public class DocumentToProtoConverter {
         if (sch.format() == Format.STRUCT) {
           valueType = Message.PRIMITIVES.get("google.protobuf.Struct");
           this.usesStructProto = true;
-          // `additionalProperties' in the schema further specified the JSON format, but
+          // `additionalProperties' in the schema further specifies the JSON format, but
           // "google.protobuf.Struct" is enough for specifying the proto message field type.
         } else {
           if (sch.additionalProperties() != null) {
