@@ -473,15 +473,6 @@
           "type": "string",
           "description": "The URL of the network in which to reserve the address. This field can only be used with INTERNAL type with the VPC_PEERING purpose."
         },
-        "metadataAny": {
-          "description": "This is a field to test that we can create google.protobuf.Any.",
-          "type": "object"
-          "format": "google.protobuf.Any",
-          "additionalProperties": {
-            "description": "Properties of the object. Contains field @type with type URL.",
-            "type": "any"
-          }
-        },
         "metadataStruct": {
           "description": "This is a field to test that we can create google.protobuf.Struct.",
           "type": "object",
