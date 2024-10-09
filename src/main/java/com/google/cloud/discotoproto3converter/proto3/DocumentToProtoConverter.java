@@ -21,7 +21,6 @@ import com.google.cloud.discotoproto3converter.disco.Method;
 import com.google.cloud.discotoproto3converter.disco.Name;
 import com.google.cloud.discotoproto3converter.disco.Schema;
 import com.google.cloud.discotoproto3converter.disco.Schema.Format;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -554,9 +553,9 @@ public class DocumentToProtoConverter {
         break;
       case ARRAY:
         if (sch.format() == Format.LISTVALUE) {
-            valueType = Message.PRIMITIVES.get("google.protobuf.ListValue");
-            this.usesStructProto = true;
-            // the repeated semantics are inherent in the ListValue proto field type.
+          valueType = Message.PRIMITIVES.get("google.protobuf.ListValue");
+          this.usesStructProto = true;
+          // the repeated semantics are inherent in the ListValue proto field type.
         } else {
           repeated = true;
         }
@@ -594,8 +593,7 @@ public class DocumentToProtoConverter {
             throw new IllegalStateException(
                 String.format(
                     "unexpected 'format' value ('%s') when processing INTEGER type in schema %s",
-                    sch.format().toString(),
-                    debugCurrentPath));
+                    sch.format().toString(), debugCurrentPath));
         }
         break;
       case NUMBER:
@@ -612,16 +610,15 @@ public class DocumentToProtoConverter {
             throw new IllegalStateException(
                 String.format(
                     "unexpected 'format' value ('%s') when processing NUMBER type in schema %s",
-                    sch.format().toString(),
-                    debugCurrentPath));
+                    sch.format().toString(), debugCurrentPath));
         }
         break;
       case OBJECT:
         if (sch.format() == Format.STRUCT) {
-            valueType = Message.PRIMITIVES.get("google.protobuf.Struct");
-            this.usesStructProto = true;
-            // `additionalProperties' in the schema further specified the JSON format, but
-            // "google.protobuf.Struct" is enough for specifying the proto message field type.
+          valueType = Message.PRIMITIVES.get("google.protobuf.Struct");
+          this.usesStructProto = true;
+          // `additionalProperties' in the schema further specified the JSON format, but
+          // "google.protobuf.Struct" is enough for specifying the proto message field type.
         } else {
           if (sch.additionalProperties() != null) {
             repeated = true;

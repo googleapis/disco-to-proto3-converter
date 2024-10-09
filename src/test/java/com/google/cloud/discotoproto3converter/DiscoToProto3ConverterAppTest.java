@@ -561,10 +561,8 @@ public class DiscoToProto3ConverterAppTest {
         generatedFilePath.toAbsolutePath(),
         baselineFilePath.toAbsolutePath());
 
-
     assertEquals(baselineBody, actualBody);
   }
-
 
   private static String readFile(Path path) throws IOException {
     return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
