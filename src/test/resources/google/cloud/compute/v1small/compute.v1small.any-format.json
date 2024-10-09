@@ -473,20 +473,47 @@
           "type": "string",
           "description": "The URL of the network in which to reserve the address. This field can only be used with INTERNAL type with the VPC_PEERING purpose."
         },
-        "metadataValue": {
-          "type": "any",
-          "format": "google.protobuf.Value",
-          "description": "This is a field to test that we can create google.protobuf.Value."
-        },
-        "metadataListValue": {
-          "type": "any",
-          "format": "google.protobuf.ListValue",
-          "description": "This is a field to test that we can create google.protobuf.ListValue."
+        "metadataAny": {
+          "description": "This is a field to test that we can create google.protobuf.Any.",
+          "type": "object"
+          "format": "google.protobuf.Any",
+          "additionalProperties": {
+            "description": "Properties of the object. Contains field @type with type URL.",
+            "type": "any"
+          }
         },
         "metadataStruct": {
-          "type": "any",
+          "description": "This is a field to test that we can create google.protobuf.Struct.",
+          "type": "object",
           "format": "google.protobuf.Struct",
-          "description": "This is a field to test that we can create google.protobuf.Struct."
+          "additionalProperties": {
+            "description": "Properties of the object.",
+            "type": "any"
+          }
+        },
+        "metadataValue": {
+          "description": "This is a field to test that we can create google.protobuf.Value.",
+          "type": "any",
+          "format": "google.protobuf.Value"
+        },
+        "metadataListValue": {
+          "description": "This is a field to test that we can create google.protobuf.ListValue.",
+          "type": "array",
+          "format": "google.protobuf.ListValue",
+          "items": {
+            "type": "any"                           
+          }
+        },
+        "metadataMapListValue" : {
+          "description": "This is a field to test that we can create a map whose values are google.protobuf.ListValue.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "format" : "google.protobuf.ListValue",
+            "items": {
+              "type": "any"
+            }
+          }
         },
         "networkTier": {
           "type": "string",
