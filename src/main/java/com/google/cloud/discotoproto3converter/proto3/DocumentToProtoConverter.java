@@ -97,7 +97,7 @@ public class DocumentToProtoConverter {
 
   private void readSchema(Document document) {
     for (Map.Entry<String, Schema> entry : document.schemas().entrySet()) {
-      schemaToField(entry.getValue(), true, "*** readSchema\n");
+      schemaToField(entry.getValue(), true, "readSchema()");
     }
     for (Message message : protoFile.getMessages().values()) {
       resolveReferences(message);
@@ -533,11 +533,10 @@ public class DocumentToProtoConverter {
     Message valueType = null;
     boolean repeated = false;
     Message keyType = null;
-    String debugCurrentPath =
-        debugPreviousPath + String.format("SCHEMA: %s\n%s\n----\n", name, description);
+    String debugCurrentPath = debugPreviousPath + String.format(".%s", name);
 
     if (trace) {
-      System.err.printf("*** schemaToField: \n%s", debugCurrentPath);
+      System.err.printf("*** schemaToField: %s\n", debugCurrentPath);
     }
 
     switch (sch.type()) {
@@ -554,7 +553,7 @@ public class DocumentToProtoConverter {
         }
         break;
       case ARRAY:
-        if (sch.format()==Format.LISTVALUE) {
+        if (sch.format() == Format.LISTVALUE) {
             valueType = Message.PRIMITIVES.get("google.protobuf.ListValue");
             this.usesStructProto = true;
             // the repeated semantics are inherent in the ListValue proto field type.
@@ -568,8 +567,11 @@ public class DocumentToProtoConverter {
       case EMPTY:
         // This handles schemas with an "$ref" field
         valueType = new Message(sch.reference(), true, false, null);
+        break;
       case INTEGER:
         switch (sch.format()) {
+          case EMPTY:
+            // intentional fall-through
           case INT32:
             valueType = Message.PRIMITIVES.get("int32");
             break;
@@ -588,22 +590,34 @@ public class DocumentToProtoConverter {
           case FIXED64:
             valueType = Message.PRIMITIVES.get("fixed64");
             break;
-            // handle default
+          default:
+            throw new IllegalStateException(
+                String.format(
+                    "unexpected 'format' value ('%s') when processing INTEGER type in schema %s",
+                    sch.format().toString(),
+                    debugCurrentPath));
         }
         break;
       case NUMBER:
         switch (sch.format()) {
+          case EMPTY:
+            // intentional fall-through
           case FLOAT:
             valueType = Message.PRIMITIVES.get("float");
             break;
           case DOUBLE:
             valueType = Message.PRIMITIVES.get("double");
             break;
-            // handle default
+          default:
+            throw new IllegalStateException(
+                String.format(
+                    "unexpected 'format' value ('%s') when processing NUMBER type in schema %s",
+                    sch.format().toString(),
+                    debugCurrentPath));
         }
         break;
       case OBJECT:
-        if (sch.format()==Format.STRUCT) {
+        if (sch.format() == Format.STRUCT) {
             valueType = Message.PRIMITIVES.get("google.protobuf.Struct");
             this.usesStructProto = true;
             // `additionalProperties' in the schema further specified the JSON format, but
@@ -804,7 +818,7 @@ public class DocumentToProtoConverter {
 
         for (Schema pathParam : method.pathParams().values()) {
           boolean required = methodSignatureParamNames.containsKey(pathParam.getIdentifier());
-          Field pathField = schemaToField(pathParam, !required, "readResources(A):)  ");
+          Field pathField = schemaToField(pathParam, !required, "readResources(A)");
           if (required) {
             Option opt = createOption("google.api.field_behavior", ProtoOptionValues.REQUIRED);
             pathField.getOptions().add(opt);
@@ -818,7 +832,7 @@ public class DocumentToProtoConverter {
 
         for (Schema queryParam : method.queryParams().values()) {
           boolean required = methodSignatureParamNames.containsKey(queryParam.getIdentifier());
-          Field queryField = schemaToField(queryParam, !required, "readResources(B):  ");
+          Field queryField = schemaToField(queryParam, !required, "readResources(B)");
           if (required) {
             Option opt = createOption("google.api.field_behavior", ProtoOptionValues.REQUIRED);
             queryField.getOptions().add(opt);
