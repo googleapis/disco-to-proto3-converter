@@ -545,10 +545,16 @@ public class DocumentToProtoConverter {
             valueType = Message.PRIMITIVES.get("google.protobuf.Value");
             this.usesStructProto = true;
             break;
-          case ANY:
+          case EMPTY:
             // intentional fall-through
-          default:
+          case ANY:
             valueType = Message.PRIMITIVES.get("google.protobuf.Any");
+            break;
+          default:
+            throw new IllegalStateException(
+                String.format(
+                    "unexpected 'format' value ('%s') when processing ANY type in schema %s",
+                    sch.format().toString(), debugCurrentPath));
         }
         break;
       case ARRAY:
