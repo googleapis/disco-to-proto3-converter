@@ -532,7 +532,7 @@ public class DocumentToProtoConverter {
     Message valueType = null;
     boolean repeated = false;
     Message keyType = null;
-    String debugCurrentPath = debugPreviousPath + String.format(".%s", name);
+    String debugCurrentPath = String.format("%s.%s", debugPreviousPath, name);
 
     if (trace) {
       System.err.printf("*** schemaToField: %s\n", debugCurrentPath);
