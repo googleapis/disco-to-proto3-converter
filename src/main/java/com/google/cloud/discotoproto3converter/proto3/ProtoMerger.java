@@ -87,6 +87,11 @@ public class ProtoMerger {
 
   private void mergeEnums(
       Map<String, Message> newMessages, Message oldMessage, Message newMessage) {
+
+    if (newMessage == null) {
+      return;
+    }
+
     Map<String, Message> newEnumsMap = new HashMap<>();
     for (Message nestedEnum : newMessage.getEnums()) {
       newEnumsMap.put(nestedEnum.getName(), nestedEnum);
@@ -99,6 +104,11 @@ public class ProtoMerger {
 
   private void mergeFields(
       Message newMessage, Message oldMessage, Map<String, Message> newMessages) {
+
+    if (newMessage == null) {
+      return;
+    }
+
     // Merge fields
     Map<String, Field> newFieldsMap =
         newMessage.getFields().stream().collect(Collectors.toMap(ProtoElement::getName, f -> f));
