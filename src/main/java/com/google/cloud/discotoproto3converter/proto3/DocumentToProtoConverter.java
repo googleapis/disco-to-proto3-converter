@@ -662,9 +662,26 @@ public class DocumentToProtoConverter {
             case FIXED64:
               valueType = Message.PRIMITIVES.get("fixed64");
               break;
-            default:
+            case FLOAT:
+              valueType = Message.PRIMITIVES.get("float");
+              break;
+            case DOUBLE:
+              valueType = Message.PRIMITIVES.get("double");
+              break;
+            case BYTE:
+              // intentional fall-through for backwards compatibility. Ideally, we'd make this refer
+              // to the protobuf primitive type `byte`.
+              //
+              // TODO: use `byte` for new messages.
+            case EMPTY:
+              // If there's no format, we default to `string`.
               valueType = Message.PRIMITIVES.get("string");
               break;
+          default:
+            throw new IllegalStateException(
+                String.format(
+                    "unexpected 'format' value ('%s') when processing STRING type in schema %s",
+                    sch.format().toString(), debugCurrentPath));
           }
         }
         break;
