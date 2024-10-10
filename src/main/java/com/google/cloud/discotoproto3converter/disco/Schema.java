@@ -263,10 +263,11 @@ public abstract class Schema implements Node {
     UINT64("uint64"),
     FIXED32("fixed32"),
     FIXED64("fixed64"),
-    VALUE("google.protobuf.Value"),
+    // standard protobuf types:
+    ANY("google.protobuf.Any"),
     LISTVALUE("google.protobuf.ListValue"),
     STRUCT("google.protobuf.Struct"),
-    ANY("google.protobuf.Any");
+    VALUE("google.protobuf.Value");
 
     private String text;
 
