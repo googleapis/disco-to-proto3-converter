@@ -561,7 +561,11 @@ public class DocumentToProtoConverter {
         if (sch.format() == Format.LISTVALUE) {
           valueType = Message.PRIMITIVES.get("google.protobuf.ListValue");
           this.usesStructProto = true;
-          // the repeated semantics are inherent in the ListValue proto field type.
+          // Since the `google.prootbuf.ListValue` whence this schema was generated is JSON-encoded
+          // as an array (see https://protobuf.dev/programming-guides/proto3/#json), the Discovery
+          // file describes the JSON array items. However, since we want to encode this schema back
+          // as an opaque `google.protobuf.ListValue` (which has the`repeated` semantics embedded
+          // internally), we should not make this field `repeated`.
         } else {
           repeated = true;
         }
@@ -576,7 +580,7 @@ public class DocumentToProtoConverter {
       case INTEGER:
         switch (sch.format()) {
           case EMPTY:
-            // intentional fall-through
+            // intentional fall-through: if there's no format, we default to `int32`.
           case INT32:
             valueType = Message.PRIMITIVES.get("int32");
             break;
@@ -605,7 +609,7 @@ public class DocumentToProtoConverter {
       case NUMBER:
         switch (sch.format()) {
           case EMPTY:
-            // intentional fall-through
+            // intentional fall-through: if there's no format, we default to `float`.
           case FLOAT:
             valueType = Message.PRIMITIVES.get("float");
             break;
