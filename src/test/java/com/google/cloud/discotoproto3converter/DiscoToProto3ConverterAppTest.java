@@ -93,7 +93,7 @@ public class DiscoToProto3ConverterAppTest {
             "src", "test", "resources", prefix.toString(), "compute-versioned.proto.baseline");
     String baselineBody = readFile(baselineFilePath);
     System.out.printf(
-        "*** @Test:convertVersioned():\n*** Discovery path: %s\n*** Generated file: %s\n*** Baseline file: %s\n",
+        "*** @Test:convertVersioned():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
         discoveryDocPath.toAbsolutePath(),
         generatedFilePath.toAbsolutePath(),
         baselineFilePath.toAbsolutePath());
@@ -203,7 +203,7 @@ public class DiscoToProto3ConverterAppTest {
             "compute-versioned-two-services.proto.baseline");
     String baselineBody = readFile(baselineFilePath);
     System.out.printf(
-        "*** @Test:convertVersionedTwoServices():\n*** Discovery path: %s\n*** Generated file: %s\n*** Baseline file: %s\n",
+        "*** @Test:convertVersionedTwoServices():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
         discoveryDocPath.toAbsolutePath(),
         generatedFilePath.toAbsolutePath(),
         baselineFilePath.toAbsolutePath());
@@ -392,6 +392,13 @@ public class DiscoToProto3ConverterAppTest {
         Paths.get(
             "src", "test", "resources", prefix.toString(), "compute.error-any.proto.baseline");
     String baselineBody = readFile(baselineFilePath);
+
+    System.out.printf(
+        "*** @Test:convertAnyFieldInError():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
+        discoveryDocPath.toAbsolutePath(),
+        generatedFilePath.toAbsolutePath(),
+        baselineFilePath.toAbsolutePath());
+
     assertEquals(baselineBody, actualBody);
   }
 
@@ -519,6 +526,40 @@ public class DiscoToProto3ConverterAppTest {
     Path baselineFilePath =
         Paths.get("src", "test", "resources", prefix.toString(), "compute.merge.proto.baseline");
     String baselineBody = readFile(baselineFilePath);
+
+    assertEquals(baselineBody, actualBody);
+  }
+
+  @Test
+  public void convertAnyFieldWithFormat() throws IOException {
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.any-format.json");
+    Path generatedFilePath =
+        Paths.get(outputDir.toString(), prefix.toString(), "compute.any-format.proto");
+
+    app.convert(
+        discoveryDocPath.toString(),
+        null,
+        generatedFilePath.toString(),
+        "",
+        "",
+        "https://cloud.google.com",
+        "true",
+        "true");
+
+    String actualBody = readFile(generatedFilePath);
+    Path baselineFilePath =
+        Paths.get(
+            "src", "test", "resources", prefix.toString(), "compute.any-format.proto.baseline");
+    String baselineBody = readFile(baselineFilePath);
+
+    System.out.printf(
+        "*** @Test:convertAnyFieldWithFormat():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
+        discoveryDocPath.toAbsolutePath(),
+        generatedFilePath.toAbsolutePath(),
+        baselineFilePath.toAbsolutePath());
 
     assertEquals(baselineBody, actualBody);
   }
