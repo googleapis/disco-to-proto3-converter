@@ -624,18 +624,26 @@ public class DocumentToProtoConverter {
         }
         break;
       case OBJECT:
-        if (sch.format() == Format.STRUCT) {
-          valueType = Message.PRIMITIVES.get("google.protobuf.Struct");
-          this.usesStructProto = true;
-          // `additionalProperties' in the schema further specifies the JSON format, but
-          // "google.protobuf.Struct" is enough for specifying the proto message field type.
-        } else {
-          if (sch.additionalProperties() != null) {
-            repeated = true;
-            keyType = Message.PRIMITIVES.get("string");
-          } else {
-            valueType = new Message(getMessageName(sch), false, false, sanitizeDescr(description));
-          }
+        switch (sch.format()) {
+          case STRUCT:
+            valueType = Message.PRIMITIVES.get("google.protobuf.Struct");
+            this.usesStructProto = true;
+            // `additionalProperties' in the schema further specifies the JSON format, but
+            // "google.protobuf.Struct" is enough for specifying the proto message field type.
+            break;
+          case EMPTY:
+            if (sch.additionalProperties() != null) {
+              repeated = true;
+              keyType = Message.PRIMITIVES.get("string");
+            } else {
+              valueType = new Message(getMessageName(sch), false, false, sanitizeDescr(description));
+            }
+            break;
+          default:
+            throw new IllegalStateException(
+                String.format(
+                    "unexpected 'format' value ('%s') when processing OBJECT type in schema %s",
+                    sch.format().toString(), debugCurrentPath));
         }
         break;
       case STRING:
