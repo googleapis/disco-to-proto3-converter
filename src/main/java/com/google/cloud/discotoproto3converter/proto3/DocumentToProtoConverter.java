@@ -636,7 +636,8 @@ public class DocumentToProtoConverter {
               repeated = true;
               keyType = Message.PRIMITIVES.get("string");
             } else {
-              valueType = new Message(getMessageName(sch), false, false, sanitizeDescr(description));
+              valueType =
+                  new Message(getMessageName(sch), false, false, sanitizeDescr(description));
             }
             break;
           default:
@@ -677,11 +678,11 @@ public class DocumentToProtoConverter {
               // If there's no format, we default to `string`.
               valueType = Message.PRIMITIVES.get("string");
               break;
-          default:
-            throw new IllegalStateException(
-                String.format(
-                    "unexpected 'format' value ('%s') when processing STRING type in schema %s",
-                    sch.format().toString(), debugCurrentPath));
+            default:
+              throw new IllegalStateException(
+                  String.format(
+                      "unexpected 'format' value ('%s') when processing STRING type in schema %s",
+                      sch.format().toString(), debugCurrentPath));
           }
         }
         break;
