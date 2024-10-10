@@ -20,6 +20,7 @@ import com.google.cloud.discotoproto3converter.disco.Inflector;
 import com.google.cloud.discotoproto3converter.disco.Method;
 import com.google.cloud.discotoproto3converter.disco.Name;
 import com.google.cloud.discotoproto3converter.disco.Schema;
+import com.google.cloud.discotoproto3converter.disco.Schema.Format;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,6 +47,7 @@ public class DocumentToProtoConverter {
   private final String relativeLinkPrefix;
   private final boolean enumsAsStrings;
   private boolean schemaRead;
+  private boolean usesStructProto;
 
   // Set this to "true" to get some tracing output on stderr during development. Leave this as
   // "false" for production code.
@@ -66,11 +68,14 @@ public class DocumentToProtoConverter {
     this.relativeLinkPrefix = relativeLinkPrefix;
     this.protoFile.setMetadata(readDocumentMetadata(document, documentFileName));
     this.enumsAsStrings = enumsAsStrings;
+    this.usesStructProto = false;
+
     readSchema(document);
     readResources(document);
     cleanupEnumNamingConflicts();
     this.protoFile.setHasLroDefinitions(applyLroConfiguration());
     this.protoFile.setHasAnyFields(checkAnyFields());
+    this.protoFile.setUsesStructProto(this.usesStructProto);
     convertEnumFieldsToStrings();
   }
 
@@ -91,7 +96,7 @@ public class DocumentToProtoConverter {
 
   private void readSchema(Document document) {
     for (Map.Entry<String, Schema> entry : document.schemas().entrySet()) {
-      schemaToField(entry.getValue(), true, "*** readSchema\n");
+      schemaToField(entry.getValue(), true, "readSchema()");
     }
     for (Message message : protoFile.getMessages().values()) {
       resolveReferences(message);
@@ -527,27 +532,55 @@ public class DocumentToProtoConverter {
     Message valueType = null;
     boolean repeated = false;
     Message keyType = null;
-    String debugCurrentPath =
-        debugPreviousPath + String.format("SCHEMA: %s\n%s\n----\n", name, description);
+    String debugCurrentPath = String.format("%s.%s", debugPreviousPath, name);
 
     if (trace) {
-      System.err.printf("*** schemaToField: \n%s", debugCurrentPath);
+      System.err.printf("*** schemaToField: %s\n", debugCurrentPath);
     }
 
     switch (sch.type()) {
       case ANY:
-        valueType = Message.PRIMITIVES.get("google.protobuf.Any");
+        switch (sch.format()) {
+          case VALUE:
+            valueType = Message.PRIMITIVES.get("google.protobuf.Value");
+            this.usesStructProto = true;
+            break;
+          case EMPTY:
+            // intentional fall-through
+          case ANY:
+            valueType = Message.PRIMITIVES.get("google.protobuf.Any");
+            break;
+          default:
+            throw new IllegalStateException(
+                String.format(
+                    "unexpected 'format' value ('%s') when processing ANY type in schema %s",
+                    sch.format().toString(), debugCurrentPath));
+        }
         break;
       case ARRAY:
-        repeated = true;
+        if (sch.format() == Format.LISTVALUE) {
+          valueType = Message.PRIMITIVES.get("google.protobuf.ListValue");
+          this.usesStructProto = true;
+          // Since the `google.prootbuf.ListValue` whence this schema was generated is JSON-encoded
+          // as an array (see https://protobuf.dev/programming-guides/proto3/#json), the Discovery
+          // file describes the JSON array items. However, since we want to encode this schema back
+          // as an opaque `google.protobuf.ListValue` (which has the`repeated` semantics embedded
+          // internally), we should not make this field `repeated`.
+        } else {
+          repeated = true;
+        }
         break;
       case BOOLEAN:
         valueType = Message.PRIMITIVES.get("bool");
         break;
       case EMPTY:
+        // This handles schemas with an "$ref" field
         valueType = new Message(sch.reference(), true, false, null);
+        break;
       case INTEGER:
         switch (sch.format()) {
+          case EMPTY:
+            // intentional fall-through: if there's no format, we default to `int32`.
           case INT32:
             valueType = Message.PRIMITIVES.get("int32");
             break;
@@ -566,24 +599,52 @@ public class DocumentToProtoConverter {
           case FIXED64:
             valueType = Message.PRIMITIVES.get("fixed64");
             break;
+          default:
+            throw new IllegalStateException(
+                String.format(
+                    "unexpected 'format' value ('%s') when processing INTEGER type in schema %s",
+                    sch.format().toString(), debugCurrentPath));
         }
         break;
       case NUMBER:
         switch (sch.format()) {
+          case EMPTY:
+            // intentional fall-through: if there's no format, we default to `float`.
           case FLOAT:
             valueType = Message.PRIMITIVES.get("float");
             break;
           case DOUBLE:
             valueType = Message.PRIMITIVES.get("double");
             break;
+          default:
+            throw new IllegalStateException(
+                String.format(
+                    "unexpected 'format' value ('%s') when processing NUMBER type in schema %s",
+                    sch.format().toString(), debugCurrentPath));
         }
         break;
       case OBJECT:
-        if (sch.additionalProperties() != null) {
-          repeated = true;
-          keyType = Message.PRIMITIVES.get("string");
-        } else {
-          valueType = new Message(getMessageName(sch), false, false, sanitizeDescr(description));
+        switch (sch.format()) {
+          case STRUCT:
+            valueType = Message.PRIMITIVES.get("google.protobuf.Struct");
+            this.usesStructProto = true;
+            // `additionalProperties' in the schema further specifies the JSON format, but
+            // "google.protobuf.Struct" is enough for specifying the proto message field type.
+            break;
+          case EMPTY:
+            if (sch.additionalProperties() != null) {
+              repeated = true;
+              keyType = Message.PRIMITIVES.get("string");
+            } else {
+              valueType =
+                  new Message(getMessageName(sch), false, false, sanitizeDescr(description));
+            }
+            break;
+          default:
+            throw new IllegalStateException(
+                String.format(
+                    "unexpected 'format' value ('%s') when processing OBJECT type in schema %s",
+                    sch.format().toString(), debugCurrentPath));
         }
         break;
       case STRING:
@@ -602,9 +663,26 @@ public class DocumentToProtoConverter {
             case FIXED64:
               valueType = Message.PRIMITIVES.get("fixed64");
               break;
-            default:
+            case FLOAT:
+              valueType = Message.PRIMITIVES.get("float");
+              break;
+            case DOUBLE:
+              valueType = Message.PRIMITIVES.get("double");
+              break;
+            case BYTE:
+              // intentional fall-through for backwards compatibility. Ideally, we'd make this refer
+              // to the protobuf primitive type `byte`.
+              //
+              // TODO: use `byte` for new messages.
+            case EMPTY:
+              // If there's no format, we default to `string`.
               valueType = Message.PRIMITIVES.get("string");
               break;
+            default:
+              throw new IllegalStateException(
+                  String.format(
+                      "unexpected 'format' value ('%s') when processing STRING type in schema %s",
+                      sch.format().toString(), debugCurrentPath));
           }
         }
         break;
@@ -613,7 +691,9 @@ public class DocumentToProtoConverter {
     if (repeated) {
       Field subField =
           schemaToField(
-              keyType == null ? sch.items() : sch.additionalProperties(), true, debugCurrentPath);
+              keyType == null ? sch.items() /* array */ : sch.additionalProperties() /* object */,
+              true,
+              debugCurrentPath);
       valueType = subField.getValueType();
     }
 
@@ -771,7 +851,7 @@ public class DocumentToProtoConverter {
 
         for (Schema pathParam : method.pathParams().values()) {
           boolean required = methodSignatureParamNames.containsKey(pathParam.getIdentifier());
-          Field pathField = schemaToField(pathParam, !required, "readResources(A):)  ");
+          Field pathField = schemaToField(pathParam, !required, "readResources(A)");
           if (required) {
             Option opt = createOption("google.api.field_behavior", ProtoOptionValues.REQUIRED);
             pathField.getOptions().add(opt);
@@ -785,7 +865,7 @@ public class DocumentToProtoConverter {
 
         for (Schema queryParam : method.queryParams().values()) {
           boolean required = methodSignatureParamNames.containsKey(queryParam.getIdentifier());
-          Field queryField = schemaToField(queryParam, !required, "readResources(B):  ");
+          Field queryField = schemaToField(queryParam, !required, "readResources(B)");
           if (required) {
             Option opt = createOption("google.api.field_behavior", ProtoOptionValues.REQUIRED);
             queryField.getOptions().add(opt);
