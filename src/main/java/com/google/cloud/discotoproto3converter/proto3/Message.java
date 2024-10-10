@@ -38,12 +38,17 @@ public class Message extends ProtoElement<Message> {
     PRIMITIVES.put("double", new Message("double", false, false, null));
     PRIMITIVES.put("", new Message("", false, true, null));
 
-    // This isn't technically a primitive, but it is a fundamental well-known-type with no a priori
-    // structure.
+    // These aren't technically primitives, but they are opaque types we treat as such, essentially.
     //
-    // TODO: If we start accepting additional well-known types, create a specific data structure for
-    // those rather than overloading "PRIMITIVES".
+    // TODO: Consider renaming this field more accurately, or creating a parallel field for these
+    // types.
     PRIMITIVES.put("google.protobuf.Any", new Message("google.protobuf.Any", false, false, null));
+    PRIMITIVES.put(
+        "google.protobuf.Value", new Message("google.protobuf.Value", false, false, null));
+    PRIMITIVES.put(
+        "google.protobuf.ListValue", new Message("google.protobuf.ListValue", false, false, null));
+    PRIMITIVES.put(
+        "google.protobuf.Struct", new Message("google.protobuf.Struct", false, false, null));
   }
 
   private final SortedSet<Field> fields = new TreeSet<>();

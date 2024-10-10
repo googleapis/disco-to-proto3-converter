@@ -24,6 +24,7 @@ public class ProtoFile {
   private final Map<String, GrpcService> services = new TreeMap<>();
   private boolean hasLroDefinitions;
   private boolean hasAnyFields;
+  private boolean usesStructProto;
 
   public ProtoFileMetadata getMetadata() {
     return metadata;
@@ -55,5 +56,13 @@ public class ProtoFile {
 
   public void setHasAnyFields(boolean hasAnyFields) {
     this.hasAnyFields = hasAnyFields;
+  }
+
+  public boolean UsesStructProto() {
+    return usesStructProto;
+  }
+
+  public void setUsesStructProto(boolean usesStructProto) {
+    this.usesStructProto = usesStructProto;
   }
 }
