@@ -182,6 +182,9 @@ message Address {
   // This is a field to test that we can create a map whose values are google.protobuf.ListValue.
   map<string, google.protobuf.ListValue> metadata_map_list_value = 117212259;
 
+  // This is a field to test that we can create a map whose values are google.protobuf.Value.
+  map<string, google.protobuf.Value> metadata_map_value = 453356478;
+
   // This is a field to test that we can create google.protobuf.Struct.
   optional google.protobuf.Struct metadata_struct = 224324325;
 
