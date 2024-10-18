@@ -487,6 +487,14 @@
           "type": "any",
           "format": "google.protobuf.Value"
         },
+        "metadataMapValue": {
+          "description": "This is a field to test that we can create a map whose values are google.protobuf.Value.",
+          "type": "object",
+          "additionalProperties": {
+            "format" : "google.protobuf.Value",
+            "type": "any"
+          }
+        },
         "metadataListValue": {
           "description": "This is a field to test that we can create google.protobuf.ListValue.",
           "type": "array",
