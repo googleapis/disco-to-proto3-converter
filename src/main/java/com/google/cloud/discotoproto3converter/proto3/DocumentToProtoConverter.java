@@ -553,8 +553,8 @@ public class DocumentToProtoConverter {
           default:
             throw new IllegalStateException(
                 String.format(
-                    "unexpected 'format' value ('%s') when processing ANY type in schema %s",
-                    sch.format().toString(), debugCurrentPath));
+                    "unexpected 'format' value (%s:'%s') when processing ANY type in schema %s",
+                    sch.format().name(), sch.format().toString(), debugCurrentPath));
         }
         break;
       case ARRAY:
@@ -631,6 +631,9 @@ public class DocumentToProtoConverter {
             // `additionalProperties' in the schema further specifies the JSON format, but
             // "google.protobuf.Struct" is enough for specifying the proto message field type.
             break;
+          case ANY:
+            valueType = Message.PRIMITIVES.get("google.protobuf.Any");
+            break;
           case EMPTY:
             if (sch.additionalProperties() != null) {
               repeated = true;
@@ -643,8 +646,8 @@ public class DocumentToProtoConverter {
           default:
             throw new IllegalStateException(
                 String.format(
-                    "unexpected 'format' value ('%s') when processing OBJECT type in schema %s",
-                    sch.format().toString(), debugCurrentPath));
+                    "unexpected 'format' value (%s:'%s') when processing OBJECT type in schema %s",
+                    sch.format().name(), sch.format().toString(), debugCurrentPath));
         }
         break;
       case STRING:
