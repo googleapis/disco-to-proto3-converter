@@ -275,6 +275,10 @@ public abstract class Schema implements Node {
       this.text = text;
     }
 
+    public String toString() {
+      return this.text;
+    }
+
     /**
      * @param text the JSON text of the format.
      * @return the enum representing the raw JSON format.
