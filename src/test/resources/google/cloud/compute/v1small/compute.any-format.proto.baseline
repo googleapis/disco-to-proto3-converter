@@ -185,6 +185,9 @@ message Address {
   // This is a field to test that we can create a map whose values are google.protobuf.Value.
   map<string, google.protobuf.Value> metadata_map_value = 453356478;
 
+  // This is a field to test we can create a repeated google.protobuf.Any
+  optional MetadataRepeatedAny metadata_repeated_any = 122515127;
+
   // This is a field to test that we can create google.protobuf.Struct.
   optional google.protobuf.Struct metadata_struct = 224324325;
 
@@ -354,10 +357,9 @@ message DeleteAddressRequest {
 
 }
 
-// [Output Only] If errors are generated during processing of the operation, this field will be populated.
+//
 message Error {
-  // [Output Only] The array of errors encountered while processing this operation.
-  repeated Errors errors = 315977579;
+  repeated google.protobuf.Any details = 483979842;
 
 }
 
@@ -448,6 +450,12 @@ message ListAddressesRequest {
 
 }
 
+// This is a field to test we can create a repeated google.protobuf.Any
+message MetadataRepeatedAny {
+  optional Error error = 96784904;
+
+}
+
 // Represents an Operation resource.
 //
 // Google Compute Engine has three Operation resources:
@@ -488,9 +496,6 @@ message Operation {
   // [Output Only] The time that this operation was completed. This value is in RFC3339 text format.
   optional string end_time = 114938801;
 
-  // [Output Only] If errors are generated during processing of the operation, this field will be populated.
-  optional Error error = 96784904;
-
   // [Output Only] If the operation fails, this field contains the HTTP error message that was returned, such as NOT FOUND.
   optional string http_error_message = 202521945 [(google.cloud.operation_field) = ERROR_MESSAGE];
 
@@ -508,6 +513,9 @@ message Operation {
 
   // [Output Only] Name of the operation.
   optional string name = 3373707 [(google.cloud.operation_field) = NAME];
+
+  // [Output Only] If errors are generated during processing of the operation, this field will be populated.
+  optional OperationError operation_error = 124395824;
 
   // [Output Only] The type of operation, such as insert, update, or delete, and so on.
   optional string operation_type = 177650450;
@@ -547,6 +555,13 @@ message Operation {
 
   // [Output Only] The URL of the zone where the operation resides. Only applicable when performing per-zone operations.
   optional string zone = 3744684;
+
+}
+
+// [Output Only] If errors are generated during processing of the operation, this field will be populated.
+message OperationError {
+  // [Output Only] The array of errors encountered while processing this operation.
+  repeated Errors errors = 315977579;
 
 }
 

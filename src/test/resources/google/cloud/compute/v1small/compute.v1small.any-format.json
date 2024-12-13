@@ -112,7 +112,7 @@
           "type": "string",
           "description": "[Output Only] The time that this operation was completed. This value is in RFC3339 text format."
         },
-        "error": {
+        "operationError": {
           "type": "object",
           "description": "[Output Only] If errors are generated during processing of the operation, this field will be populated.",
           "properties": {
@@ -515,16 +515,26 @@
           }
         },
         "metadataRepeatedAny": {
+	  "type": "object",
           "description": "This is a field to test we can create a repeated google.protobuf.Any",
-          "type": "array",
-          "items": {
-            "format" : "google.protobuf.Any",
-            "type": "object",
-            "additionalProperties": {
-              "type": "any",
-              "description": "Properties of the object. Contains field @type with type URL."
-            }
-          }
+	  "properties": {
+            "error": {
+	      "type": "object",
+	      "properties": {
+		"details": {
+		  "type": "array",
+		  "items": {
+		    "format": "google.protobuf.Any",
+		    "type": "object",
+		    "additionalProperties": {
+                      "type": "any",
+                      "description": "Properties of the object. Contains field @type with type URL."
+		    }
+		  }
+		}
+	      }
+	    }
+	  }
         },
         "networkTier": {
           "type": "string",
