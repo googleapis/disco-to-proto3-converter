@@ -839,8 +839,23 @@ public class DocumentToProtoConverter {
         methodApiVersions.add(serviceApiVersion);
 
         // Request
-        String requestName = getRpcMessageName(method, "request").toUpperCamel();
         String methodname = getRpcMethodName(method).toUpperCamel();
+
+        // The proto RPC request message is a new message that wraps the Discovery file's request
+        // schema for this RPC.
+        String requestName = getRpcMessageName(method, "request").toUpperCamel();
+        if (protoFile.getMessages().containsKey(requestName)) {
+          // In some cases, the request schema name specified in the Discovery file exactly matches
+          // the proto service RPC request message name (requestName) we determined above. We avoid name
+          // collisions in what follows.
+
+          String requestName2 = getRpcMessageName(method, "rpc", "request").toUpperCamel();
+          if (protoFile.getMessages().containsKey(requestName2)) {
+            throw new InternalError(String.format("could not construct request message name for %s.%s: tried '%s', '%s'", grpcServiceName, methodname, requestName, requestName2));
+          }
+          requestName = requestName2;
+        }
+
         String inputDescription = getInputMessageDescription(grpcServiceName, methodname);
         Message input = new Message(requestName, false, false, sanitizeDescr(inputDescription));
         String httpOptionPath = method.flatPath();
@@ -973,14 +988,21 @@ public class DocumentToProtoConverter {
     return "The " + serviceName + " API.";
   }
 
-  private Name getRpcMessageName(Method method, String suffix) {
+  private Name getRpcMessageName(Method method, String... suffixes) {
     String[] pieces = method.id().split("\\.");
     String methodName = pieces[pieces.length - 1];
     String resourceName = pieces[pieces.length - 2];
     if (!method.isPluralMethod()) {
       resourceName = Inflector.singularize(resourceName);
     }
-    return Name.anyCamel(methodName, resourceName, suffix);
+
+    int numSuffixes = suffixes.length;
+    String[] nameParts = new String[2+numSuffixes];
+    nameParts[0] = methodName;
+    nameParts[1] = resourceName;
+    System.arraycopy(suffixes, 0, nameParts, 2, numSuffixes);
+
+    return Name.anyCamel(nameParts);
   }
 
   private Name getRpcMethodName(Method method) {
