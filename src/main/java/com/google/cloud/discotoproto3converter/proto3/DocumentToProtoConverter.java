@@ -847,8 +847,7 @@ public class DocumentToProtoConverter {
         if (protoFile.getMessages().containsKey(requestName)) {
           // In some cases, the request schema name specified in the Discovery file exactly matches
           // the proto service RPC request message name (requestName) we determined above. We avoid
-          // name
-          // collisions in what follows.
+          // name collisions in what follows.
 
           String requestName2 = getRpcMessageName(method, "rpc", "request").toUpperCamel();
           if (protoFile.getMessages().containsKey(requestName2)) {
