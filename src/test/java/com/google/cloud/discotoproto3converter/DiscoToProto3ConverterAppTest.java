@@ -616,24 +616,25 @@ public class DiscoToProto3ConverterAppTest {
             "compute.v1small.request-message-name-conflict-unrecoverable.json");
     Path generatedFilePath =
         Paths.get(
-            outputDir.toString(), prefix.toString(), "compute.request-message-name-conflict-unrecoverable.proto");
+            outputDir.toString(),
+            prefix.toString(),
+            "compute.request-message-name-conflict-unrecoverable.proto");
     System.out.printf(
         "*** @Test:convertRequestMessageNameUnrecoverableConflicts():\n    Discovery path: %s\n    Generated file: %s\n",
-        discoveryDocPath.toAbsolutePath(),
-        generatedFilePath.toAbsolutePath());
+        discoveryDocPath.toAbsolutePath(), generatedFilePath.toAbsolutePath());
 
-     assertThrows(
-         DocumentToProtoConverter.RpcRequestMessageConflictException.class,
-         () ->
-         app.convert(
-             discoveryDocPath.toString(),
-             null,
-             generatedFilePath.toString(),
-             "",
-             "",
-             "https://cloud.google.com",
-             "true",
-             "true"));
+    assertThrows(
+        DocumentToProtoConverter.RpcRequestMessageConflictException.class,
+        () ->
+            app.convert(
+                discoveryDocPath.toString(),
+                null,
+                generatedFilePath.toString(),
+                "",
+                "",
+                "https://cloud.google.com",
+                "true",
+                "true"));
   }
 
   private static String readFile(Path path) throws IOException {
