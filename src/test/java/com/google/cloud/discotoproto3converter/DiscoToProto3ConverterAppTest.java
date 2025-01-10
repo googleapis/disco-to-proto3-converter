@@ -603,6 +603,39 @@ public class DiscoToProto3ConverterAppTest {
     assertEquals(baselineBody, actualBody);
   }
 
+  @Test
+  public void convertRequestMessageNameUnrecoverableConflicts() throws IOException {
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get(
+            "src",
+            "test",
+            "resources",
+            prefix.toString(),
+            "compute.v1small.request-message-name-conflict-unrecoverable.json");
+    Path generatedFilePath =
+        Paths.get(
+            outputDir.toString(), prefix.toString(), "compute.request-message-name-conflict-unrecoverable.proto");
+    System.out.printf(
+        "*** @Test:convertRequestMessageNameUnrecoverableConflicts():\n    Discovery path: %s\n    Generated file: %s\n",
+        discoveryDocPath.toAbsolutePath(),
+        generatedFilePath.toAbsolutePath());
+
+     assertThrows(
+         DocumentToProtoConverter.RpcRequestMessageConflictException.class,
+         () ->
+         app.convert(
+             discoveryDocPath.toString(),
+             null,
+             generatedFilePath.toString(),
+             "",
+             "",
+             "https://cloud.google.com",
+             "true",
+             "true"));
+  }
+
   private static String readFile(Path path) throws IOException {
     return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
   }

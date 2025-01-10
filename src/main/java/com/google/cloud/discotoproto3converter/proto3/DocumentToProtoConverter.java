@@ -851,10 +851,7 @@ public class DocumentToProtoConverter {
 
           String requestName2 = getRpcMessageName(method, "rpc", "request").toUpperCamel();
           if (protoFile.getMessages().containsKey(requestName2)) {
-            throw new InternalError(
-                String.format(
-                    "could not construct request message name for %s.%s: tried '%s', '%s'",
-                    grpcServiceName, methodname, requestName, requestName2));
+            throw new RpcRequestMessageConflictException(grpcServiceName, methodname, requestName, requestName2);
           }
           requestName = requestName2;
         }
@@ -1047,6 +1044,20 @@ public class DocumentToProtoConverter {
                       .stream()
                       .map(version -> String.format("\"%s\"", version))
                       .collect(Collectors.toList()))));
+    }
+  }
+
+  public class RpcRequestMessageConflictException extends InternalError {
+    public RpcRequestMessageConflictException(String serviceName, String rpcName, String candidateMessageName1,
+        String candidateMessageName2) {
+      super(
+          String.format(
+              "could not construct request message name for %s.%s: tried '%s', '%s'",
+              serviceName,
+              rpcName,
+              candidateMessageName1,
+              candidateMessageName2));
+
     }
   }
 }
