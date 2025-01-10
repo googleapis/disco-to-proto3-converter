@@ -583,7 +583,7 @@ public class DiscoToProto3ConverterAppTest {
             prefix.toString(),
             "compute.request-message-name-conflict.proto.baseline");
     System.out.printf(
-        "*** @Test:convertAnyFieldWithFormat():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
+        "*** @Test:convertRequestMessageNameConflicts():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
         discoveryDocPath.toAbsolutePath(),
         generatedFilePath.toAbsolutePath(),
         baselineFilePath.toAbsolutePath());
