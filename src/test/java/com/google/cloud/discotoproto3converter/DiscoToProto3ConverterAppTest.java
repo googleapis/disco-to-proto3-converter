@@ -566,12 +566,22 @@ public class DiscoToProto3ConverterAppTest {
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
     Path discoveryDocPath =
-        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.request-message-name-conflict.json");
+        Paths.get(
+            "src",
+            "test",
+            "resources",
+            prefix.toString(),
+            "compute.v1small.request-message-name-conflict.json");
     Path generatedFilePath =
-        Paths.get(outputDir.toString(), prefix.toString(), "compute.request-message-name-conflict.proto");
+        Paths.get(
+            outputDir.toString(), prefix.toString(), "compute.request-message-name-conflict.proto");
     Path baselineFilePath =
         Paths.get(
-            "src", "test", "resources", prefix.toString(), "compute.request-message-name-conflict.proto.baseline");
+            "src",
+            "test",
+            "resources",
+            prefix.toString(),
+            "compute.request-message-name-conflict.proto.baseline");
     System.out.printf(
         "*** @Test:convertAnyFieldWithFormat():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
         discoveryDocPath.toAbsolutePath(),
