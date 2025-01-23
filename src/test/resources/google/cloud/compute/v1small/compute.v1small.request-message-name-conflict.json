@@ -1,0 +1,92 @@
+{
+  "kind": "discovery#restDescription",
+  "etag": "\"u9GIe6H63LSGq-9_t39K2Zx_EAc/FxLyjO3NNw-MCcpaZiOfen7ZKXY\"",
+  "discoveryVersion": "v1",
+  "id": "compute:v1",
+  "name": "compute",
+  "version": "v1small",
+  "revision": "20200302",
+  "title": "Compute Engine API",
+  "description": "Creates and runs virtual machines on Google Cloud Platform.",
+  "ownerDomain": "google.com",
+  "ownerName": "Google",
+  "icons": {
+    "x16": "https://www.google.com/images/icons/product/compute_engine-16.png",
+    "x32": "https://www.google.com/images/icons/product/compute_engine-32.png"
+  },
+  "documentationLink": "https://developers.google.com/compute/docs/reference/latest/",
+  "protocol": "rest",
+  "baseUrl": "https://compute.googleapis.com/compute/v1/projects/",
+  "basePath": "/compute/v1/projects/",
+  "rootUrl": "https://compute.googleapis.com/",
+  "servicePath": "compute/v1/projects/",
+  "batchPath": "batch/compute/v1",
+  "schemas": {
+    "CalendarModeAdviceRequest": {
+      "id": "CalendarModeAdviceRequest",
+      "description": "A request",
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "The name.",
+          "type": "string"
+        }
+      }
+    },
+    "CalendarModeAdviceResponse": {
+      "id": "CalendarModeAdviceResponse",
+      "description": "A response.",
+      "type": "object",
+      "properties": {
+        "recommendation": {
+          "description": "Recommendations.",
+          "type": "string"
+        }
+      }
+    }    
+  },
+  "resources": {
+    "advice": {
+      "methods": {
+        "calendarMode": {
+          "id": "compute.advice.calendarMode",
+          "path": "projects/{project}/regions/{region}/advice/calendarMode",
+          "flatPath": "projects/{project}/regions/{region}/advice/calendarMode",
+          "httpMethod": "POST",
+          "parameters": {
+            "project": {
+              "description": "Project ID for this request.",
+              "pattern": "(?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?))",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            },
+            "region": {
+              "description": "Name of the region for this request.",
+              "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "parameterOrder": [
+            "project",
+            "region"
+          ],
+          "request": {
+            "$ref": "CalendarModeAdviceRequest"
+          },
+          "response": {
+            "$ref": "CalendarModeAdviceResponse"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/compute"
+          ],
+          "description": "Advise something"
+        }
+      }
+    }
+  }
+}
+

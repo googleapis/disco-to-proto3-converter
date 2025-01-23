@@ -376,6 +376,14 @@ public class DiscoToProto3ConverterAppTest {
         Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.error-any.json");
     Path generatedFilePath =
         Paths.get(outputDir.toString(), prefix.toString(), "compute.error-any.proto");
+    Path baselineFilePath =
+        Paths.get(
+            "src", "test", "resources", prefix.toString(), "compute.error-any.proto.baseline");
+    System.out.printf(
+        "*** @Test:convertAnyFieldInError():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
+        discoveryDocPath.toAbsolutePath(),
+        generatedFilePath.toAbsolutePath(),
+        baselineFilePath.toAbsolutePath());
 
     app.convert(
         discoveryDocPath.toString(),
@@ -388,16 +396,7 @@ public class DiscoToProto3ConverterAppTest {
         "true");
 
     String actualBody = readFile(generatedFilePath);
-    Path baselineFilePath =
-        Paths.get(
-            "src", "test", "resources", prefix.toString(), "compute.error-any.proto.baseline");
     String baselineBody = readFile(baselineFilePath);
-
-    System.out.printf(
-        "*** @Test:convertAnyFieldInError():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
-        discoveryDocPath.toAbsolutePath(),
-        generatedFilePath.toAbsolutePath(),
-        baselineFilePath.toAbsolutePath());
 
     assertEquals(baselineBody, actualBody);
   }
@@ -538,6 +537,14 @@ public class DiscoToProto3ConverterAppTest {
         Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.any-format.json");
     Path generatedFilePath =
         Paths.get(outputDir.toString(), prefix.toString(), "compute.any-format.proto");
+    Path baselineFilePath =
+        Paths.get(
+            "src", "test", "resources", prefix.toString(), "compute.any-format.proto.baseline");
+    System.out.printf(
+        "*** @Test:convertAnyFieldWithFormat():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
+        discoveryDocPath.toAbsolutePath(),
+        generatedFilePath.toAbsolutePath(),
+        baselineFilePath.toAbsolutePath());
 
     app.convert(
         discoveryDocPath.toString(),
@@ -550,18 +557,97 @@ public class DiscoToProto3ConverterAppTest {
         "true");
 
     String actualBody = readFile(generatedFilePath);
+    String baselineBody = readFile(baselineFilePath);
+    assertEquals(baselineBody, actualBody);
+  }
+
+  @Test
+  public void convertRequestMessageNameConflicts() throws IOException {
+    // In this test, the Discovery file defines a method
+    // Advice.CalendarMode(CalendarModeAdviceRequest). The converter tries to create its own request
+    // wrapper message for this method, also called CalendarModeAdviceRequest, which wraps the
+    // Discovery-provided request message. The converter notices that the request wrapper message
+    // name would be the same as the Discovery request message name, and it changes the name of the
+    // wrapper to CalendarModeAdviceRpcRequest.
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get(
+            "src",
+            "test",
+            "resources",
+            prefix.toString(),
+            "compute.v1small.request-message-name-conflict.json");
+    Path generatedFilePath =
+        Paths.get(
+            outputDir.toString(), prefix.toString(), "compute.request-message-name-conflict.proto");
     Path baselineFilePath =
         Paths.get(
-            "src", "test", "resources", prefix.toString(), "compute.any-format.proto.baseline");
-    String baselineBody = readFile(baselineFilePath);
-
+            "src",
+            "test",
+            "resources",
+            prefix.toString(),
+            "compute.request-message-name-conflict.proto.baseline");
     System.out.printf(
-        "*** @Test:convertAnyFieldWithFormat():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
+        "*** @Test:convertRequestMessageNameConflicts():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
         discoveryDocPath.toAbsolutePath(),
         generatedFilePath.toAbsolutePath(),
         baselineFilePath.toAbsolutePath());
 
+    app.convert(
+        discoveryDocPath.toString(),
+        null,
+        generatedFilePath.toString(),
+        "",
+        "",
+        "https://cloud.google.com",
+        "true",
+        "true");
+
+    String actualBody = readFile(generatedFilePath);
+    String baselineBody = readFile(baselineFilePath);
     assertEquals(baselineBody, actualBody);
+  }
+
+  @Test
+  public void convertRequestMessageNameUnrecoverableConflicts() throws IOException {
+    // In this test, the Discovery file defines a method
+    // Advice.CalendarMode(CalendarModeAdviceRequest). The converter tries to create its own request
+    // wrapper message for this method, also called CalendarModeAdviceRequest, which wraps the
+    // Discovery-provided request message. The converter notices that the request wrapper message
+    // name would be the same as the Discovery request message name, and it tries to change the name
+    // of the wrapper to CalendarModeAdviceRpcRequest. However, there is another Discovery message
+    // with that new name, so the converter stops trying to rename and throws an exception.
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get(
+            "src",
+            "test",
+            "resources",
+            prefix.toString(),
+            "compute.v1small.request-message-name-conflict-unrecoverable.json");
+    Path generatedFilePath =
+        Paths.get(
+            outputDir.toString(),
+            prefix.toString(),
+            "compute.request-message-name-conflict-unrecoverable.proto");
+    System.out.printf(
+        "*** @Test:convertRequestMessageNameUnrecoverableConflicts():\n    Discovery path: %s\n    Generated file: %s\n",
+        discoveryDocPath.toAbsolutePath(), generatedFilePath.toAbsolutePath());
+
+    assertThrows(
+        DocumentToProtoConverter.RpcRequestMessageConflictException.class,
+        () ->
+            app.convert(
+                discoveryDocPath.toString(),
+                null,
+                generatedFilePath.toString(),
+                "",
+                "",
+                "https://cloud.google.com",
+                "true",
+                "true"));
   }
 
   private static String readFile(Path path) throws IOException {
