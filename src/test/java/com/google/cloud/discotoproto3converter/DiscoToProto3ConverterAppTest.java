@@ -563,6 +563,12 @@ public class DiscoToProto3ConverterAppTest {
 
   @Test
   public void convertRequestMessageNameConflicts() throws IOException {
+    // In this test, the Discovery file defines a method
+    // Advice.CalendarMode(CalendarModeAdviceRequest). The converter tries to create its own request
+    // wrapper message for this method, also called CalendarModeAdviceRequest, which wraps the
+    // Discovery-provided request message. The converter notices that the request wrapper message
+    // name would be the same as the Discovery request message name, and it changes the name of the
+    // wrapper to CalendarModeAdviceRpcRequest.
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
     Path discoveryDocPath =
@@ -605,6 +611,13 @@ public class DiscoToProto3ConverterAppTest {
 
   @Test
   public void convertRequestMessageNameUnrecoverableConflicts() throws IOException {
+    // In this test, the Discovery file defines a method
+    // Advice.CalendarMode(CalendarModeAdviceRequest). The converter tries to create its own request
+    // wrapper message for this method, also called CalendarModeAdviceRequest, which wraps the
+    // Discovery-provided request message. The converter notices that the request wrapper message
+    // name would be the same as the Discovery request message name, and it tries to change the name
+    // of the wrapper to CalendarModeAdviceRpcRequest. However, there is another Discovery message
+    // with that new name, so the converter stops trying to rename and throws an exception.
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
     Path discoveryDocPath =
