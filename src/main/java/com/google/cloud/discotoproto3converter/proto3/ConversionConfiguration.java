@@ -34,7 +34,10 @@ public class ConversionConfiguration {
     // Each DistinctProtoType instance should have a distinct protoMessageName.
     private String protoMessageName;
 
-    // Multiple DistinctProtoType instances may share the same schema.
+    // Multiple DistinctProtoType instances may share the same schema. Note that when reading the
+    // external config, we always set the schema to null. We only set to null through the
+    // addLocation method that is transitively called by the DocumentToProtoConverter, and only
+    // those schemas that are set get emitted back out.
     private String schema;
 
     // Any location should appear at most once in this field across all DistinctProtoType instances.
@@ -156,6 +159,13 @@ public class ConversionConfiguration {
     for (Map.Entry<String, DistinctProtoType> fieldToProto : this.fieldToProtoType) {
       String fieldPath = fieldToProto.getKey();
       DistinctProtoType thisDistinctProtoType = fieldToProto.getValue();
+      if (thisDistinctProtoType.schema == null) {
+        // If thisDistinctProtoType was read in, it was set to null, and if the correspond proto
+        // type was renamed in the config, the read-in DistinctProtoType would still have schema
+        // being null. That would be fine, except that the fieldPath must point to a type that is non-null. So if we're here, that's an error.
+        throw IllegalStateException(String.format("previously specified field of type %s is not longer used: %s",
+                thisDistinctProtoType.protoMessageName, fieldPath));
+      }
       InlineSchema thisInlineSchema = schemaToDetails.get(thisDistinctProtoType.schema);
       if (thisInlineSchema == null) {
         thisInlineSchema = new InlineSchema();
