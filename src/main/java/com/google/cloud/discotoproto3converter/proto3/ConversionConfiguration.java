@@ -41,12 +41,13 @@ public class ConversionConfiguration {
     // Any location should appear at most once in this field across all DistinctProtoType instances.
     private List<String> locations;
 
-    private boolean errors;
+    private List<String> errors;
 
     public DistinctProtoType(String protoTypeName, String schema) {
       this.locations = new ArrayList<String>();
       this.protoMessageName = protoTypeName;
       this.schema = schema;
+      this.errors = new ArrayList<String>();
     }
 
     // Overrides this.protoMessageName (we used to check they matched)
@@ -55,7 +56,9 @@ public class ConversionConfiguration {
         this.locations.add(fieldPath);
       }
       if (this.schema != null && schema != this.schema) {
-        errors = true;
+        errors.add(String.format("new schema does not match previous schema for field path %s:\nold schema:\n%s\nnew schema:\n%s",
+                fieldPath, this.schema, schema));
+        return;
       }
       this.protoMessageName = protoTypeName;
       this.schema = schema;
@@ -118,10 +121,11 @@ public class ConversionConfiguration {
     public DistinctProtoType addProtoType(DistinctProtoType theProtoType) {
       String protoTypeName = theProtoType.protoMessageName;
       String protoSchema = theProtoType.schema;
+      List<String> errors = new ArrayList<String>();
+
 
       assert protoSchema != null;
       assert this.schema == null || this.schema == protoSchema;
-      //      assert this.locations.get(protoTypeName) == null;
 
       this.schema = protoSchema;
       List<String> currentLocations = this.locations.get(protoTypeName);
@@ -131,9 +135,13 @@ public class ConversionConfiguration {
       }
       for (String newLocation : theProtoType.locations) {
         if (currentLocations.contains(newLocation)) {
-          throw new IllegalStateException(String.format("location was already registered: %s", newLocation));
+          errors.add(String.format("location was already registered: %s", newLocation));
+          continue;
         }
         currentLocations.add(newLocation);
+      };
+      if (errors.size() > 0) {
+        throw new IllegalStateException(String.join("\n", errors));
       };
 
       return theProtoType;
@@ -151,18 +159,24 @@ public class ConversionConfiguration {
   private List<InlineSchema> inlineSchemas;
   /* END: Only these fields are exposed in the external proto config. */
 
+
+  // Map of distinct field paths to a DistinctProtoType. Keys that describe fields with the same
+  // proto3 message type should point to the same DistinctProtoType instance, and that instance
+  // should include each of those field locations.
+  private transient Map<String, DistinctProtoType> fieldToProtoType;
+
+  private transient List<String> errors = new ArrayList<String>();
+
+
   public ConversionConfiguration() {
     this.inlineSchemas = new ArrayList<InlineSchema>();
     this.fieldToProtoType = new HashMap<String, DistinctProtoType>();
     this.converterVersion = "UNSET";
     this.apiVersion = "UNSET";
     this.discoveryRevision = "UNSET";
-  }
 
-  // Map of distinct field paths to a DistinctProtoType. Keys that describe fields with the same
-  // proto3 message type should point to the same DistinctProtoType instance, and that instance
-  // should include each of those field locations.
-  private transient Map<String, DistinctProtoType> fieldToProtoType;
+    this.errors = new ArrayList<String>();
+  }
 
   /**
    * Registers in this.fieldToProtoType a single instance of schema being used as the protoTypeName
@@ -174,7 +188,7 @@ public class ConversionConfiguration {
       protoType = new DistinctProtoType(protoTypeName, schema);
       this.fieldToProtoType.put(fieldPath, protoType);
     } else if (requireNew) {
-      throw new IllegalStateException(String.format("field specified multiple times: %s", fieldPath));
+      this.errors.add(String.format("field specified multiple times: %s", fieldPath));
     }
     protoType.addLocation(fieldPath, protoTypeName, schema);
     return protoType;
@@ -192,7 +206,9 @@ public class ConversionConfiguration {
         String protoTypeName = protoTypeToFields.getKey();
         for (String oneFieldPath : protoTypeToFields.getValue()) {
           DistinctProtoType protoType = this.addInlineSchemaInstance(oneFieldPath, protoTypeName, null,true);
-          assert !protoType.errors;
+          if (protoType.errors.size() > 0) {
+            throw new IllegalStateException(String.join("\n", protoType.errors));
+          }
         }
       }
     }
@@ -204,6 +220,7 @@ public class ConversionConfiguration {
    */
   public ConversionConfiguration PopulateInlineSchemas() {
     Map<String,InlineSchema> schemaToDetails = new HashMap<String, InlineSchema>(); // Keys are schemas
+    List<String> errors = new ArrayList<String>();
     for (Map.Entry<String, DistinctProtoType> fieldToProto : this.fieldToProtoType.entrySet()) {
       String fieldPath = fieldToProto.getKey();
       DistinctProtoType thisDistinctProtoType = fieldToProto.getValue();
@@ -211,8 +228,9 @@ public class ConversionConfiguration {
         // If thisDistinctProtoType was read in, it was set to null, and if the correspond proto
         // type was renamed in the config, the read-in DistinctProtoType would still have schema
         // being null. That would be fine, except that the fieldPath must point to a type that is non-null. So if we're here, that's an error.
-        throw new IllegalStateException(String.format("previously specified field of type %s is not longer used: %s",
+        errors.add(String.format("previously specified field of type %s is not longer used: %s",
                 thisDistinctProtoType.protoMessageName, fieldPath));
+        continue;
       }
       InlineSchema thisInlineSchema = schemaToDetails.get(thisDistinctProtoType.schema);
       if (thisInlineSchema == null) {
@@ -221,6 +239,9 @@ public class ConversionConfiguration {
       }
       thisInlineSchema.addProtoType(thisDistinctProtoType);
     }
+    if (errors.size() > 0) {
+      throw new IllegalStateException(String.join("\n", errors));
+    };
     this.inlineSchemas = new ArrayList<InlineSchema>(schemaToDetails.values());
     return this;
   }
