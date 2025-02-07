@@ -182,6 +182,12 @@ public class ConversionConfiguration {
     return addInlineSchemaInstance(fieldPath, protoTypeName, schema, false);
   }
 
+  public void throwIfError() {
+    if (this.errors.size() > 0) {
+      throw new IllegalStateException(String.join("\n", this.errors));
+    }
+  }
+
   /**
    * Registers in this.fieldToProtoType a single instance of schema being used as the protoTypeName
    * type of the field at fieldPath.
@@ -210,12 +216,11 @@ public class ConversionConfiguration {
         String protoTypeName = protoTypeToFields.getKey();
         for (String oneFieldPath : protoTypeToFields.getValue()) {
           DistinctProtoType protoType = this.addInlineSchemaInstance(oneFieldPath, protoTypeName, oneInlineSchema.schema, true);
-          if (protoType.errors.size() > 0) {
-            throw new IllegalStateException(String.join("\n", protoType.errors));
-          }
+          errors.addAll(protoType.errors);
         }
       }
     }
+    this.throwIfError();
     return this.fieldToProtoType;
   }
 
@@ -224,7 +229,6 @@ public class ConversionConfiguration {
    */
   public ConversionConfiguration PopulateInlineSchemas() {
     Map<String,InlineSchema> schemaToDetails = new HashMap<String, InlineSchema>(); // Keys are schemas
-    List<String> errors = new ArrayList<String>();
     for (Map.Entry<String, DistinctProtoType> fieldToProto : this.fieldToProtoType.entrySet()) {
       String fieldPath = fieldToProto.getKey();
       DistinctProtoType thisDistinctProtoType = fieldToProto.getValue();
@@ -243,9 +247,7 @@ public class ConversionConfiguration {
       }
       thisInlineSchema.addProtoType(thisDistinctProtoType);
     }
-    if (errors.size() > 0) {
-      throw new IllegalStateException(String.join("\n", errors));
-    };
+    this.throwIfError();
     this.inlineSchemas = new ArrayList<InlineSchema>(schemaToDetails.values());
     return this;
   }
