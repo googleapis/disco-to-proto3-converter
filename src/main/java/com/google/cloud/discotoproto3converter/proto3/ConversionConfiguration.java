@@ -24,8 +24,6 @@ import com.google.gson.Gson;
 
 public class ConversionConfiguration {
 
-
-
   /**
    *  Inner class to capture the uses of a distinct proto message type. This class is used for
    *  internal computations and is not directly reflected in the external config.
@@ -35,9 +33,9 @@ public class ConversionConfiguration {
     private String protoMessageName;
 
     // Multiple DistinctProtoType instances may share the same schema. Note that when reading the
-    // external config, we always set the schema to null. We only set to null through the
-    // addLocation method that is transitively called by the DocumentToProtoConverter, and only
-    // those schemas that are set get emitted back out.
+    // external config, we always set the schema to null. We only set the schemas to non-null
+    // through the addLocation method that is transitively called from the DocumentToProtoConverter,
+    // and only those schemas that are set (non-null) get emitted back out.
     private String schema;
 
     // Any location should appear at most once in this field across all DistinctProtoType instances.
@@ -51,12 +49,42 @@ public class ConversionConfiguration {
       this.schema = schema;
     }
 
+    // Overrides this.protoMessageName (we used to check they matched)
     public void addLocation(String fieldPath, String protoTypeName, String schema) {
-      this.locations.add(fieldPath);
-      if (protoTypeName != this.protoMessageName || (this.schema != null && schema != this.schema)) {
+      if (!this.locations.contains(fieldPath)) {
+        this.locations.add(fieldPath);
+      }
+      if (this.schema != null && schema != this.schema) {
         errors = true;
       }
+      this.protoMessageName = protoTypeName;
       this.schema = schema;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (!(obj instanceof DistinctProtoType) || obj == null) {
+        return false;
+      }
+      DistinctProtoType other = (DistinctProtoType)obj;
+      if (other == null ||
+          !this.protoMessageName.equals(other.protoMessageName) ||
+          // Separate the null here, and when we use the schema (not read from external config) set
+          // a new internal field that says used. Also change places where we check for null
+          // schema. This will initially cause the readWriteWIthoutAnyChanges test to fail.
+          (this.schema != null && !this.schema.equals(other.schema))||
+          this.locations.size() != other.locations.size()) {
+        return false;
+      }
+      for (String oneLocation : this.locations) {
+        if (!other.locations.contains(oneLocation)) {
+          return false;
+        }
+      }
+      return true;
     }
   }
 
@@ -66,18 +94,26 @@ public class ConversionConfiguration {
    * of those places. These data are reflected in the external config.
    */
   static class InlineSchema {
-    // A human-readable representation of the schema. This is not inspected by the code in anyway except to check for equality.
-    private final String schema;
+    // A human-readable representation of the schema. This is not inspected by the code in anyway
+    // except to check for equality.
+    private String schema;
 
-    // Map of proto3 message type names that implement this schema to the locations of fields with this type.
+    // Map of proto3 message type names that implement this schema to the locations of fields with
+    // this type.
     private Map<String, List<String>> locations;
+
+    private InlineSchema() {
+      this.locations = new HashMap<String, List<String>>();
+    }
 
     /**
      * Adds theProtoType to this, meaning that it registers thePrototype.locations as field paths
      * (in this.locations) associated with this schema under the proto3 message name
      * theProtoType.protoMessageName.  This checks that this.schema equals theProtoType.schema, or,
-     * if the former is null, sets it to the latter. This also checks that no locations were
-     * previously provided for thePrototype.protoMessageName.
+     * if the former is null, sets it to the latter.
+     *
+     * DELETE: This also checks that no locations were previously provided for
+     * thePrototype.protoMessageName.
      */
     public DistinctProtoType addProtoType(DistinctProtoType theProtoType) {
       String protoTypeName = theProtoType.protoMessageName;
@@ -85,10 +121,20 @@ public class ConversionConfiguration {
 
       assert protoSchema != null;
       assert this.schema == null || this.schema == protoSchema;
-      assert this.locations.get(protoTypeName) == null;
+      //      assert this.locations.get(protoTypeName) == null;
 
       this.schema = protoSchema;
-      this.locations.put(protoTypeName, thePrototype.locations);
+      List<String> currentLocations = this.locations.get(protoTypeName);
+      if (currentLocations == null) {
+        currentLocations = new ArrayList<String>();
+        this.locations.put(protoTypeName, currentLocations);
+      }
+      for (String newLocation : theProtoType.locations) {
+        if (currentLocations.contains(newLocation)) {
+          throw new IllegalStateException(String.format("location was already registered: %s", newLocation));
+        }
+        currentLocations.add(newLocation);
+      };
 
       return theProtoType;
     }
@@ -100,14 +146,17 @@ public class ConversionConfiguration {
   private final String converterVersion;
 
   private final String apiVersion;
-  private String discoveryRevision;
+  private final String discoveryRevision;
 
   private List<InlineSchema> inlineSchemas;
   /* END: Only these fields are exposed in the external proto config. */
 
   public ConversionConfiguration() {
-    this.inlineSchemas = new ArrayList<String>();
+    this.inlineSchemas = new ArrayList<InlineSchema>();
     this.fieldToProtoType = new HashMap<String, DistinctProtoType>();
+    this.converterVersion = "UNSET";
+    this.apiVersion = "UNSET";
+    this.discoveryRevision = "UNSET";
   }
 
   // Map of distinct field paths to a DistinctProtoType. Keys that describe fields with the same
@@ -119,13 +168,13 @@ public class ConversionConfiguration {
    * Registers in this.fieldToProtoType a single instance of schema being used as the protoTypeName
    * type of the field at fieldPath.
    */
-  private DistinctProtoType addInlineSchemaInstance(String fieldPath, String protoTypeName, String schema, boolean requireNew /* remove?*/) {
+  public DistinctProtoType addInlineSchemaInstance(String fieldPath, String protoTypeName, String schema, boolean requireNew /* remove?*/) {
     DistinctProtoType protoType = this.fieldToProtoType.get(fieldPath);
     if (protoType == null) {
       protoType = new DistinctProtoType(protoTypeName, schema);
       this.fieldToProtoType.put(fieldPath, protoType);
     } else if (requireNew) {
-      throw IllegalStateException(String.format("field specified multiple times: %s", fieldPath));
+      throw new IllegalStateException(String.format("field specified multiple times: %s", fieldPath));
     }
     protoType.addLocation(fieldPath, protoTypeName, schema);
     return protoType;
@@ -154,26 +203,26 @@ public class ConversionConfiguration {
    * Clears and populates this.inlineSchemas from this.fieldToProtoType
    */
   public ConversionConfiguration PopulateInlineSchemas() {
-    this.inlineSchemas.clear();
     Map<String,InlineSchema> schemaToDetails = new HashMap<String, InlineSchema>(); // Keys are schemas
-    for (Map.Entry<String, DistinctProtoType> fieldToProto : this.fieldToProtoType) {
+    for (Map.Entry<String, DistinctProtoType> fieldToProto : this.fieldToProtoType.entrySet()) {
       String fieldPath = fieldToProto.getKey();
       DistinctProtoType thisDistinctProtoType = fieldToProto.getValue();
       if (thisDistinctProtoType.schema == null) {
         // If thisDistinctProtoType was read in, it was set to null, and if the correspond proto
         // type was renamed in the config, the read-in DistinctProtoType would still have schema
         // being null. That would be fine, except that the fieldPath must point to a type that is non-null. So if we're here, that's an error.
-        throw IllegalStateException(String.format("previously specified field of type %s is not longer used: %s",
+        throw new IllegalStateException(String.format("previously specified field of type %s is not longer used: %s",
                 thisDistinctProtoType.protoMessageName, fieldPath));
       }
       InlineSchema thisInlineSchema = schemaToDetails.get(thisDistinctProtoType.schema);
       if (thisInlineSchema == null) {
         thisInlineSchema = new InlineSchema();
-        schemaToDetails.put(thisInlineSchema);
+        schemaToDetails.put(thisDistinctProtoType.schema, thisInlineSchema);
       }
       thisInlineSchema.addProtoType(thisDistinctProtoType);
     }
-    this.inlineSchemas = schemaToDetails.values();
+    this.inlineSchemas = new ArrayList<InlineSchema>(schemaToDetails.values());
+    return this;
   }
 
   static public ConversionConfiguration FromJSON(String jsonContents) {
@@ -189,4 +238,23 @@ public class ConversionConfiguration {
     return gson.toJson(this);
   }
 
+  public boolean publicFieldsEqual(ConversionConfiguration other, boolean matchDiscoveryRevision) {
+    if (!(this.converterVersion.equals(other.converterVersion) &&
+        this.apiVersion.equals(other.apiVersion) &&
+        (!matchDiscoveryRevision || (this.discoveryRevision.equals(other.discoveryRevision))) &&
+        this.inlineSchemas.size() == other.inlineSchemas.size() &&
+        this.fieldToProtoType.size() == other.fieldToProtoType.size())) {
+      return false;
+    }
+
+    for (Map.Entry<String, DistinctProtoType> thisEntry : this.fieldToProtoType.entrySet()) {
+      String fieldPath = thisEntry.getKey();
+      DistinctProtoType thisProtoType = thisEntry.getValue();
+      DistinctProtoType otherProtoType = other.fieldToProtoType.get(fieldPath);
+      if (otherProtoType == null || !thisProtoType.equals(otherProtoType)) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
