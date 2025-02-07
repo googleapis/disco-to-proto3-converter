@@ -56,7 +56,10 @@ public class ConversionConfiguration {
       if (!this.locations.contains(fieldPath)) {
         this.locations.add(fieldPath);
       }
-      // TODO: if schemaUsed: throw error
+      if (this.schemaUsed) {
+        this.errors.add(String.format("!! this DistinctProtoInstance was already used: %s:%s:%s\n",
+                protoTypeName, fieldPath, schema));
+      }
 
       this.protoMessageName = protoTypeName;
       this.schema = schema;
@@ -114,10 +117,9 @@ public class ConversionConfiguration {
      * theProtoType.protoMessageName.  This checks that this.schema equals theProtoType.schema, or,
      * if the former is null, sets it to the latter.
      *
-     * DELETE: This also checks that no locations were previously provided for
-     * thePrototype.protoMessageName.
+     * Returns a list of errors.
      */
-    public DistinctProtoType addProtoType(DistinctProtoType theProtoType) {
+    public List<String> addProtoType(DistinctProtoType theProtoType) {
       String protoTypeName = theProtoType.protoMessageName;
       String protoSchema = theProtoType.schema;
       List<String> errors = new ArrayList<String>();
@@ -134,16 +136,12 @@ public class ConversionConfiguration {
       }
       for (String newLocation : theProtoType.locations) {
         if (currentLocations.contains(newLocation)) {
-          errors.add(String.format("location was already registered: %s", newLocation));
+          errors.add(String.format("!! location was already registered: %s", newLocation));
           continue;
         }
         currentLocations.add(newLocation);
       };
-      if (errors.size() > 0) {
-        throw new IllegalStateException(String.join("\n", errors));
-      };
-
-      return theProtoType;
+      return errors;
     }
   }
 
@@ -198,9 +196,10 @@ public class ConversionConfiguration {
       protoType = new DistinctProtoType(protoTypeName, schema);
       this.fieldToProtoType.put(fieldPath, protoType);
     } else if (readingFromFile) {
-      this.errors.add(String.format("field specified multiple times: %s", fieldPath));
+      this.errors.add(String.format("!! field specified multiple times: %s", fieldPath));
     }
     protoType.update(fieldPath, protoTypeName, schema, readingFromFile);
+    errors.addAll(protoType.errors);
     return protoType;
   }
 
@@ -216,7 +215,6 @@ public class ConversionConfiguration {
         String protoTypeName = protoTypeToFields.getKey();
         for (String oneFieldPath : protoTypeToFields.getValue()) {
           DistinctProtoType protoType = this.addInlineSchemaInstance(oneFieldPath, protoTypeName, oneInlineSchema.schema, true);
-          errors.addAll(protoType.errors);
         }
       }
     }
@@ -233,10 +231,7 @@ public class ConversionConfiguration {
       String fieldPath = fieldToProto.getKey();
       DistinctProtoType thisDistinctProtoType = fieldToProto.getValue();
       if (!thisDistinctProtoType.schemaUsed) {
-        // If thisDistinctProtoType was read in, it was set to null, and if the correspond proto
-        // type was renamed in the config, the read-in DistinctProtoType would still have schema
-        // being null. That would be fine, except that the fieldPath must point to a type that is non-null. So if we're here, that's an error.
-        errors.add(String.format("previously specified field of type %s is not longer used: %s",
+        errors.add(String.format("!! previously specified field of type %s is not longer used: %s",
                 thisDistinctProtoType.protoMessageName, fieldPath));
         continue;
       }
@@ -245,7 +240,7 @@ public class ConversionConfiguration {
         thisInlineSchema = new InlineSchema();
         schemaToDetails.put(thisDistinctProtoType.schema, thisInlineSchema);
       }
-      thisInlineSchema.addProtoType(thisDistinctProtoType);
+      this.errors.addAll(thisInlineSchema.addProtoType(thisDistinctProtoType));
     }
     this.throwIfError();
     this.inlineSchemas = new ArrayList<InlineSchema>(schemaToDetails.values());
