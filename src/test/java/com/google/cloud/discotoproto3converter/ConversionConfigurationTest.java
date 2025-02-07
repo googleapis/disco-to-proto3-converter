@@ -108,7 +108,7 @@ public class ConversionConfigurationTest {
     """;
         assert checkIdenticalJSON(referenceConfig, variantConfig);
 
-    // Changing the schema keeps the configs equal
+    // Changing the schema makes the configs not equal
     variantConfig = """
         {
        "converterVersion": "A",
@@ -132,7 +132,7 @@ public class ConversionConfigurationTest {
        ]
        }
     """;
-        assert checkIdenticalJSON(referenceConfig, variantConfig);
+        assertFalse(checkIdenticalJSON(referenceConfig, variantConfig));
 
     // Changing the locations makes the configs not equal
     variantConfig = """
@@ -165,13 +165,13 @@ public class ConversionConfigurationTest {
 
   @Test
   public void readWriteWithoutAnyChanges() {
-    String label = "readWriteSplittingSchema";
+    String label = "readWriteWithoutAnyChanges";
 
     ConversionConfiguration config = ConversionConfiguration.FromJSON(inputConfig);
-    config.addInlineSchemaInstance("schemas.Pond.info", "PondInfo", "current schema", false);
-    config.addInlineSchemaInstance("schemas.BigLake.lakeInfo", "LakeInfo", "current schema", false);
-    config.addInlineSchemaInstance("schemas.Lake.info", "LakeInfo", "current schema", false);
-    config.addInlineSchemaInstance("schemas.BigPond.pondInfo", "PondInfo", "current schema", false);
+    config.addInlineSchemaInstance("schemas.Pond.info", "PondInfo", "an initial schema");
+    config.addInlineSchemaInstance("schemas.BigLake.lakeInfo", "LakeInfo", "an initial schema");
+    config.addInlineSchemaInstance("schemas.Lake.info", "LakeInfo", "an initial schema");
+    config.addInlineSchemaInstance("schemas.BigPond.pondInfo", "PondInfo", "an initial schema");
     String outputConfig = config.ToJSON();
 
     System.out.printf("** %s: input\n%s\n%s: output\n%s\n",
@@ -185,10 +185,10 @@ public class ConversionConfigurationTest {
     String label = "readWriteSplittingSchema";
 
     ConversionConfiguration config = ConversionConfiguration.FromJSON(inputConfig);
-    config.addInlineSchemaInstance("schemas.Pond.info", "FirstPondInfo", "current schema", false);
-    config.addInlineSchemaInstance("schemas.BigLake.lakeInfo", "AugmentedLakeInfo", "current schema", false);
-    config.addInlineSchemaInstance("schemas.Lake.info", "LakeInfo", "current schema", false);
-    config.addInlineSchemaInstance("schemas.BigPond.pondInfo", "SecondPondInfo", "current schema", false);
+    config.addInlineSchemaInstance("schemas.Pond.info", "FirstPondInfo", "current schema");
+    config.addInlineSchemaInstance("schemas.BigLake.lakeInfo", "AugmentedLakeInfo", "current schema");
+    config.addInlineSchemaInstance("schemas.Lake.info", "LakeInfo", "current schema");
+    config.addInlineSchemaInstance("schemas.BigPond.pondInfo", "SecondPondInfo", "current schema");
     String outputConfig = config.ToJSON();
 
     String expectedConfig = """
@@ -221,11 +221,11 @@ public class ConversionConfigurationTest {
     String label = "readWriteAddingSchema";
 
     ConversionConfiguration config = ConversionConfiguration.FromJSON(inputConfig);
-    config.addInlineSchemaInstance("schemas.Pond.info", "PondInfo", "current schema", false);
-    config.addInlineSchemaInstance("schemas.BigLake.lakeInfo", "LakeInfo", "current schema", false);
-    config.addInlineSchemaInstance("schemas.Lake.info", "LakeInfo", "current schema", false);
-    config.addInlineSchemaInstance("schemas.BigPond.pondInfo", "PondInfo", "current schema", false);
-    config.addInlineSchemaInstance("schemas.River.info", "RiverInfo", "new schema", false);
+    config.addInlineSchemaInstance("schemas.Pond.info", "PondInfo", "current schema");
+    config.addInlineSchemaInstance("schemas.BigLake.lakeInfo", "LakeInfo", "current schema");
+    config.addInlineSchemaInstance("schemas.Lake.info", "LakeInfo", "current schema");
+    config.addInlineSchemaInstance("schemas.BigPond.pondInfo", "PondInfo", "current schema");
+    config.addInlineSchemaInstance("schemas.River.info", "RiverInfo", "new schema");
     String outputConfig = config.ToJSON();
 
     String expectedConfig =         """
@@ -263,9 +263,9 @@ public class ConversionConfigurationTest {
   public void readWriteWithoutUsingFieldSchema() {
     String label = "readWriteWithoutUsingFieldSchema";
     ConversionConfiguration config = ConversionConfiguration.FromJSON(inputConfig);
-    config.addInlineSchemaInstance("schemas.Pond.info", "PondInfo", "current schema", false);
-    config.addInlineSchemaInstance("schemas.BigLake.lakeInfo", "LakeInfo", "current schema", false);
-    config.addInlineSchemaInstance("schemas.Lake.info", "LakeInfo", "current schema", false);
+    config.addInlineSchemaInstance("schemas.Pond.info", "PondInfo", "current schema");
+    config.addInlineSchemaInstance("schemas.BigLake.lakeInfo", "LakeInfo", "current schema");
+    config.addInlineSchemaInstance("schemas.Lake.info", "LakeInfo", "current schema");
     // We omit BigPond
 
     System.out.printf("** %s: input\n%s\n", label, inputConfig);

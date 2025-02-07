@@ -37,6 +37,7 @@ public class ConversionConfiguration {
     // through the addLocation method that is transitively called from the DocumentToProtoConverter,
     // and only those schemas that are set (non-null) get emitted back out.
     private String schema;
+    private boolean schemaUsed;
 
     // Any location should appear at most once in this field across all DistinctProtoType instances.
     private List<String> locations;
@@ -51,17 +52,15 @@ public class ConversionConfiguration {
     }
 
     // Overrides this.protoMessageName (we used to check they matched)
-    public void addLocation(String fieldPath, String protoTypeName, String schema) {
+    public void update(String fieldPath, String protoTypeName, String schema, boolean readingFromFile) {
       if (!this.locations.contains(fieldPath)) {
         this.locations.add(fieldPath);
       }
-      if (this.schema != null && schema != this.schema) {
-        errors.add(String.format("new schema does not match previous schema for field path %s:\nold schema:\n%s\nnew schema:\n%s",
-                fieldPath, this.schema, schema));
-        return;
-      }
+      // TODO: if schemaUsed: throw error
+
       this.protoMessageName = protoTypeName;
       this.schema = schema;
+      this.schemaUsed = !readingFromFile;
     }
 
     @Override
@@ -178,19 +177,24 @@ public class ConversionConfiguration {
     this.errors = new ArrayList<String>();
   }
 
+
+  public DistinctProtoType addInlineSchemaInstance(String fieldPath, String protoTypeName, String schema) {
+    return addInlineSchemaInstance(fieldPath, protoTypeName, schema, false);
+  }
+
   /**
    * Registers in this.fieldToProtoType a single instance of schema being used as the protoTypeName
    * type of the field at fieldPath.
    */
-  public DistinctProtoType addInlineSchemaInstance(String fieldPath, String protoTypeName, String schema, boolean requireNew /* remove?*/) {
+  public DistinctProtoType addInlineSchemaInstance(String fieldPath, String protoTypeName, String schema, boolean readingFromFile) {
     DistinctProtoType protoType = this.fieldToProtoType.get(fieldPath);
     if (protoType == null) {
       protoType = new DistinctProtoType(protoTypeName, schema);
       this.fieldToProtoType.put(fieldPath, protoType);
-    } else if (requireNew) {
+    } else if (readingFromFile) {
       this.errors.add(String.format("field specified multiple times: %s", fieldPath));
     }
-    protoType.addLocation(fieldPath, protoTypeName, schema);
+    protoType.update(fieldPath, protoTypeName, schema, readingFromFile);
     return protoType;
   }
 
@@ -205,7 +209,7 @@ public class ConversionConfiguration {
       for (Map.Entry<String, List<String>> protoTypeToFields : oneInlineSchema.locations.entrySet()) {
         String protoTypeName = protoTypeToFields.getKey();
         for (String oneFieldPath : protoTypeToFields.getValue()) {
-          DistinctProtoType protoType = this.addInlineSchemaInstance(oneFieldPath, protoTypeName, null,true);
+          DistinctProtoType protoType = this.addInlineSchemaInstance(oneFieldPath, protoTypeName, oneInlineSchema.schema, true);
           if (protoType.errors.size() > 0) {
             throw new IllegalStateException(String.join("\n", protoType.errors));
           }
@@ -224,7 +228,7 @@ public class ConversionConfiguration {
     for (Map.Entry<String, DistinctProtoType> fieldToProto : this.fieldToProtoType.entrySet()) {
       String fieldPath = fieldToProto.getKey();
       DistinctProtoType thisDistinctProtoType = fieldToProto.getValue();
-      if (thisDistinctProtoType.schema == null) {
+      if (!thisDistinctProtoType.schemaUsed) {
         // If thisDistinctProtoType was read in, it was set to null, and if the correspond proto
         // type was renamed in the config, the read-in DistinctProtoType would still have schema
         // being null. That would be fine, except that the fieldPath must point to a type that is non-null. So if we're here, that's an error.
