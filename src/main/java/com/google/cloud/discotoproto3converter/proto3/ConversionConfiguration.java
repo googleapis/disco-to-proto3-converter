@@ -25,39 +25,41 @@ import com.google.gson.Gson;
 public class ConversionConfiguration {
 
   /**
-   *  Inner class to capture the uses of a distinct proto message type. This class is used for
+   *  Inner class to capture fields with inline-defined schemas. While several fields may use
+   *  identical inline-defined schemas that wind up referring to the same protobuf type, this class
+   *  should be instantiated once per field, not once per protobuf type. This class is used for
    *  internal computations and is not directly reflected in the external config.
    */
-  static class DistinctProtoType {
-    // Each DistinctProtoType instance should have a distinct protoMessageName.
+  static class InlineFieldSchemaInstance {
+    // Each InlineFieldSchemaInstance should have a distinct protoMessageName.
     private String protoMessageName;
 
-    // Multiple DistinctProtoType instances may share the same schema. Note that when reading the
-    // external config, we always set the schema to null. We only set the schemas to non-null
-    // through the addLocation method that is transitively called from the DocumentToProtoConverter,
-    // and only those schemas that are set (non-null) get emitted back out.
+    // Multiple InlineFieldSchemaInstance instances may share the same schema. Note that when
+    // reading the external config, we always set schemaUsed to false. We only set it to true via
+    // the update method that is transitively called from the DocumentToProtoConverter.
     private String schema;
     private boolean schemaUsed;
 
-    // Any location should appear at most once in this field across all DistinctProtoType instances.
+    // Any location should appear at most once in this field across all InlineFieldSchemaInstance instances.
     private List<String> locations;
 
     private List<String> errors;
 
-    public DistinctProtoType(String protoTypeName, String schema) {
+    public InlineFieldSchemaInstance(String protoTypeName, String schema) {
       this.locations = new ArrayList<String>();
       this.protoMessageName = protoTypeName;
       this.schema = schema;
       this.errors = new ArrayList<String>();
     }
 
-    // Overrides this.protoMessageName (we used to check they matched)
+    // Updates this InlineFieldSchemaInstance, setting schemaUsed if not readingFromFile, and
+    // erroring if schemaUsed was already set.
     public void update(String fieldPath, String protoTypeName, String schema, boolean readingFromFile) {
       if (!this.locations.contains(fieldPath)) {
         this.locations.add(fieldPath);
       }
       if (this.schemaUsed) {
-        this.errors.add(String.format("!! this DistinctProtoInstance was already used: %s:%s:%s\n",
+        this.errors.add(String.format("!! this InlineFieldSchemaInstance was already used: %s:%s:%s\n",
                 protoTypeName, fieldPath, schema));
       }
 
@@ -71,10 +73,10 @@ public class ConversionConfiguration {
       if (obj == this) {
         return true;
       }
-      if (!(obj instanceof DistinctProtoType) || obj == null) {
+      if (!(obj instanceof InlineFieldSchemaInstance) || obj == null) {
         return false;
       }
-      DistinctProtoType other = (DistinctProtoType)obj;
+      InlineFieldSchemaInstance other = (InlineFieldSchemaInstance)obj;
       if (other == null ||
           !this.protoMessageName.equals(other.protoMessageName) ||
           // Separate the null here, and when we use the schema (not read from external config) set
@@ -112,29 +114,29 @@ public class ConversionConfiguration {
     }
 
     /**
-     * Adds theProtoType to this, meaning that it registers thePrototype.locations as field paths
+     * Adds fieldSchemaInstance to this, meaning that it registers fieldSchemaInstance.locations as field paths
      * (in this.locations) associated with this schema under the proto3 message name
-     * theProtoType.protoMessageName.  This checks that this.schema equals theProtoType.schema, or,
+     * fieldSchemaInstance.protoMessageName.  This checks that this.schema equals fieldSchemaInstance.schema, or,
      * if the former is null, sets it to the latter.
      *
      * Returns a list of errors.
      */
-    public List<String> addProtoType(DistinctProtoType theProtoType) {
-      String protoTypeName = theProtoType.protoMessageName;
-      String protoSchema = theProtoType.schema;
+    public List<String> addFieldInstance(InlineFieldSchemaInstance fieldSchemaInstance) {
+      String protoTypeName = fieldSchemaInstance.protoMessageName;
+      String schema = fieldSchemaInstance.schema;
       List<String> errors = new ArrayList<String>();
 
 
-      assert protoSchema != null;
-      assert this.schema == null || this.schema == protoSchema;
+      assert schema != null;
+      assert this.schema == null || this.schema == schema;
 
-      this.schema = protoSchema;
+      this.schema = schema;
       List<String> currentLocations = this.locations.get(protoTypeName);
       if (currentLocations == null) {
         currentLocations = new ArrayList<String>();
         this.locations.put(protoTypeName, currentLocations);
       }
-      for (String newLocation : theProtoType.locations) {
+      for (String newLocation : fieldSchemaInstance.locations) {
         if (currentLocations.contains(newLocation)) {
           errors.add(String.format("!! location was already registered: %s", newLocation));
           continue;
@@ -157,17 +159,17 @@ public class ConversionConfiguration {
   /* END: Only these fields are exposed in the external proto config. */
 
 
-  // Map of distinct field paths to a DistinctProtoType. Keys that describe fields with the same
-  // proto3 message type should point to the same DistinctProtoType instance, and that instance
-  // should include each of those field locations.
-  private transient Map<String, DistinctProtoType> fieldToProtoType;
+  // Map of distinct field paths to a InlineFieldSchemaInstance. Fields that use identical schemas
+  // will still point to unique InlineFieldInstance objects. The schemas are combined in
+  // PopulateInlineSchemas, which is called before writing out the output config.
+  private transient Map<String, InlineFieldSchemaInstance> fieldToSchemaInstance;
 
   private transient List<String> errors = new ArrayList<String>();
 
 
   public ConversionConfiguration() {
     this.inlineSchemas = new ArrayList<InlineSchema>();
-    this.fieldToProtoType = new HashMap<String, DistinctProtoType>();
+    this.fieldToSchemaInstance = new HashMap<String, InlineFieldSchemaInstance>();
     this.converterVersion = "UNSET";
     this.apiVersion = "UNSET";
     this.discoveryRevision = "UNSET";
@@ -176,7 +178,7 @@ public class ConversionConfiguration {
   }
 
 
-  public DistinctProtoType addInlineSchemaInstance(String fieldPath, String protoTypeName, String schema) {
+  public InlineFieldSchemaInstance addInlineSchemaInstance(String fieldPath, String protoTypeName, String schema) {
     return addInlineSchemaInstance(fieldPath, protoTypeName, schema, false);
   }
 
@@ -190,67 +192,68 @@ public class ConversionConfiguration {
    * Registers in this.fieldToProtoType a single instance of schema being used as the protoTypeName
    * type of the field at fieldPath.
    */
-  public DistinctProtoType addInlineSchemaInstance(String fieldPath, String protoTypeName, String schema, boolean readingFromFile) {
-    DistinctProtoType protoType = this.fieldToProtoType.get(fieldPath);
-    if (protoType == null) {
-      protoType = new DistinctProtoType(protoTypeName, schema);
-      this.fieldToProtoType.put(fieldPath, protoType);
+  public InlineFieldSchemaInstance addInlineSchemaInstance(String fieldPath, String protoTypeName, String schema, boolean readingFromFile) {
+    InlineFieldSchemaInstance fieldInstance = this.fieldToSchemaInstance.get(fieldPath);
+    if (fieldInstance == null) {
+      fieldInstance = new InlineFieldSchemaInstance(protoTypeName, schema);
+      this.fieldToSchemaInstance.put(fieldPath, fieldInstance);
     } else if (readingFromFile) {
       this.errors.add(String.format("!! field specified multiple times: %s", fieldPath));
     }
-    protoType.update(fieldPath, protoTypeName, schema, readingFromFile);
-    errors.addAll(protoType.errors);
-    return protoType;
+    fieldInstance.update(fieldPath, protoTypeName, schema, readingFromFile);
+    errors.addAll(fieldInstance.errors);
+    return fieldInstance;
   }
 
 
   /**
-   * Populates this.fieldToProtoType (checked to be initially empty) from this.inlineSchemas, as
-   * would have been read in from an external config. Returns this.fieldToProtoType.
+   * Populates this.fieldToSchemaInstance (checked to be initially empty) from this.inlineSchemas,
+   * as would have been read in from an external config. Returns this.fieldToProtoType.
    */
-  public Map<String, DistinctProtoType> PopulateFieldToProtoType() {
-    assert this.fieldToProtoType.size() == 0;
+  public Map<String, InlineFieldSchemaInstance> PopulateFieldToSchemaInstance() {
+    assert this.fieldToSchemaInstance.size() == 0;
     for (InlineSchema oneInlineSchema : this.inlineSchemas) {
       for (Map.Entry<String, List<String>> protoTypeToFields : oneInlineSchema.locations.entrySet()) {
         String protoTypeName = protoTypeToFields.getKey();
         for (String oneFieldPath : protoTypeToFields.getValue()) {
-          DistinctProtoType protoType = this.addInlineSchemaInstance(oneFieldPath, protoTypeName, oneInlineSchema.schema, true);
+          this.addInlineSchemaInstance(oneFieldPath, protoTypeName, oneInlineSchema.schema, true);
         }
       }
     }
     this.throwIfError();
-    return this.fieldToProtoType;
+    return this.fieldToSchemaInstance;
   }
 
   /**
-   * Clears and populates this.inlineSchemas from this.fieldToProtoType
+   * Clears and populates this.inlineSchemas from this.fieldToSchemaInstance, which would have been updated by the converter processing the current Discovery file.
    */
   public ConversionConfiguration PopulateInlineSchemas() {
     Map<String,InlineSchema> schemaToDetails = new HashMap<String, InlineSchema>(); // Keys are schemas
-    for (Map.Entry<String, DistinctProtoType> fieldToProto : this.fieldToProtoType.entrySet()) {
-      String fieldPath = fieldToProto.getKey();
-      DistinctProtoType thisDistinctProtoType = fieldToProto.getValue();
-      if (!thisDistinctProtoType.schemaUsed) {
+    for (Map.Entry<String, InlineFieldSchemaInstance> fieldToSchemaInstance : this.fieldToSchemaInstance.entrySet()) {
+      String fieldPath = fieldToSchemaInstance.getKey();
+      InlineFieldSchemaInstance InlineFieldSchemaInstance = fieldToSchemaInstance.getValue();
+      if (!InlineFieldSchemaInstance.schemaUsed) {
         errors.add(String.format("!! previously specified field of type %s is not longer used: %s",
-                thisDistinctProtoType.protoMessageName, fieldPath));
+                InlineFieldSchemaInstance.protoMessageName, fieldPath));
         continue;
       }
-      InlineSchema thisInlineSchema = schemaToDetails.get(thisDistinctProtoType.schema);
+      InlineSchema thisInlineSchema = schemaToDetails.get(InlineFieldSchemaInstance.schema);
       if (thisInlineSchema == null) {
         thisInlineSchema = new InlineSchema();
-        schemaToDetails.put(thisDistinctProtoType.schema, thisInlineSchema);
+        schemaToDetails.put(InlineFieldSchemaInstance.schema, thisInlineSchema);
       }
-      this.errors.addAll(thisInlineSchema.addProtoType(thisDistinctProtoType));
+      this.errors.addAll(thisInlineSchema.addFieldInstance(InlineFieldSchemaInstance));
     }
     this.throwIfError();
     this.inlineSchemas = new ArrayList<InlineSchema>(schemaToDetails.values());
+    // TODO: Consider sorting the schemas by number of instances
     return this;
   }
 
   static public ConversionConfiguration FromJSON(String jsonContents) {
     Gson gson = new Gson();
     ConversionConfiguration config =  gson.fromJson(jsonContents, ConversionConfiguration.class);
-    config.PopulateFieldToProtoType();
+    config.PopulateFieldToSchemaInstance();
     return config;
   }
 
@@ -265,15 +268,15 @@ public class ConversionConfiguration {
         this.apiVersion.equals(other.apiVersion) &&
         (!matchDiscoveryRevision || (this.discoveryRevision.equals(other.discoveryRevision))) &&
         this.inlineSchemas.size() == other.inlineSchemas.size() &&
-        this.fieldToProtoType.size() == other.fieldToProtoType.size())) {
+        this.fieldToSchemaInstance.size() == other.fieldToSchemaInstance.size())) {
       return false;
     }
 
-    for (Map.Entry<String, DistinctProtoType> thisEntry : this.fieldToProtoType.entrySet()) {
+    for (Map.Entry<String, InlineFieldSchemaInstance> thisEntry : this.fieldToSchemaInstance.entrySet()) {
       String fieldPath = thisEntry.getKey();
-      DistinctProtoType thisProtoType = thisEntry.getValue();
-      DistinctProtoType otherProtoType = other.fieldToProtoType.get(fieldPath);
-      if (otherProtoType == null || !thisProtoType.equals(otherProtoType)) {
+      InlineFieldSchemaInstance thisSchemaInstance = thisEntry.getValue();
+      InlineFieldSchemaInstance otherSchemaInstance = other.fieldToSchemaInstance.get(fieldPath);
+      if (otherSchemaInstance == null || !thisSchemaInstance.equals(otherSchemaInstance)) {
         return false;
       }
     }
