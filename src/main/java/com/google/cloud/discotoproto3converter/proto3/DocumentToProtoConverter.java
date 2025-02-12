@@ -36,6 +36,9 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.io.IOException; // TODO (vchudnov): remove
+import java.nio.file.Files; // TODO (vchudnov): remove
+import java.nio.file.Paths; // TODO (vchudnov): remove
 
 public class DocumentToProtoConverter {
 
@@ -48,6 +51,7 @@ public class DocumentToProtoConverter {
   private final boolean enumsAsStrings;
   private boolean schemaRead;
   private boolean usesStructProto;
+  private ConversionConfiguration config;
 
   // Set this to "true" to get some tracing output on stderr during development. Leave this as
   // "false" for production code.
@@ -62,13 +66,17 @@ public class DocumentToProtoConverter {
       Set<String> serviceIgnoreSet,
       Set<String> messageIgnoreSet,
       String relativeLinkPrefix,
-      boolean enumsAsStrings) {
+      boolean enumsAsStrings)
+      throws IOException // TODO(vchudnov): delete
+  {
     this.serviceIgnoreSet = serviceIgnoreSet;
     this.messageIgnoreSet = messageIgnoreSet;
     this.relativeLinkPrefix = relativeLinkPrefix;
     this.protoFile.setMetadata(readDocumentMetadata(document, documentFileName));
     this.enumsAsStrings = enumsAsStrings;
     this.usesStructProto = false;
+    // TODO: read from contents to be passed into constructor
+    this.config = ConversionConfiguration.FromJSON("{}");
 
     readSchema(document);
     readResources(document);
@@ -77,6 +85,9 @@ public class DocumentToProtoConverter {
     this.protoFile.setHasAnyFields(checkAnyFields());
     this.protoFile.setUsesStructProto(this.usesStructProto);
     convertEnumFieldsToStrings();
+
+    // TODO(vchudnov): remove
+    Files.write(Paths.get("/tmp/DIREGAPIC-converter/config.json"), this.config.ToJSON().getBytes());
   }
 
   public ProtoFile getProtoFile() {
@@ -804,7 +815,10 @@ public class DocumentToProtoConverter {
   }
 
   private String getMessageName(Schema sch, String schemaPath) {
-    String messageName = sch.getIdentifier();
+    String messageName = this.config.GetMessageNameForPath(schemaPath);
+    if (messageName == null) {
+      messageName = sch.getIdentifier();
+    }
     if (Character.isLowerCase(messageName.charAt(0))) {
       messageName = Name.anyCamel(messageName).toUpperCamel();
     }

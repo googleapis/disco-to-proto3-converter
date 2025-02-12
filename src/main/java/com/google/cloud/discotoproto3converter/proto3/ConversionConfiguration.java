@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 public class ConversionConfiguration {
 
@@ -41,7 +42,7 @@ public class ConversionConfiguration {
     private boolean schemaUsed;
 
     // Any location should appear at most once in this field across all InlineFieldSchemaInstance instances.
-    private List<String> locations;
+    private List<String> locations;  // TODO: I think we only need to have a single location
 
     private List<String> errors;
 
@@ -50,6 +51,15 @@ public class ConversionConfiguration {
       this.protoMessageName = protoTypeName;
       this.schema = schema;
       this.errors = new ArrayList<String>();
+    }
+
+    private String findProtoTypeNameForPath(String schemaPath) {
+      if (this.locations.contains(schemaPath)) {
+        return this.protoMessageName;
+      }
+      this.errors.add(String.format("!! requested name for path \"%s\" in object with paths [%s]",
+          schemaPath, String.join(", ", this.locations)));
+      return null;
     }
 
     // Updates this InlineFieldSchemaInstance, setting schemaUsed if not readingFromFile, and
@@ -177,6 +187,14 @@ public class ConversionConfiguration {
     this.errors = new ArrayList<String>();
   }
 
+  // TODO(vchudnov): test
+  public String GetMessageNameForPath(String schemaPath) {
+    InlineFieldSchemaInstance inlineSchema = this.fieldToSchemaInstance.get(schemaPath);
+    if (inlineSchema == null) {
+      return null;
+    }
+    return inlineSchema.findProtoTypeNameForPath(schemaPath);
+  }
 
   public InlineFieldSchemaInstance addInlineSchemaInstance(String fieldPath, String protoTypeName, String schema) {
     return addInlineSchemaInstance(fieldPath, protoTypeName, schema, false);
@@ -253,12 +271,15 @@ public class ConversionConfiguration {
   static public ConversionConfiguration FromJSON(String jsonContents) {
     Gson gson = new Gson();
     ConversionConfiguration config =  gson.fromJson(jsonContents, ConversionConfiguration.class);
+    if (config == null) { // TODO(vchudnov): add tests for this
+      throw new IllegalStateException(String.format("could not parse JSON contents:<<\n%s\n...>>", jsonContents.substring(0, 20)));
+    }
     config.PopulateFieldToSchemaInstance();
     return config;
   }
 
   public String ToJSON() {
-    Gson gson = new Gson();
+    Gson gson = new GsonBuilder().setPrettyPrinting().create();
     this.PopulateInlineSchemas();
     return gson.toJson(this);
   }
