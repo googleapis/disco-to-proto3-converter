@@ -533,16 +533,29 @@ public class DocumentToProtoConverter {
   }
 
   private Field schemaToField(Schema sch, boolean optional, List<String> previousSchemaPath) {
+    assert previousSchemaPath.size() > 0; // we should at least have the caller
+
     String name = Name.anyCamel(sch.key()).toCapitalizedLowerUnderscore();
     String description = sch.description();
     Message valueType = null;
     boolean repeated = false;
     Message keyType = null;
+
     List<String> currentSchemaPath = new ArrayList(previousSchemaPath);
+    boolean atTopLevel = currentSchemaPath.size() == 1; //  we only have the caller
     currentSchemaPath.add(name);
+    String currentSchemaPathString = String.join(".", currentSchemaPath);
+
+    // In order to record the proto type names corresponding to inline schemas, and to apply
+    // configured name overrides, we need the path to the schema without the caller. We only apply
+    // the name overrides to inline schemas, so we don't need to stringify the path otherwise.
+    String inlineSchemaPathString = null;
+    if (!atTopLevel) {
+      inlineSchemaPathString = String.join(".", currentSchemaPath.subList(1, currentSchemaPath.size()));
+    }
 
     if (trace) {
-      System.err.printf("*** schemaToField: %s\n", String.join(".", currentSchemaPath));
+      System.err.printf("*** schemaToField: %s\n", currentSchemaPathString);
     }
 
     switch (sch.type()) {
@@ -561,7 +574,7 @@ public class DocumentToProtoConverter {
             throw new IllegalStateException(
                 String.format(
                     "unexpected 'format' value (%s:'%s') when processing ANY type in schema %s",
-                    sch.format().name(), sch.format().toString(), currentSchemaPath));
+                    sch.format().name(), sch.format().toString(), currentSchemaPathString));
         }
         break;
       case ARRAY:
@@ -610,7 +623,7 @@ public class DocumentToProtoConverter {
             throw new IllegalStateException(
                 String.format(
                     "unexpected 'format' value ('%s') when processing INTEGER type in schema %s",
-                    sch.format().toString(), currentSchemaPath));
+                    sch.format().toString(), currentSchemaPathString));
         }
         break;
       case NUMBER:
@@ -627,7 +640,7 @@ public class DocumentToProtoConverter {
             throw new IllegalStateException(
                 String.format(
                     "unexpected 'format' value ('%s') when processing NUMBER type in schema %s",
-                    sch.format().toString(), currentSchemaPath));
+                    sch.format().toString(), currentSchemaPathString));
         }
         break;
       case OBJECT:
@@ -647,21 +660,21 @@ public class DocumentToProtoConverter {
               keyType = Message.PRIMITIVES.get("string");  // schema corresponds to map<String, ...>
             } else {
               valueType =
-                  new Message(getMessageName(sch), false, false, sanitizeDescr(description));
+                  new Message(getMessageName(sch, inlineSchemaPathString), false, false, sanitizeDescr(description));
             }
             break;
           default:
             throw new IllegalStateException(
                 String.format(
                     "unexpected 'format' value (%s:'%s') when processing OBJECT type in schema %s",
-                    sch.format().name(), sch.format().toString(), currentSchemaPath));
+                    sch.format().name(), sch.format().toString(), currentSchemaPathString));
         }
         break;
       case STRING:
         if (sch.isEnum() && !"".equals(sch.getIdentifier())) {
           valueType =
               constructEnumMessage(
-                  getMessageName(sch, true), description, sch.enumValues(), sch.enumDescriptions());
+                  getMessageName(sch, true, inlineSchemaPathString), description, sch.enumValues(), sch.enumDescriptions());
         } else {
           switch (sch.format()) {
             case INT64:
@@ -692,7 +705,7 @@ public class DocumentToProtoConverter {
               throw new IllegalStateException(
                   String.format(
                       "unexpected 'format' value ('%s') when processing STRING type in schema %s",
-                      sch.format().toString(), currentSchemaPath));
+                      sch.format().toString(), currentSchemaPathString));
           }
         }
         break;
@@ -790,7 +803,7 @@ public class DocumentToProtoConverter {
     return enumMessage;
   }
 
-  private String getMessageName(Schema sch) {
+  private String getMessageName(Schema sch, String schemaPath) {
     String messageName = sch.getIdentifier();
     if (Character.isLowerCase(messageName.charAt(0))) {
       messageName = Name.anyCamel(messageName).toUpperCamel();
@@ -798,13 +811,13 @@ public class DocumentToProtoConverter {
     return messageName;
   }
 
-  private String getMessageName(Schema sch, Boolean isEnum) {
+  private String getMessageName(Schema sch, Boolean isEnum, String schemaPath) {
     String messageName = sch.getIdentifier();
     // For the enum name start with uppercase letter, add the "Enum" suffix.
     if (isEnum && Character.isUpperCase(messageName.charAt(0))) {
       return Name.anyCamel(messageName).toUpperCamel() + "Enum";
     }
-    return getMessageName(sch);
+    return getMessageName(sch, schemaPath);
   }
 
   private void readResources(Document document) {
