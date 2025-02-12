@@ -526,16 +526,23 @@ public class DocumentToProtoConverter {
     return option;
   }
 
-  private Field schemaToField(Schema sch, boolean optional, String debugPreviousPath) {
+  private Field schemaToField(Schema sch, boolean optional, String caller) {
+    List<String> currentSchemaPath = new ArrayList();
+    currentSchemaPath.add(caller);
+    return schemaToField(sch, optional, currentSchemaPath);
+  }
+
+  private Field schemaToField(Schema sch, boolean optional, List<String> previousSchemaPath) {
     String name = Name.anyCamel(sch.key()).toCapitalizedLowerUnderscore();
     String description = sch.description();
     Message valueType = null;
     boolean repeated = false;
     Message keyType = null;
-    String debugCurrentPath = String.format("%s.%s", debugPreviousPath, name);
+    List<String> currentSchemaPath = new ArrayList(previousSchemaPath);
+    currentSchemaPath.add(name);
 
     if (trace) {
-      System.err.printf("*** schemaToField: %s\n", debugCurrentPath);
+      System.err.printf("*** schemaToField: %s\n", String.join(".", currentSchemaPath));
     }
 
     switch (sch.type()) {
@@ -554,7 +561,7 @@ public class DocumentToProtoConverter {
             throw new IllegalStateException(
                 String.format(
                     "unexpected 'format' value (%s:'%s') when processing ANY type in schema %s",
-                    sch.format().name(), sch.format().toString(), debugCurrentPath));
+                    sch.format().name(), sch.format().toString(), currentSchemaPath));
         }
         break;
       case ARRAY:
@@ -603,7 +610,7 @@ public class DocumentToProtoConverter {
             throw new IllegalStateException(
                 String.format(
                     "unexpected 'format' value ('%s') when processing INTEGER type in schema %s",
-                    sch.format().toString(), debugCurrentPath));
+                    sch.format().toString(), currentSchemaPath));
         }
         break;
       case NUMBER:
@@ -620,7 +627,7 @@ public class DocumentToProtoConverter {
             throw new IllegalStateException(
                 String.format(
                     "unexpected 'format' value ('%s') when processing NUMBER type in schema %s",
-                    sch.format().toString(), debugCurrentPath));
+                    sch.format().toString(), currentSchemaPath));
         }
         break;
       case OBJECT:
@@ -637,7 +644,7 @@ public class DocumentToProtoConverter {
           case EMPTY:
             if (sch.additionalProperties() != null) {
               repeated = true;
-              keyType = Message.PRIMITIVES.get("string");
+              keyType = Message.PRIMITIVES.get("string");  // schema corresponds to map<String, ...>
             } else {
               valueType =
                   new Message(getMessageName(sch), false, false, sanitizeDescr(description));
@@ -647,7 +654,7 @@ public class DocumentToProtoConverter {
             throw new IllegalStateException(
                 String.format(
                     "unexpected 'format' value (%s:'%s') when processing OBJECT type in schema %s",
-                    sch.format().name(), sch.format().toString(), debugCurrentPath));
+                    sch.format().name(), sch.format().toString(), currentSchemaPath));
         }
         break;
       case STRING:
@@ -685,7 +692,7 @@ public class DocumentToProtoConverter {
               throw new IllegalStateException(
                   String.format(
                       "unexpected 'format' value ('%s') when processing STRING type in schema %s",
-                      sch.format().toString(), debugCurrentPath));
+                      sch.format().toString(), currentSchemaPath));
           }
         }
         break;
@@ -694,9 +701,9 @@ public class DocumentToProtoConverter {
     if (repeated) {
       Field subField =
           schemaToField(
-              keyType == null ? sch.items() /* array */ : sch.additionalProperties() /* object */,
+              keyType == null ? sch.items() /* array */ : sch.additionalProperties() /* map */,
               true,
-              debugCurrentPath);
+              currentSchemaPath);
       valueType = subField.getValueType();
     }
 
@@ -709,7 +716,7 @@ public class DocumentToProtoConverter {
 
     // Recurse for nested messages
     for (Map.Entry<String, Schema> entry : sch.properties().entrySet()) {
-      Field valueTypeField = schemaToField(entry.getValue(), true, debugCurrentPath);
+      Field valueTypeField = schemaToField(entry.getValue(), true, currentSchemaPath);
       valueType.getFields().add(valueTypeField);
       if (valueTypeField.getValueType().isEnum()) {
         valueType.getEnums().add(valueTypeField.getValueType());
