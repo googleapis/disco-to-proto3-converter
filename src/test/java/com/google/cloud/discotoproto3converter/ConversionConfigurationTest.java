@@ -197,6 +197,21 @@ public class ConversionConfigurationTest {
   }
 
   @Test
+  public void readWriteNotUsingASchema() {
+    String label = "readWriteUsingSchemaTwice";
+
+    ConversionConfiguration config = ConversionConfiguration.FromJSON(inputConfig);
+    config.addInlineSchemaInstance("schemas.Pond.info", "PondInfo", "an initial schema");
+    config.addInlineSchemaInstance("schemas.Lake.info", "LakeInfo", "an initial schema");
+    config.addInlineSchemaInstance("schemas.BigPond.pondInfo", "PondInfo", "an initial schema");
+    // not using schemas.BigLake.lakeInfo should cause an error
+    System.out.printf("** %s: input\n%s\n", label, inputConfig);
+
+    assertThrows(IllegalStateException.class,
+        () -> config.ToJSON());
+  }
+
+  @Test
   public void readWriteSplittingSchema() {
     String label = "readWriteSplittingSchema";
 
