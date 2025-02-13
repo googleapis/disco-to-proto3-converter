@@ -53,6 +53,7 @@ public abstract class Schema implements Node {
     String description = root.getString("description");
     Format format = Format.getEnum(root.getString("format"));
     String id = root.getString("id");
+    String contents = root.toString();
 
     DiscoveryNode enumNode = root.getArray("enum");
     boolean isEnum = !enumNode.isEmpty();
@@ -110,6 +111,7 @@ public abstract class Schema implements Node {
             .setRepeated(repeated)
             .setRequired(required)
             .setType(type)
+            .setJsonContents(contents)
             .build();
     thisSchema.parent = parent;
     if (items != null) {
@@ -127,7 +129,7 @@ public abstract class Schema implements Node {
 
   /** @return a non-null identifier for this schema. */
   public String getIdentifier() {
-    return Strings.isNullOrEmpty(id()) ? key() : id();
+    return Strings.isNullOrEmpty(id()) ? key() : id(); // ** vchudnov: if inline, id is unset, key is the parent's key, ie field name: check here. (A) We can call a new method to compute (and memoize) the full path to the field, and then use that path to call into the config or (B) we can pass the Schema path after the fact, as we traverse all schemas. But will this work with RPC requests?
   }
 
   public static Schema empty() {
@@ -154,6 +156,10 @@ public abstract class Schema implements Node {
   void setParent(Node parent) {
     this.parent = parent;
   }
+
+  /** returns the JSON-format contents of this node */
+  @Nullable
+  public abstract String jsonContents();
 
   /** @return the schema of the additionalProperties, or null if none. */
   @Nullable
@@ -332,6 +338,25 @@ public abstract class Schema implements Node {
         type());
   }
 
+  public int contentHashCode() {
+    return Objects.hash(
+        additionalProperties() == null ? null : additionalProperties().getIdentifier(),
+        defaultValue(),
+        description(),
+        format(),
+        id(),
+        isEnum(),
+        items() == null ? null : items().getIdentifier(),
+        key(),
+        location(),
+        pattern(),
+        properties().keySet(),
+        reference(),
+        repeated(),
+        required(),
+        type());
+  }
+
   @Override
   public boolean equals(Object other) {
     if (!(other instanceof Schema)) {
@@ -413,6 +438,8 @@ public abstract class Schema implements Node {
     public abstract Builder setRequired(boolean val);
 
     public abstract Builder setType(Type val);
+
+    public abstract Builder setJsonContents(String contents);
 
     public abstract Schema build();
   }
