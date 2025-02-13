@@ -953,7 +953,7 @@ public class DocumentToProtoConverter {
         if (method.response() != null) {
           output = protoFile.getMessages().get(method.response().reference());
         } else {
-          String responseName = getRpcMessageName(method, "response").toUpperCamel();
+          String responseName = setRpcMessageName(method, grpcServiceName, methodname, "response");
           String outputDescription = getOutputMessageDescription(grpcServiceName, methodname);
           output = new Message(responseName, false, false, outputDescription);
           putAllMessages(responseName, output);
@@ -1070,7 +1070,7 @@ public class DocumentToProtoConverter {
       messageName = messageName2;
     }
 
-    this.config.addInlineSchemaInstance(messageKey, messageName, Integer.toHexString(method.hashCode()));
+    this.config.addInlineSchemaInstance(messageKey, messageName, Integer.toHexString(method.hashCode()+suffix.hashCode()));
     return messageName;
   }
 
