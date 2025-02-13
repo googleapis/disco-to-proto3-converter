@@ -54,6 +54,11 @@ public class DiscoveryNode {
     return jsonNode.asText();
   }
 
+  /** @return a valid JSON representation of this node. */
+  public String toString() {
+    return jsonNode.toString();
+  }
+
   /**
    * Returns this node's elements. If this node is not an array node, an empty list is returned.
    *
