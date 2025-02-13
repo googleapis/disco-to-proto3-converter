@@ -883,34 +883,8 @@ public class DocumentToProtoConverter {
         // Request
         String methodname = getRpcMethodName(method).toUpperCamel();
 
-        String requestMessageKey = getRpcMessageConfigKey(method, "_request");
-        // The proto RPC request message is a new message that wraps the Discovery file's request
-        // schema for this RPC.
-        String requestName = this.config.getMessageNameForPath(requestMessageKey);
-        boolean requestMessageConfigured = requestName != null;
-        if (!requestMessageConfigured){
-          requestName = getRpcMessageName(method, "request").toUpperCamel();
-        }
-        if (protoFile.getMessages().containsKey(requestName)) {
-          // In some cases, the request schema name specified in the Discovery file exactly matches
-          // the proto service RPC request message name (requestName) we determined above. We avoid
-          // name collisions in what follows.
+        String requestName = setRpcMessageName(method, grpcServiceName, methodname, "request");
 
-          if (requestMessageConfigured) {
-            // We don't override explicit configuration, so if there's a conflict, we just  error.
-            throw new RpcRequestConfiguredMessageConflictException(
-                requestMessageKey, methodname);
-          }
-
-          String requestName2 = getRpcMessageName(method, "rpc", "request").toUpperCamel();
-          if (protoFile.getMessages().containsKey(requestName2)) {
-            throw new RpcRequestMessageConflictException(
-                grpcServiceName, methodname, requestName, requestName2);
-          }
-          requestName = requestName2;
-        }
-
-        this.config.addInlineSchemaInstance(requestMessageKey, requestName, Integer.toHexString(method.hashCode()));
         String inputDescription = getInputMessageDescription(grpcServiceName, methodname);
         Message input = new Message(requestName, false, false, sanitizeDescr(inputDescription));
         String httpOptionPath = method.flatPath();
@@ -1065,6 +1039,39 @@ public class DocumentToProtoConverter {
     System.arraycopy(suffixes, 0, nameParts, 2, numSuffixes);
 
     return Name.anyCamel(nameParts);
+  }
+
+  private String setRpcMessageName(Method method, String grpcServiceName, String methodName, String suffix) {
+    String messageKey = getRpcMessageConfigKey(method, "_" + suffix);
+
+    // The proto RPC request message is a new message that wraps the Discovery file's request
+    // schema for this RPC.
+    String messageName = this.config.getMessageNameForPath(messageKey);
+    boolean messageNameConfigured = messageName != null;
+    if (!messageNameConfigured){
+      messageName = getRpcMessageName(method, suffix).toUpperCamel();
+    }
+    if (protoFile.getMessages().containsKey(messageName)) {
+      // In some cases, the request schema name specified in the Discovery file exactly matches
+      // the proto service RPC request message name (requestName) we determined above. We avoid
+      // name collisions in what follows.
+
+      if (messageNameConfigured) {
+        // We don't override explicit configuration, so if there's a conflict, we just  error.
+        throw new RpcRequestConfiguredMessageConflictException(
+            messageKey, methodName);
+      }
+
+      String messageName2 = getRpcMessageName(method, "rpc", suffix).toUpperCamel();
+      if (protoFile.getMessages().containsKey(messageName2)) {
+        throw new RpcRequestMessageConflictException(
+            grpcServiceName, methodName, messageName, messageName2);
+      }
+      messageName = messageName2;
+    }
+
+    this.config.addInlineSchemaInstance(messageKey, messageName, Integer.toHexString(method.hashCode()));
+    return messageName;
   }
 
   private Name getRpcMethodName(Method method) {
