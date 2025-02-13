@@ -342,7 +342,7 @@ public abstract class Schema implements Node {
     return Objects.hash(
         additionalProperties() == null ? null : additionalProperties().getIdentifier(),
         defaultValue(),
-        description(),
+        description(),  // TODO(vchudnov): Consider excluding description
         format(),
         id(),
         isEnum(),
