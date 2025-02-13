@@ -540,6 +540,7 @@ public class DocumentToProtoConverter {
   private Field schemaToField(Schema sch, boolean optional, String caller) {
     List<String> currentSchemaPath = new ArrayList();
     currentSchemaPath.add(caller);
+    currentSchemaPath.add("schemas");
     return schemaToField(sch, optional, currentSchemaPath);
   }
 
@@ -553,7 +554,7 @@ public class DocumentToProtoConverter {
     Message keyType = null;
 
     List<String> currentSchemaPath = new ArrayList(previousSchemaPath);
-    boolean atTopLevel = currentSchemaPath.size() == 1; //  we only have the caller
+    boolean atTopLevel = currentSchemaPath.size() == 2; //  we only have the caller + "schemas"
     currentSchemaPath.add(name);
     String currentSchemaPathString = String.join(".", currentSchemaPath);
 
@@ -827,7 +828,7 @@ public class DocumentToProtoConverter {
     }
     if (schemaPath != null) {
       //      this.config.addInlineSchemaInstance(schemaPath, messageName, sch.jsonContents()); // TODO(vchudnov): consider using just the schema haseh instad. It will make it easier to track changes
-      this.config.addInlineSchemaInstance(schemaPath, messageName, Integer.toString(sch.contentHashCode()));  // TODO(vchudnov): use as a straight integer
+      this.config.addInlineSchemaInstance(schemaPath, messageName, Integer.toHexString(sch.contentHashCode()));  // TODO(vchudnov): use as a straight integer
     }
     return messageName;
   }
@@ -882,13 +883,24 @@ public class DocumentToProtoConverter {
         // Request
         String methodname = getRpcMethodName(method).toUpperCamel();
 
+        String requestMessageKey = getRpcMessageConfigKey(method, "_request");
         // The proto RPC request message is a new message that wraps the Discovery file's request
         // schema for this RPC.
-        String requestName = getRpcMessageName(method, "request").toUpperCamel();
+        String requestName = this.config.getMessageNameForPath(requestMessageKey);
+        boolean requestMessageConfigured = requestName != null;
+        if (!requestMessageConfigured){
+          requestName = getRpcMessageName(method, "request").toUpperCamel();
+        }
         if (protoFile.getMessages().containsKey(requestName)) {
           // In some cases, the request schema name specified in the Discovery file exactly matches
           // the proto service RPC request message name (requestName) we determined above. We avoid
           // name collisions in what follows.
+
+          if (requestMessageConfigured) {
+            // We don't override explicit configuration, so if there's a conflict, we just  error.
+            throw new RpcRequestConfiguredMessageConflictException(
+                requestMessageKey, methodname);
+          }
 
           String requestName2 = getRpcMessageName(method, "rpc", "request").toUpperCamel();
           if (protoFile.getMessages().containsKey(requestName2)) {
@@ -898,6 +910,7 @@ public class DocumentToProtoConverter {
           requestName = requestName2;
         }
 
+        this.config.addInlineSchemaInstance(requestMessageKey, requestName, Integer.toHexString(method.hashCode()));
         String inputDescription = getInputMessageDescription(grpcServiceName, methodname);
         Message input = new Message(requestName, false, false, sanitizeDescr(inputDescription));
         String httpOptionPath = method.flatPath();
@@ -1030,6 +1043,13 @@ public class DocumentToProtoConverter {
     return "The " + serviceName + " API.";
   }
 
+  private String getRpcMessageConfigKey(Method method, String suffix) {
+    String[] pieces = method.id().split("\\.");
+    String methodName = pieces[pieces.length - 1];
+    String resourceName = pieces[pieces.length - 2];
+    return String.format("resources.%s.%s.%s", resourceName, methodName, suffix);
+  }
+
   private Name getRpcMessageName(Method method, String... suffixes) {
     String[] pieces = method.id().split("\\.");
     String methodName = pieces[pieces.length - 1];
@@ -1099,6 +1119,17 @@ public class DocumentToProtoConverter {
           String.format(
               "could not construct request message name for %s.%s: tried '%s', '%s'",
               serviceName, rpcName, candidateMessageName1, candidateMessageName2));
+    }
+  }
+
+  public class RpcRequestConfiguredMessageConflictException extends InternalError {
+    public RpcRequestConfiguredMessageConflictException(
+        String configKey,
+        String candidateMessageName) {
+      super(
+          String.format(
+              "configured message name conflicts with already defined message: %s : %s",
+              configKey, candidateMessageName));
     }
   }
 }
