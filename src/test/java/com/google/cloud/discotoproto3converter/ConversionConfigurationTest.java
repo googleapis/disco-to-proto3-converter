@@ -274,6 +274,49 @@ public class ConversionConfigurationTest {
     assert checkIdenticalJSON(expectedConfig, outputConfig);
   }
 
+   @Test
+  public void readWriteAddingSchemaStrnigVairable() {
+    String label = "readWriteAddingSchema";
+
+    ConversionConfiguration config = ConversionConfiguration.FromJSON(inputConfig);
+    // This first call uses a non-literal to ensure we are doing the correct comparisons under the hood.
+    config.addInlineSchemaInstance("schemas.Pond.info", "PondInfo", new String("current schema"));
+    config.addInlineSchemaInstance("schemas.BigLake.lakeInfo", "LakeInfo", "current schema");
+    config.addInlineSchemaInstance("schemas.Lake.info", "LakeInfo", "current schema");
+    config.addInlineSchemaInstance("schemas.BigPond.pondInfo", "PondInfo", "current schema");
+    config.addInlineSchemaInstance("schemas.River.info", "RiverInfo", "new schema");
+    String outputConfig = config.ToJSON();
+
+    String expectedConfig =         """
+        {
+       "converterVersion": "some-identifier",
+       "apiVersion": "gamma",
+       "discoveryRevision": "20250204",
+       "inlineSchemas": [
+          {
+            "schema": "current schema",
+            "locations": {
+              "LakeInfo": ["schemas.Lake.info", "schemas.BigLake.lakeInfo"],
+              "PondInfo": ["schemas.Pond.info", "schemas.BigPond.pondInfo"]
+                  }
+          },
+          {
+            "schema": "new schema",
+            "locations": {
+           "RiverInfo": ["schemas.River.info"]
+            }
+           }
+       ]
+       }
+""";
+
+    System.out.printf("** %s: input\n%s\n%s: output\n%s\n%s: expected\n%s\n",
+        label, inputConfig,
+        label, outputConfig,
+        label, expectedConfig);
+    assert checkIdenticalJSON(expectedConfig, outputConfig);
+  }
+
 
   @Test
   public void readWriteWithoutUsingFieldSchema() {

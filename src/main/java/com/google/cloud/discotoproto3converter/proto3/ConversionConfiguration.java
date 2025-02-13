@@ -138,7 +138,7 @@ public class ConversionConfiguration {
 
 
       assert schema != null;
-      assert this.schema == null || this.schema == schema;
+      assert this.schema == null || this.schema.equals(schema);
 
       this.schema = schema;
       List<String> currentLocations = this.locations.get(protoTypeName);
@@ -188,7 +188,7 @@ public class ConversionConfiguration {
   }
 
   // TODO(vchudnov): test
-  public String GetMessageNameForPath(String schemaPath) {
+  public String getMessageNameForPath(String schemaPath) {
     InlineFieldSchemaInstance inlineSchema = this.fieldToSchemaInstance.get(schemaPath);
     if (inlineSchema == null) {
       return null;
