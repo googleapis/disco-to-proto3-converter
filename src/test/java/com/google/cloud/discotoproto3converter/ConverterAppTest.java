@@ -36,7 +36,9 @@ public class ConverterAppTest {
               "--message_ignorelist=epsilon",
               "--relative_link_prefix=zeta",
               "--enums_as_strings=eta",
-              "--output_comments=theta"
+              "--output_comments=theta",
+              "--input_config_path=iota",
+              "--output_config_path=kappa"
             });
 
     assertEquals("alpha", parsedArgs.get("--discovery_doc_path"));
@@ -47,6 +49,8 @@ public class ConverterAppTest {
     assertEquals("zeta", parsedArgs.get("--relative_link_prefix"));
     assertEquals("eta", parsedArgs.get("--enums_as_strings"));
     assertEquals("theta", parsedArgs.get("--output_comments"));
+    assertEquals("iota", parsedArgs.get("--input_config_path"));
+    assertEquals("kappa", parsedArgs.get("--output_config_path"));
   }
 
   @Test
@@ -69,6 +73,8 @@ public class ConverterAppTest {
     assertEquals("zeta", parsedArgs.get("--relative_link_prefix"));
     assertEquals("false", parsedArgs.get("--enums_as_strings"));
     assertEquals("true", parsedArgs.get("--output_comments"));
+    assertEquals("", parsedArgs.get("--input_config_path"));
+    assertEquals("", parsedArgs.get("--output_config_path"));
   }
 
   @Test

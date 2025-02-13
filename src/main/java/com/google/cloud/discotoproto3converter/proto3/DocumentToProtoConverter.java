@@ -36,9 +36,6 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.io.IOException; // TODO (vchudnov): remove
-import java.nio.file.Files; // TODO (vchudnov): remove
-import java.nio.file.Paths; // TODO (vchudnov): remove
 
 public class DocumentToProtoConverter {
 
@@ -52,6 +49,7 @@ public class DocumentToProtoConverter {
   private boolean schemaRead;
   private boolean usesStructProto;
   private ConversionConfiguration config;
+  private String outputConfigContents;
 
   // Set this to "true" to get some tracing output on stderr during development. Leave this as
   // "false" for production code.
@@ -66,17 +64,20 @@ public class DocumentToProtoConverter {
       Set<String> serviceIgnoreSet,
       Set<String> messageIgnoreSet,
       String relativeLinkPrefix,
-      boolean enumsAsStrings)
-      throws IOException // TODO(vchudnov): delete
-  {
+      boolean enumsAsStrings,
+      String inputConfig) {
     this.serviceIgnoreSet = serviceIgnoreSet;
     this.messageIgnoreSet = messageIgnoreSet;
     this.relativeLinkPrefix = relativeLinkPrefix;
     this.protoFile.setMetadata(readDocumentMetadata(document, documentFileName));
     this.enumsAsStrings = enumsAsStrings;
     this.usesStructProto = false;
-    // TODO: read from contents to be passed into constructor
-    this.config = ConversionConfiguration.FromJSON("{}");
+
+    if (inputConfig==null) {
+       inputConfig = "{}";
+     }
+    this.config = ConversionConfiguration.FromJSON(inputConfig);
+
 
     readSchema(document);
     readResources(document);
@@ -86,8 +87,14 @@ public class DocumentToProtoConverter {
     this.protoFile.setUsesStructProto(this.usesStructProto);
     convertEnumFieldsToStrings();
 
-    // TODO(vchudnov): remove
-    Files.write(Paths.get("/tmp/DIREGAPIC-converter/config.json"), this.config.ToJSON().getBytes());
+    this.outputConfigContents = this.config.ToJSON();
+
+    // TODO(vchudnov): converter version datetime@host
+
+  }
+
+  public String getOutputConfig() {
+    return this.outputConfigContents;
   }
 
   public ProtoFile getProtoFile() {
