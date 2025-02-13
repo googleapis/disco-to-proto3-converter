@@ -814,13 +814,18 @@ public class DocumentToProtoConverter {
     return enumMessage;
   }
 
+
+  // NOTE that if schema path is null, nothing is looked up (implicitly) and nothing is recorded (explicitly)
   private String getMessageName(Schema sch, String schemaPath) {
-    String messageName = this.config.GetMessageNameForPath(schemaPath);
+    String messageName = this.config.getMessageNameForPath(schemaPath);
     if (messageName == null) {
       messageName = sch.getIdentifier();
     }
     if (Character.isLowerCase(messageName.charAt(0))) {
       messageName = Name.anyCamel(messageName).toUpperCamel();
+    }
+    if (schemaPath != null) {
+      this.config.addInlineSchemaInstance(schemaPath, messageName, sch.jsonContents()); // TODO(vchudnov): consider using the schema hash instad. It will make it easier to track changes
     }
     return messageName;
   }
