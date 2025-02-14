@@ -42,7 +42,7 @@ public class ConversionConfiguration {
     private boolean schemaUsed;
 
     // Any location should appear at most once in this field across all InlineFieldSchemaInstance instances.
-    private List<String> locations;  // TODO: I think we only need to have a single location
+    private List<String> locations; // TODO: I think we only need to have a single location
 
     private List<String> errors;
 
@@ -54,9 +54,10 @@ public class ConversionConfiguration {
     }
 
     private String findProtoTypeNameForPath(String schemaPath) {
-      if (this.locations.contains(schemaPath)) {
+      if (schemaPath != null && this.locations.contains(schemaPath)) {
         return this.protoMessageName;
       }
+
       this.errors.add(String.format("!! requested name for path \"%s\" in object with paths [%s]",
           schemaPath, String.join(", ", this.locations)));
       return null;
@@ -86,13 +87,13 @@ public class ConversionConfiguration {
       if (!(obj instanceof InlineFieldSchemaInstance) || obj == null) {
         return false;
       }
-      InlineFieldSchemaInstance other = (InlineFieldSchemaInstance)obj;
+      InlineFieldSchemaInstance other = (InlineFieldSchemaInstance) obj;
       if (other == null ||
           !this.protoMessageName.equals(other.protoMessageName) ||
           // Separate the null here, and when we use the schema (not read from external config) set
           // a new internal field that says used. Also change places where we check for null
           // schema. This will initially cause the readWriteWIthoutAnyChanges test to fail.
-          (this.schema != null && !this.schema.equals(other.schema))||
+          (this.schema != null && !this.schema.equals(other.schema)) ||
           this.locations.size() != other.locations.size()) {
         return false;
       }
@@ -136,7 +137,6 @@ public class ConversionConfiguration {
       String schema = fieldSchemaInstance.schema;
       List<String> errors = new ArrayList<String>();
 
-
       assert schema != null;
       assert this.schema == null || this.schema.equals(schema);
 
@@ -168,14 +168,12 @@ public class ConversionConfiguration {
   private List<InlineSchema> inlineSchemas;
   /* END: Only these fields are exposed in the external proto config. */
 
-
   // Map of distinct field paths to a InlineFieldSchemaInstance. Fields that use identical schemas
   // will still point to unique InlineFieldInstance objects. The schemas are combined in
   // PopulateInlineSchemas, which is called before writing out the output config.
   private transient Map<String, InlineFieldSchemaInstance> fieldToSchemaInstance;
 
   private transient List<String> errors = new ArrayList<String>();
-
 
   public ConversionConfiguration() {
     this.inlineSchemas = new ArrayList<InlineSchema>();
@@ -218,6 +216,7 @@ public class ConversionConfiguration {
     } else if (readingFromFile) {
       this.errors.add(String.format("!! field specified multiple times: %s", fieldPath));
     }
+
     fieldInstance.update(fieldPath, protoTypeName, schema, readingFromFile);
     errors.addAll(fieldInstance.errors);
     return fieldInstance;

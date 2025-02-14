@@ -164,10 +164,23 @@ public class ConversionConfigurationTest {
   }
 
   @Test
+  public void getMessageNameForPath() {
+    String label = "readWriteWithoutAnyChanges";
+
+    ConversionConfiguration config = ConversionConfiguration.FromJSON(inputConfig);
+
+    assert "LakeInfo".equals(config.getMessageNameForPath("schemas.Lake.info"));
+    assert "LakeInfo".equals(config.getMessageNameForPath(new String("schemas.BigLake.lakeInfo")));
+    assert "PondInfo".equals(config.getMessageNameForPath(new String("schemas.Pond.info")));
+    assert "PondInfo".equals(config.getMessageNameForPath("schemas.BigPond.pondInfo"));
+  }
+
+  @Test
   public void readWriteWithoutAnyChanges() {
     String label = "readWriteWithoutAnyChanges";
 
     ConversionConfiguration config = ConversionConfiguration.FromJSON(inputConfig);
+
     config.addInlineSchemaInstance("schemas.Pond.info", "PondInfo", "an initial schema");
     config.addInlineSchemaInstance("schemas.BigLake.lakeInfo", "LakeInfo", "an initial schema");
     config.addInlineSchemaInstance("schemas.Lake.info", "LakeInfo", "an initial schema");
