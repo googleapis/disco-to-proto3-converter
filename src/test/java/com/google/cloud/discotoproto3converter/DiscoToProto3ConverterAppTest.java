@@ -484,19 +484,66 @@ public class DiscoToProto3ConverterAppTest {
   public void protoParserRoundtripBigNoComments() throws IOException {
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path prefix = Paths.get("google", "cloud", "compute", "v1");
+    Path discoveryPath = Paths.get("src", "test", "resources", prefix.toString(), "compute.v1.json");
+    Path inputConfigPath = Paths.get("src", "test", "resources", prefix.toString(), "compute.v1.config.input.json");
+    Path convertedProtoPath =
+        Paths.get(outputDir.toString(), prefix.toString(), "compute_big_converted.proto");
+    Path parsedProtoPath =
+        Paths.get(outputDir.toString(), prefix.toString(), "compute_big_parsed.proto");
+
+    app.convert(discoveryPath.toString(), null, convertedProtoPath.toString(), inputConfigPath.toString(), "", "", "", null, "false", "false");
+    app.convert(null, convertedProtoPath.toString(), parsedProtoPath.toString(), inputConfigPath.toString(), "", "", "", null, "false", "false");
+
+    String convertedBody = readFile(convertedProtoPath);
+    String parsedBody = readFile(parsedProtoPath);
+    assertEquals(convertedBody, parsedBody);
+  }
+
+  @Test
+  public void protoParserBigNoConfig() throws IOException {
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1");
     Path discoPath = Paths.get("src", "test", "resources", prefix.toString(), "compute.v1.json");
 
-    Path convPath =
-        Paths.get(outputDir.toString(), prefix.toString(), "compute_big_converted.proto");
-    app.convert(discoPath.toString(), null, convPath.toString(), "", "", null, "false", "false");
+    Path convPath = Paths.get(outputDir.toString(), prefix.toString(), "compute_big_converted.proto");
+    assertThrows(IllegalArgumentException.class,
+        () ->
+        app.convert(discoPath.toString(), null, convPath.toString(), "", "", null, "false", "false"));
+  }
 
-    Path parsedPath =
-        Paths.get(outputDir.toString(), prefix.toString(), "compute_big_parsed.proto");
-    app.convert(null, convPath.toString(), parsedPath.toString(), "", "", null, "false", "false");
+  @Test
+  public void idempotentConversionWithOutputConfig() throws IOException {
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1");
+    Path discoveryPath = Paths.get("src", "test", "resources", prefix.toString(), "compute.v1.json");
+    Path inputConfigPath = Paths.get("src", "test", "resources", prefix.toString(), "compute.v1.config.input.json");
+    Path firstOutputConfigPath = Paths.get(outputDir.toString(), prefix.toString(), "compute-v1.config.output-1.json");
+    Path secondOutputConfigPath = Paths.get(outputDir.toString(), prefix.toString(), "compute.v1.config.output-2.json");
+    Path firstProtoPath = Paths.get(outputDir.toString(), prefix.toString(), "compute_big_first.proto");
+    Path secondProtoPath = Paths.get(outputDir.toString(), prefix.toString(), "compute_big_second.proto");
 
-    String convertedBody = readFile(convPath);
-    String parsedBody = readFile(parsedPath);
-    assertEquals(convertedBody, parsedBody);
+    System.out.printf(
+        "*** @Test:idempotentConversionWithOutputConfig():\n    Discovery path: %s\n    Input config: %s\n" +
+        "    First output config:  %s\n" +
+        "    First output proto:   %s\n" +
+        "    Second output config: %s\n" +
+        "    Second output proto:  %s\n",
+        discoveryPath.toAbsolutePath(),
+        inputConfigPath.toAbsolutePath(),
+        firstOutputConfigPath.toAbsolutePath(),
+        firstProtoPath.toAbsolutePath(),
+        secondOutputConfigPath.toAbsolutePath(),
+        secondProtoPath.toAbsolutePath());
+
+    app.convert(discoveryPath.toString(), null, firstProtoPath.toString(),
+        inputConfigPath.toString(), firstOutputConfigPath.toString(),
+        "", "", null, "false", "false");
+    app.convert(discoveryPath.toString(), null, secondProtoPath.toString(),
+        firstOutputConfigPath.toString(), secondOutputConfigPath.toString(),
+        "", "", null, "false", "false");
+
+    assert readFile(firstProtoPath).equals(readFile(secondProtoPath)); // identical output protos
+    assert readFile(firstOutputConfigPath).equals(readFile(secondOutputConfigPath)); // identical output configs
   }
 
   @Test

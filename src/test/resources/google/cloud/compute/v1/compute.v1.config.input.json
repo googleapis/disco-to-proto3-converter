@@ -1,0 +1,13 @@
+{
+  "converterVersion": "UNSPECIFIED",
+  "apiVersion": "UNSPECIFIED",
+  "discoveryRevision": "UNSPECIFIED",
+  "inlineSchemas" : [{
+    "schema": "",
+    "locations": {
+      "ErrorSetVchudnov": [
+        "schemas.Managed_instance_last_attempt.errors"
+      ]
+    }
+  }]
+}

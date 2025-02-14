@@ -84,6 +84,7 @@ public abstract class ConverterApp {
     }
 
     ProtoFile newProtoFile = null;
+
     if (discoveryDocPath != null) {
       Document document = createDocument(discoveryDocPath);
       DocumentToProtoConverter converter =
@@ -98,7 +99,9 @@ public abstract class ConverterApp {
       newProtoFile = converter.getProtoFile();
 
       if (outputConfigPath.length() > 0) {
-        Files.writeString(Paths.get(outputConfigPath), converter.getOutputConfig());
+        Path outputPath = Paths.get(outputConfigPath);
+        Files.createDirectories(outputPath.getParent());
+        Files.writeString(outputPath, converter.getOutputConfig());
       }
     }
 

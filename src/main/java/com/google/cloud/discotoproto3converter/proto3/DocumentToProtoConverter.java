@@ -773,26 +773,10 @@ public class DocumentToProtoConverter {
         putAllMessages(valueType.getName(), valueType);
       }
       if (!valueType.equals(existingMessage)) {
-        if (!"Errors".equals(valueType.getName())) {
-          // ManagedInstanceLastAttempt has the following ridiculous internal Errors message
-          // definition:
-          // message ManagedInstanceLastAttempt {
-          //   message Errors {
-          //       message Errors {}
-          //       repeated Errors errors = 1;
-          //   }
-          //   Errors errors = 1;
-          // }
-          // (i.e. Errors inside Errors with repeated Errors inside and singular Errors outside
-          // (O_o))
-          // This is the only place where something like this happens, so simply ignoring it for
-          // now.
-          throw new IllegalArgumentException(
-              "Message collision detected. Existing message = "
-                  + existingMessage
-                  + ", new message = "
-                  + valueType);
-        }
+        throw new IllegalArgumentException(String.format(
+            "Message collision detected. Existing message = %s; new message = %s @ %s",
+            existingMessage,
+            valueType, currentSchemaPathString));
       }
     }
     return field;
