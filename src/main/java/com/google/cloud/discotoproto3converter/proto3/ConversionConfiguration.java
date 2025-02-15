@@ -256,12 +256,36 @@ public class ConversionConfiguration {
       }
       this.errors.addAll(thisInlineSchema.addFieldInstance(inlineFieldSchemaInstance));
     }
-    this.throwIfError();
-    this.inlineSchemas = new ArrayList<InlineSchema>(schemaToDetails.values());
 
-    // TODO: verify all the inline schemas have consistent message names
+    this.inlineSchemas = new ArrayList<InlineSchema>(schemaToDetails.values());
+    VerifyInlineSchemas();
+
+    this.throwIfError();
+
     // TODO: Consider sorting the schemas by number of instances
     return this;
+  }
+
+  /** Consistency check that all the `InlineFieldSchemaInstance` from which we populated `inlineSchemas` have consistent message names. */
+  public void VerifyInlineSchemas() {
+    for (InlineSchema oneInlineSchema : this.inlineSchemas) {
+      for (Map.Entry<String, List<String>> entry : oneInlineSchema.locations.entrySet()) {
+        String messageName = entry.getKey();
+        List<String> messageLocations = entry.getValue();
+        for (String oneLocation : messageLocations) {
+          InlineFieldSchemaInstance thisInstance = this.fieldToSchemaInstance.get(oneLocation);
+          if (thisInstance == null) {
+            errors.add(String.format("inconsistency: did not find InlineFieldSchemaInstance at %s", oneLocation));
+            continue;
+          }
+          if (!messageName.equals(thisInstance.protoMessageName)) {
+            errors.add(String.format("inconsistency: expected message name '%s' but got '%s' at location %s",
+                    messageName, thisInstance.protoMessageName,
+                    oneLocation));
+          }
+        }
+      }
+    }
   }
 
   static public ConversionConfiguration FromJSON(String jsonContents) {
