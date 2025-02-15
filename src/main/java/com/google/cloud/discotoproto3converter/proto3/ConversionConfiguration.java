@@ -42,38 +42,40 @@ public class ConversionConfiguration {
     private boolean schemaUsed;
 
     // Any location should appear at most once in this field across all InlineFieldSchemaInstance instances.
-    private List<String> locations; // TODO: I think we only need to have a single location
+    private String location;
 
     private List<String> errors;
 
     public InlineFieldSchemaInstance(String protoTypeName, String schema) {
-      this.locations = new ArrayList<String>();
+      this.location = null;
       this.protoMessageName = protoTypeName;
       this.schema = schema;
       this.errors = new ArrayList<String>();
     }
 
     private String findProtoTypeNameForPath(String schemaPath) {
-      if (schemaPath != null && this.locations.contains(schemaPath)) {
+      if (this.location != null && this.location.equals(schemaPath)) {
         return this.protoMessageName;
       }
 
-      this.errors.add(String.format("!! requested name for path \"%s\" in object with paths [%s]",
-          schemaPath, String.join(", ", this.locations)));
+      this.errors.add(String.format("!! requested name for path \"%s\" in object with paths %s",
+          schemaPath, this.location));
       return null;
     }
 
     // Updates this InlineFieldSchemaInstance, setting schemaUsed if not readingFromFile, and
     // erroring if schemaUsed was already set.
     public void update(String fieldPath, String protoTypeName, String schema, boolean readingFromFile) {
-      if (!this.locations.contains(fieldPath)) {
-        this.locations.add(fieldPath);
+      if (this.location != null && !this.location.equals(fieldPath)) {
+        this.errors.add(String.format("trying to update location of inline schema instance %s -> %s",
+            this.location, fieldPath));
       }
       if (this.schemaUsed) {
         this.errors.add(String.format("!! this InlineFieldSchemaInstance was already used: %s:%s:%s\n",
                 protoTypeName, fieldPath, schema));
       }
 
+      this.location = fieldPath;
       this.protoMessageName = protoTypeName;
       this.schema = schema;
       this.schemaUsed = !readingFromFile;
@@ -90,18 +92,12 @@ public class ConversionConfiguration {
       InlineFieldSchemaInstance other = (InlineFieldSchemaInstance) obj;
       if (other == null ||
           !this.protoMessageName.equals(other.protoMessageName) ||
-          // Separate the null here, and when we use the schema (not read from external config) set
-          // a new internal field that says used. Also change places where we check for null
-          // schema. This will initially cause the readWriteWIthoutAnyChanges test to fail.
           (this.schema != null && !this.schema.equals(other.schema)) ||
-          this.locations.size() != other.locations.size()) {
+          ((this.location == null) != (other.location == null)) ||
+          ((this.location != null && !this.location.equals(other.location))) ){
         return false;
       }
-      for (String oneLocation : this.locations) {
-        if (!other.locations.contains(oneLocation)) {
-          return false;
-        }
-      }
+
       return true;
     }
   }
@@ -146,13 +142,12 @@ public class ConversionConfiguration {
         currentLocations = new ArrayList<String>();
         this.locations.put(protoTypeName, currentLocations);
       }
-      for (String newLocation : fieldSchemaInstance.locations) {
-        if (currentLocations.contains(newLocation)) {
-          errors.add(String.format("!! location was already registered: %s", newLocation));
-          continue;
-        }
-        currentLocations.add(newLocation);
-      };
+
+      String newLocation = fieldSchemaInstance.location;
+      if (currentLocations.contains(newLocation)) {
+        errors.add(String.format("!! location was already registered: %s", newLocation));
+      }
+      currentLocations.add(newLocation);
       return errors;
     }
   }
@@ -248,21 +243,23 @@ public class ConversionConfiguration {
     Map<String,InlineSchema> schemaToDetails = new HashMap<String, InlineSchema>(); // Keys are schemas
     for (Map.Entry<String, InlineFieldSchemaInstance> fieldToSchemaInstance : this.fieldToSchemaInstance.entrySet()) {
       String fieldPath = fieldToSchemaInstance.getKey();
-      InlineFieldSchemaInstance InlineFieldSchemaInstance = fieldToSchemaInstance.getValue();
-      if (!InlineFieldSchemaInstance.schemaUsed) {
-        errors.add(String.format("!! previously specified field of type %s is not longer used: %s",
-                InlineFieldSchemaInstance.protoMessageName, fieldPath));
+      InlineFieldSchemaInstance inlineFieldSchemaInstance = fieldToSchemaInstance.getValue();
+      if (!inlineFieldSchemaInstance.schemaUsed) {
+        errors.add(String.format("!! previously specified field of type %s is no longer used: %s",
+                inlineFieldSchemaInstance.protoMessageName, fieldPath));
         continue;
       }
-      InlineSchema thisInlineSchema = schemaToDetails.get(InlineFieldSchemaInstance.schema);
+      InlineSchema thisInlineSchema = schemaToDetails.get(inlineFieldSchemaInstance.schema);
       if (thisInlineSchema == null) {
         thisInlineSchema = new InlineSchema();
-        schemaToDetails.put(InlineFieldSchemaInstance.schema, thisInlineSchema);
+        schemaToDetails.put(inlineFieldSchemaInstance.schema, thisInlineSchema);
       }
-      this.errors.addAll(thisInlineSchema.addFieldInstance(InlineFieldSchemaInstance));
+      this.errors.addAll(thisInlineSchema.addFieldInstance(inlineFieldSchemaInstance));
     }
     this.throwIfError();
     this.inlineSchemas = new ArrayList<InlineSchema>(schemaToDetails.values());
+
+    // TODO: verify all the inline schemas have consistent message names
     // TODO: Consider sorting the schemas by number of instances
     return this;
   }
