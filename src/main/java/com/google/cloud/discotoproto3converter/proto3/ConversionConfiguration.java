@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -153,12 +154,10 @@ public class ConversionConfiguration {
   }
 
   /* BEGIN: Only these fields are exposed in the external proto config. */
-  // - https://stackoverflow.com/a/50934756
-  // - https://www.baeldung.com/spring-git-information
-  private final String converterVersion;
 
-  private final String apiVersion;
-  private final String discoveryRevision;
+  private String converterVersion;
+  private String apiVersion;
+  private String discoveryRevision;
 
   private List<InlineSchema> inlineSchemas;
   /* END: Only these fields are exposed in the external proto config. */
@@ -173,11 +172,22 @@ public class ConversionConfiguration {
   public ConversionConfiguration() {
     this.inlineSchemas = new ArrayList<InlineSchema>();
     this.fieldToSchemaInstance = new HashMap<String, InlineFieldSchemaInstance>();
-    this.converterVersion = "UNSET";
-    this.apiVersion = "UNSET";
-    this.discoveryRevision = "UNSET";
+    this.converterVersion = "";
+    this.apiVersion = "";
+    this.discoveryRevision = "";
 
     this.errors = new ArrayList<String>();
+  }
+
+  // TODO(vchudnov): test
+  public void SetConfigMetadata(String converterVersion, String apiVersion, String discoveryRevision) {
+    if (this.apiVersion.length() > 0 && !this.apiVersion.equals(apiVersion)) {
+      throw new IllegalStateException(
+          String.format("trying to override apiVersion %s with %s", this.apiVersion, apiVersion));
+    }
+    this.converterVersion = converterVersion;
+    this.apiVersion = apiVersion;
+    this.discoveryRevision = discoveryRevision;
   }
 
   // TODO(vchudnov): test

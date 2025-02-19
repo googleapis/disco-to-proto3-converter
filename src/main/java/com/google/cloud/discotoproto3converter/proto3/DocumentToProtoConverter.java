@@ -21,6 +21,8 @@ import com.google.cloud.discotoproto3converter.disco.Method;
 import com.google.cloud.discotoproto3converter.disco.Name;
 import com.google.cloud.discotoproto3converter.disco.Schema;
 import com.google.cloud.discotoproto3converter.disco.Schema.Format;
+import java.io.InputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,6 +32,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -77,7 +80,7 @@ public class DocumentToProtoConverter {
        inputConfig = "{}";
      }
     this.config = ConversionConfiguration.FromJSON(inputConfig);
-
+    this.config.SetConfigMetadata(getConverterVersion(), document.version(), document.revision());
 
     readSchema(document);
     readResources(document);
@@ -88,9 +91,26 @@ public class DocumentToProtoConverter {
     convertEnumFieldsToStrings();
 
     this.outputConfigContents = this.config.ToJSON();
+  }
 
-    // TODO(vchudnov): converter version datetime@host
+ static public String getConverterVersion() {
+    Properties gitProperties = getGitProperties();
+    String converterVersion = gitProperties.getProperty("git.commit.id", "not-found");
+    if (gitProperties.getProperty("git.dirty").equals("true")) {
+      converterVersion = converterVersion + "*";
+    }
+    return converterVersion;
+  }
 
+ static public Properties getGitProperties() {
+    Properties properties = new Properties();
+    try {
+      InputStream is = DocumentToProtoConverter.class.getClassLoader().getResourceAsStream("git.properties");
+      properties.load(is);
+    } catch (IOException io) {
+      System.out.printf("*** could not get git properties\n");
+    }
+  return properties;
   }
 
   public String getOutputConfig() {
