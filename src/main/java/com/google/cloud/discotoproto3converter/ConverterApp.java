@@ -36,6 +36,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -76,7 +79,8 @@ public abstract class ConverterApp {
       String messageIgnorelist,
       String relativeLinkPrefix,
       String enumsAsStrings,
-      String outputComments)
+      String outputComments,
+      String timeStamp)
       throws IOException {
     String inputConfig = null;
     if (inputConfigPath.length() > 0) {
@@ -95,7 +99,8 @@ public abstract class ConverterApp {
               new HashSet<>(Arrays.asList(messageIgnorelist.split(","))),
               relativeLinkPrefix,
               Boolean.valueOf(enumsAsStrings),
-              inputConfig);
+              inputConfig,
+              timeStamp);
       newProtoFile = converter.getProtoFile();
 
       if (outputConfigPath.length() > 0) {
@@ -122,10 +127,39 @@ public abstract class ConverterApp {
         writer.writeToFile(pw, previousProtoFile, Boolean.valueOf(outputComments));
       }
     }
-
   }
 
-  /** Convenience constructor when we don't deal with input or output configs. */
+  /** Convenience method when we automatically set the time to right now. */
+    public void convert(
+      String discoveryDocPath,
+      String previousProtoPath,
+      String outputFilePath,
+      String inputConfigPath,
+      String outputConfigPath,
+      String serviceIgnorelist,
+      String messageIgnorelist,
+      String relativeLinkPrefix,
+      String enumsAsStrings,
+      String outputComments)
+        throws IOException {
+  convert(
+      discoveryDocPath,
+      previousProtoPath,
+      outputFilePath,
+      inputConfigPath,
+      outputConfigPath,
+      serviceIgnorelist,
+      messageIgnorelist,
+      relativeLinkPrefix,
+      enumsAsStrings,
+      outputComments,
+      OffsetDateTime
+      .now()
+      .truncatedTo(ChronoUnit.SECONDS)
+      .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+    }
+
+  /** Convenience method when we don't deal with input or output configs. */
   public void convert(
       String discoveryDocPath,
       String previousProtoPath,
@@ -145,7 +179,8 @@ public abstract class ConverterApp {
         messageIgnorelist,
         relativeLinkPrefix,
         enumsAsStrings,
-        outputComments);
+        outputComments,
+        "");
   }
 
   public void convert(String[] args) throws IOException {

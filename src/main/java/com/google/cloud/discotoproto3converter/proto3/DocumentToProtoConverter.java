@@ -68,7 +68,8 @@ public class DocumentToProtoConverter {
       Set<String> messageIgnoreSet,
       String relativeLinkPrefix,
       boolean enumsAsStrings,
-      String inputConfig) {
+      String inputConfig,
+      String timeStamp) {
     this.serviceIgnoreSet = serviceIgnoreSet;
     this.messageIgnoreSet = messageIgnoreSet;
     this.relativeLinkPrefix = relativeLinkPrefix;
@@ -79,8 +80,9 @@ public class DocumentToProtoConverter {
     if (inputConfig==null) {
        inputConfig = "{}";
      }
-    this.config = ConversionConfiguration.FromJSON(inputConfig);
-    this.config.SetConfigMetadata(getConverterVersion(), document.version(), document.revision());
+
+    this.config = ConversionConfiguration.fromJSON(inputConfig);
+    this.config.setConfigMetadata(getConverterVersion(), document.version(), document.revision(), timeStamp);
 
     readSchema(document);
     readResources(document);
@@ -90,14 +92,14 @@ public class DocumentToProtoConverter {
     this.protoFile.setUsesStructProto(this.usesStructProto);
     convertEnumFieldsToStrings();
 
-    this.outputConfigContents = this.config.ToJSON();
+    this.outputConfigContents = this.config.toJSON();
   }
 
  static public String getConverterVersion() {
     Properties gitProperties = getGitProperties();
-    String converterVersion = gitProperties.getProperty("git.commit.id", "not-found");
+    String converterVersion = gitProperties.getProperty("git.commit.id.abbrev", "not-found");
     if (gitProperties.getProperty("git.dirty").equals("true")) {
-      converterVersion = converterVersion + "*";
+      converterVersion = converterVersion + "+";
     }
     return converterVersion;
   }

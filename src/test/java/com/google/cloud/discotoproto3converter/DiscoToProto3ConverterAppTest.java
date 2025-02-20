@@ -537,10 +537,10 @@ public class DiscoToProto3ConverterAppTest {
 
     app.convert(discoveryPath.toString(), null, firstProtoPath.toString(),
         inputConfigPath.toString(), firstOutputConfigPath.toString(),
-        "", "", null, "false", "false");
+        "", "", null, "false", "false","3001-01-01");
     app.convert(discoveryPath.toString(), null, secondProtoPath.toString(),
         firstOutputConfigPath.toString(), secondOutputConfigPath.toString(),
-        "", "", null, "false", "false");
+        "", "", null, "false", "false", "3001-01-01");
 
     assert readFile(firstProtoPath).equals(readFile(secondProtoPath)); // identical output protos
     assert readFile(firstOutputConfigPath).equals(readFile(secondOutputConfigPath)); // identical output configs

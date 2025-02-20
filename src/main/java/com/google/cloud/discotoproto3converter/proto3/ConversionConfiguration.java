@@ -129,7 +129,7 @@ public class ConversionConfiguration {
      *
      * Returns a list of errors.
      */
-    public List<String> addFieldInstance(InlineFieldSchemaInstance fieldSchemaInstance) {
+    private List<String> addFieldInstance(InlineFieldSchemaInstance fieldSchemaInstance) {
       String protoTypeName = fieldSchemaInstance.protoMessageName;
       String schema = fieldSchemaInstance.schema;
       List<String> errors = new ArrayList<String>();
@@ -156,6 +156,7 @@ public class ConversionConfiguration {
   /* BEGIN: Only these fields are exposed in the external proto config. */
 
   private String converterVersion;
+  private String updateTime;
   private String apiVersion;
   private String discoveryRevision;
 
@@ -173,6 +174,7 @@ public class ConversionConfiguration {
     this.inlineSchemas = new ArrayList<InlineSchema>();
     this.fieldToSchemaInstance = new HashMap<String, InlineFieldSchemaInstance>();
     this.converterVersion = "";
+    this.updateTime = "";
     this.apiVersion = "";
     this.discoveryRevision = "";
 
@@ -180,7 +182,7 @@ public class ConversionConfiguration {
   }
 
   // TODO(vchudnov): test
-  public void SetConfigMetadata(String converterVersion, String apiVersion, String discoveryRevision) {
+  public void setConfigMetadata(String converterVersion, String apiVersion, String discoveryRevision, String updateTime) {
     if (this.apiVersion.length() > 0 && !this.apiVersion.equals(apiVersion)) {
       throw new IllegalStateException(
           String.format("trying to override apiVersion %s with %s", this.apiVersion, apiVersion));
@@ -188,6 +190,7 @@ public class ConversionConfiguration {
     this.converterVersion = converterVersion;
     this.apiVersion = apiVersion;
     this.discoveryRevision = discoveryRevision;
+    this.updateTime = updateTime;
   }
 
   // TODO(vchudnov): test
@@ -203,13 +206,7 @@ public class ConversionConfiguration {
     return addInlineSchemaInstance(fieldPath, protoTypeName, schema, false);
   }
 
-  public void throwIfError() {
-    if (this.errors.size() > 0) {
-      throw new IllegalStateException(String.join("\n", this.errors));
-    }
-  }
-
-  /**
+    /**
    * Registers in this.fieldToProtoType a single instance of schema being used as the protoTypeName
    * type of the field at fieldPath.
    */
@@ -232,7 +229,7 @@ public class ConversionConfiguration {
    * Populates this.fieldToSchemaInstance (checked to be initially empty) from this.inlineSchemas,
    * as would have been read in from an external config. Returns this.fieldToProtoType.
    */
-  public Map<String, InlineFieldSchemaInstance> PopulateFieldToSchemaInstance() {
+  private Map<String, InlineFieldSchemaInstance> populateFieldToSchemaInstance() {
     assert this.fieldToSchemaInstance.size() == 0;
     for (InlineSchema oneInlineSchema : this.inlineSchemas) {
       for (Map.Entry<String, List<String>> protoTypeToFields : oneInlineSchema.locations.entrySet()) {
@@ -249,7 +246,7 @@ public class ConversionConfiguration {
   /**
    * Clears and populates this.inlineSchemas from this.fieldToSchemaInstance, which would have been updated by the converter processing the current Discovery file.
    */
-  public ConversionConfiguration PopulateInlineSchemas() {
+  private ConversionConfiguration populateInlineSchemas() {
     Map<String,InlineSchema> schemaToDetails = new HashMap<String, InlineSchema>(); // Keys are schemas
     for (Map.Entry<String, InlineFieldSchemaInstance> fieldToSchemaInstance : this.fieldToSchemaInstance.entrySet()) {
       String fieldPath = fieldToSchemaInstance.getKey();
@@ -268,7 +265,7 @@ public class ConversionConfiguration {
     }
 
     this.inlineSchemas = new ArrayList<InlineSchema>(schemaToDetails.values());
-    VerifyInlineSchemas();
+    verifyInlineSchemas();
 
     this.throwIfError();
 
@@ -277,7 +274,7 @@ public class ConversionConfiguration {
   }
 
   /** Consistency check that all the `InlineFieldSchemaInstance` from which we populated `inlineSchemas` have consistent message names. */
-  public void VerifyInlineSchemas() {
+  private void verifyInlineSchemas() {
     for (InlineSchema oneInlineSchema : this.inlineSchemas) {
       for (Map.Entry<String, List<String>> entry : oneInlineSchema.locations.entrySet()) {
         String messageName = entry.getKey();
@@ -298,19 +295,19 @@ public class ConversionConfiguration {
     }
   }
 
-  static public ConversionConfiguration FromJSON(String jsonContents) {
+  static public ConversionConfiguration fromJSON(String jsonContents) {
     Gson gson = new Gson();
     ConversionConfiguration config =  gson.fromJson(jsonContents, ConversionConfiguration.class);
     if (config == null) { // TODO(vchudnov): add tests for this
       throw new IllegalStateException(String.format("could not parse JSON contents:<<\n%s\n...>>", jsonContents.substring(0, 20)));
     }
-    config.PopulateFieldToSchemaInstance();
+    config.populateFieldToSchemaInstance();
     return config;
   }
 
-  public String ToJSON() {
+  public String toJSON() {
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    this.PopulateInlineSchemas();
+    this.populateInlineSchemas();
     return gson.toJson(this);
   }
 
@@ -333,4 +330,11 @@ public class ConversionConfiguration {
     }
     return true;
   }
+
+  private void throwIfError() {
+    if (this.errors.size() > 0) {
+      throw new IllegalStateException(String.join("\n", this.errors));
+    }
+  }
+
 }
