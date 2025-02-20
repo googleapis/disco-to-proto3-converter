@@ -67,6 +67,10 @@ public class ConversionConfiguration {
       throw new IllegalStateException(
           String.format("trying to override apiVersion %s with %s", this.apiVersion, apiVersion));
     }
+    if (this.discoveryRevision.length() > 0 && this.discoveryRevision.compareTo(discoveryRevision) > 0) {
+      throw new IllegalStateException(
+          String.format("trying to override discoveryRevision %s with %s", this.discoveryRevision, discoveryRevision));
+    }
     this.converterVersion = converterVersion;
     this.apiVersion = apiVersion;
     this.discoveryRevision = discoveryRevision;

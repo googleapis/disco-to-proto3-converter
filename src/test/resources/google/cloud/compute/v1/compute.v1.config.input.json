@@ -1,7 +1,7 @@
 {
   "converterVersion": "UNSPECIFIED",
   "apiVersion": "",
-  "discoveryRevision": "UNSPECIFIED",
+  "discoveryRevision": "",
   "inlineSchemas" : [{
     "schema": "",
     "locations": {
