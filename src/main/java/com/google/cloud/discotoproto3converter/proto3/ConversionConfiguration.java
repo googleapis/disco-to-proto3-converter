@@ -19,88 +19,109 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 public class ConversionConfiguration {
 
-  /**
-   *  Inner class to capture fields with inline-defined schemas. While several fields may use
-   *  identical inline-defined schemas that wind up referring to the same protobuf type, this class
-   *  should be instantiated once per field, not once per protobuf type. This class is used for
-   *  internal computations and is not directly reflected in the external config.
-   */
-  static class InlineFieldSchemaInstance {
-    // Each InlineFieldSchemaInstance should have a distinct protoMessageName.
-    private String protoMessageName;
+  /* Only these fields are exposed in the external proto config. Other fields defined later in this
+   * file are used in the course of processing the config.*/
 
-    // Multiple InlineFieldSchemaInstance instances may share the same schema. Note that when
-    // reading the external config, we always set schemaUsed to false. We only set it to true via
-    // the update method that is transitively called from the DocumentToProtoConverter.
-    private String schema;
-    private boolean schemaUsed;
+  private String converterVersion;
+  private String updateTime;
+  private String apiVersion;
+  private String discoveryRevision;
+  private List<InlineSchema> inlineSchemas;
 
-    // Any location should appear at most once in this field across all InlineFieldSchemaInstance instances.
-    private String location;
+  public ConversionConfiguration() {
+    this.inlineSchemas = new ArrayList<InlineSchema>();
+    this.fieldToSchemaInstance = new HashMap<String, InlineFieldSchemaInstance>();
+    this.converterVersion = "";
+    this.updateTime = "";
+    this.apiVersion = "";
+    this.discoveryRevision = "";
 
-    private List<String> errors;
+    this.errors = new ArrayList<String>();
+  }
 
-    public InlineFieldSchemaInstance(String protoTypeName, String schema) {
-      this.location = null;
-      this.protoMessageName = protoTypeName;
-      this.schema = schema;
-      this.errors = new ArrayList<String>();
+  static public ConversionConfiguration fromJSON(String jsonContents) {
+    Gson gson = new Gson();
+    ConversionConfiguration config =  gson.fromJson(jsonContents, ConversionConfiguration.class);
+    if (config == null) { // TODO(vchudnov): add tests for this
+      throw new IllegalStateException(String.format("could not parse JSON contents:<<\n%s\n...>>", jsonContents.substring(0, 20)));
     }
+    config.populateFieldToSchemaInstance();
+    return config;
+  }
 
-    private String findProtoTypeNameForPath(String schemaPath) {
-      if (this.location != null && this.location.equals(schemaPath)) {
-        return this.protoMessageName;
-      }
+  public String toJSON() {
+    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    this.populateInlineSchemas();
+    return gson.toJson(this);
+  }
 
-      this.errors.add(String.format("!! requested name for path \"%s\" in object with paths %s",
-          schemaPath, this.location));
+  // TODO(vchudnov): test
+  public void setConfigMetadata(String converterVersion, String apiVersion, String discoveryRevision, String updateTime) {
+    if (this.apiVersion.length() > 0 && !this.apiVersion.equals(apiVersion)) {
+      throw new IllegalStateException(
+          String.format("trying to override apiVersion %s with %s", this.apiVersion, apiVersion));
+    }
+    this.converterVersion = converterVersion;
+    this.apiVersion = apiVersion;
+    this.discoveryRevision = discoveryRevision;
+    this.updateTime = updateTime;
+  }
+
+  // TODO(vchudnov): test
+  public String getMessageNameForPath(String schemaPath) {
+    InlineFieldSchemaInstance inlineSchema = this.fieldToSchemaInstance.get(schemaPath);
+    if (inlineSchema == null) {
       return null;
     }
+    return inlineSchema.findProtoTypeNameForPath(schemaPath);
+  }
 
-    // Updates this InlineFieldSchemaInstance, setting schemaUsed if not readingFromFile, and
-    // erroring if schemaUsed was already set.
-    public void update(String fieldPath, String protoTypeName, String schema, boolean readingFromFile) {
-      if (this.location != null && !this.location.equals(fieldPath)) {
-        this.errors.add(String.format("trying to update location of inline schema instance %s -> %s",
-            this.location, fieldPath));
-      }
-      if (this.schemaUsed) {
-        this.errors.add(String.format("!! this InlineFieldSchemaInstance was already used: %s:%s:%s\n",
-                protoTypeName, fieldPath, schema));
-      }
-
-      this.location = fieldPath;
-      this.protoMessageName = protoTypeName;
-      this.schema = schema;
-      this.schemaUsed = !readingFromFile;
+  /**
+   * Registers in this.fieldToProtoType a single instance of schema being used as the protoTypeName
+   * type of the field at fieldPath.
+   */
+  public InlineFieldSchemaInstance addInlineSchemaInstance(String fieldPath, String protoTypeName, String schema, boolean readingFromFile) {
+    InlineFieldSchemaInstance fieldInstance = this.fieldToSchemaInstance.get(fieldPath);
+    if (fieldInstance == null) {
+      fieldInstance = new InlineFieldSchemaInstance(protoTypeName, schema);
+      this.fieldToSchemaInstance.put(fieldPath, fieldInstance);
+    } else if (readingFromFile) {
+      this.errors.add(String.format("!! field specified multiple times: %s", fieldPath));
     }
 
-    @Override
-    public boolean equals(Object obj) {
-      if (obj == this) {
-        return true;
-      }
-      if (!(obj instanceof InlineFieldSchemaInstance) || obj == null) {
-        return false;
-      }
-      InlineFieldSchemaInstance other = (InlineFieldSchemaInstance) obj;
-      if (other == null ||
-          !this.protoMessageName.equals(other.protoMessageName) ||
-          (this.schema != null && !this.schema.equals(other.schema)) ||
-          ((this.location == null) != (other.location == null)) ||
-          ((this.location != null && !this.location.equals(other.location))) ){
-        return false;
-      }
+    fieldInstance.update(fieldPath, protoTypeName, schema, readingFromFile);
+    errors.addAll(fieldInstance.errors);
+    return fieldInstance;
+  }
 
-      return true;
+  public InlineFieldSchemaInstance addInlineSchemaInstance(String fieldPath, String protoTypeName, String schema) {
+    return addInlineSchemaInstance(fieldPath, protoTypeName, schema, false);
+  }
+
+  public boolean publicFieldsEqual(ConversionConfiguration other, boolean matchDiscoveryRevision) {
+    if (!(this.converterVersion.equals(other.converterVersion) &&
+        this.apiVersion.equals(other.apiVersion) &&
+        (!matchDiscoveryRevision || (this.discoveryRevision.equals(other.discoveryRevision))) &&
+        this.inlineSchemas.size() == other.inlineSchemas.size() &&
+        this.fieldToSchemaInstance.size() == other.fieldToSchemaInstance.size())) {
+      return false;
     }
+
+    for (Map.Entry<String, InlineFieldSchemaInstance> thisEntry : this.fieldToSchemaInstance.entrySet()) {
+      String fieldPath = thisEntry.getKey();
+      InlineFieldSchemaInstance thisSchemaInstance = thisEntry.getValue();
+      InlineFieldSchemaInstance otherSchemaInstance = other.fieldToSchemaInstance.get(fieldPath);
+      if (otherSchemaInstance == null || !thisSchemaInstance.equals(otherSchemaInstance)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
@@ -153,77 +174,13 @@ public class ConversionConfiguration {
     }
   }
 
-  /* BEGIN: Only these fields are exposed in the external proto config. */
-
-  private String converterVersion;
-  private String updateTime;
-  private String apiVersion;
-  private String discoveryRevision;
-
-  private List<InlineSchema> inlineSchemas;
-  /* END: Only these fields are exposed in the external proto config. */
 
   // Map of distinct field paths to a InlineFieldSchemaInstance. Fields that use identical schemas
   // will still point to unique InlineFieldInstance objects. The schemas are combined in
-  // PopulateInlineSchemas, which is called before writing out the output config.
+  // populateInlineSchemas, which is called before writing out the output config.
   private transient Map<String, InlineFieldSchemaInstance> fieldToSchemaInstance;
 
   private transient List<String> errors = new ArrayList<String>();
-
-  public ConversionConfiguration() {
-    this.inlineSchemas = new ArrayList<InlineSchema>();
-    this.fieldToSchemaInstance = new HashMap<String, InlineFieldSchemaInstance>();
-    this.converterVersion = "";
-    this.updateTime = "";
-    this.apiVersion = "";
-    this.discoveryRevision = "";
-
-    this.errors = new ArrayList<String>();
-  }
-
-  // TODO(vchudnov): test
-  public void setConfigMetadata(String converterVersion, String apiVersion, String discoveryRevision, String updateTime) {
-    if (this.apiVersion.length() > 0 && !this.apiVersion.equals(apiVersion)) {
-      throw new IllegalStateException(
-          String.format("trying to override apiVersion %s with %s", this.apiVersion, apiVersion));
-    }
-    this.converterVersion = converterVersion;
-    this.apiVersion = apiVersion;
-    this.discoveryRevision = discoveryRevision;
-    this.updateTime = updateTime;
-  }
-
-  // TODO(vchudnov): test
-  public String getMessageNameForPath(String schemaPath) {
-    InlineFieldSchemaInstance inlineSchema = this.fieldToSchemaInstance.get(schemaPath);
-    if (inlineSchema == null) {
-      return null;
-    }
-    return inlineSchema.findProtoTypeNameForPath(schemaPath);
-  }
-
-  public InlineFieldSchemaInstance addInlineSchemaInstance(String fieldPath, String protoTypeName, String schema) {
-    return addInlineSchemaInstance(fieldPath, protoTypeName, schema, false);
-  }
-
-    /**
-   * Registers in this.fieldToProtoType a single instance of schema being used as the protoTypeName
-   * type of the field at fieldPath.
-   */
-  public InlineFieldSchemaInstance addInlineSchemaInstance(String fieldPath, String protoTypeName, String schema, boolean readingFromFile) {
-    InlineFieldSchemaInstance fieldInstance = this.fieldToSchemaInstance.get(fieldPath);
-    if (fieldInstance == null) {
-      fieldInstance = new InlineFieldSchemaInstance(protoTypeName, schema);
-      this.fieldToSchemaInstance.put(fieldPath, fieldInstance);
-    } else if (readingFromFile) {
-      this.errors.add(String.format("!! field specified multiple times: %s", fieldPath));
-    }
-
-    fieldInstance.update(fieldPath, protoTypeName, schema, readingFromFile);
-    errors.addAll(fieldInstance.errors);
-    return fieldInstance;
-  }
-
 
   /**
    * Populates this.fieldToSchemaInstance (checked to be initially empty) from this.inlineSchemas,
@@ -295,46 +252,89 @@ public class ConversionConfiguration {
     }
   }
 
-  static public ConversionConfiguration fromJSON(String jsonContents) {
-    Gson gson = new Gson();
-    ConversionConfiguration config =  gson.fromJson(jsonContents, ConversionConfiguration.class);
-    if (config == null) { // TODO(vchudnov): add tests for this
-      throw new IllegalStateException(String.format("could not parse JSON contents:<<\n%s\n...>>", jsonContents.substring(0, 20)));
-    }
-    config.populateFieldToSchemaInstance();
-    return config;
-  }
-
-  public String toJSON() {
-    Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    this.populateInlineSchemas();
-    return gson.toJson(this);
-  }
-
-  public boolean publicFieldsEqual(ConversionConfiguration other, boolean matchDiscoveryRevision) {
-    if (!(this.converterVersion.equals(other.converterVersion) &&
-        this.apiVersion.equals(other.apiVersion) &&
-        (!matchDiscoveryRevision || (this.discoveryRevision.equals(other.discoveryRevision))) &&
-        this.inlineSchemas.size() == other.inlineSchemas.size() &&
-        this.fieldToSchemaInstance.size() == other.fieldToSchemaInstance.size())) {
-      return false;
-    }
-
-    for (Map.Entry<String, InlineFieldSchemaInstance> thisEntry : this.fieldToSchemaInstance.entrySet()) {
-      String fieldPath = thisEntry.getKey();
-      InlineFieldSchemaInstance thisSchemaInstance = thisEntry.getValue();
-      InlineFieldSchemaInstance otherSchemaInstance = other.fieldToSchemaInstance.get(fieldPath);
-      if (otherSchemaInstance == null || !thisSchemaInstance.equals(otherSchemaInstance)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   private void throwIfError() {
     if (this.errors.size() > 0) {
       throw new IllegalStateException(String.join("\n", this.errors));
     }
   }
+
+  /**
+   *  Inner class to capture fields with inline-defined schemas. While several fields may use
+   *  identical inline-defined schemas that wind up referring to the same protobuf type, this class
+   *  should be instantiated once per field, not once per protobuf type. This class is used for
+   *  internal computations and is not directly reflected in the external config.
+   */
+  static class InlineFieldSchemaInstance {
+    // Each InlineFieldSchemaInstance should have a distinct protoMessageName.
+    private String protoMessageName;
+
+    // Multiple InlineFieldSchemaInstance instances may share the same schema. Note that when
+    // reading the external config, we always set schemaUsed to false. We only set it to true via
+    // the update method that is transitively called from the DocumentToProtoConverter.
+    private String schema;
+    private boolean schemaUsed;
+
+    // Any location should appear at most once in this field across all InlineFieldSchemaInstance instances.
+    private String location;
+
+    private List<String> errors;
+
+    public InlineFieldSchemaInstance(String protoTypeName, String schema) {
+      this.location = null;
+      this.protoMessageName = protoTypeName;
+      this.schema = schema;
+      this.errors = new ArrayList<String>();
+    }
+
+    private String findProtoTypeNameForPath(String schemaPath) {
+      if (this.location != null && this.location.equals(schemaPath)) {
+        return this.protoMessageName;
+      }
+
+      this.errors.add(String.format("- requested name for path \"%s\" in object with path %s",
+              schemaPath, this.location));
+      return null;
+    }
+
+    // Updates this InlineFieldSchemaInstance, setting schemaUsed if not readingFromFile, and
+    // erroring if schemaUsed was already set.
+    public void update(String fieldPath, String protoTypeName, String schema, boolean readingFromFile) {
+      if (this.location != null && !this.location.equals(fieldPath)) {
+        this.errors.add(String.format("trying to update location of inline schema instance %s -> %s",
+                this.location, fieldPath));
+      }
+      if (this.schemaUsed) {
+        this.errors.add(String.format("- this InlineFieldSchemaInstance was already used: %s:%s:%s\n",
+                protoTypeName, fieldPath, schema));
+      }
+
+      this.location = fieldPath;
+      this.protoMessageName = protoTypeName;
+      this.schema = schema;
+      this.schemaUsed = !readingFromFile;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (!(obj instanceof InlineFieldSchemaInstance) || obj == null) {
+        return false;
+      }
+      InlineFieldSchemaInstance other = (InlineFieldSchemaInstance) obj;
+      if (other == null ||
+          !this.protoMessageName.equals(other.protoMessageName) ||
+          (this.schema != null && !this.schema.equals(other.schema)) ||
+          ((this.location == null) != (other.location == null)) ||
+          ((this.location != null && !this.location.equals(other.location))) ){
+        return false;
+      }
+
+      return true;
+    }
+  }
+
+
 
 }
