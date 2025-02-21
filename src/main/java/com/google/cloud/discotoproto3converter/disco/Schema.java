@@ -53,7 +53,6 @@ public abstract class Schema implements Node {
     String description = root.getString("description");
     Format format = Format.getEnum(root.getString("format"));
     String id = root.getString("id");
-    String contents = root.toString();
 
     DiscoveryNode enumNode = root.getArray("enum");
     boolean isEnum = !enumNode.isEmpty();
@@ -111,7 +110,6 @@ public abstract class Schema implements Node {
             .setRepeated(repeated)
             .setRequired(required)
             .setType(type)
-            .setJsonContents(contents)
             .build();
     thisSchema.parent = parent;
     if (items != null) {
@@ -156,10 +154,6 @@ public abstract class Schema implements Node {
   void setParent(Node parent) {
     this.parent = parent;
   }
-
-  /** returns the JSON-format contents of this node */
-  @Nullable
-  public abstract String jsonContents();
 
   /** @return the schema of the additionalProperties, or null if none. */
   @Nullable
@@ -438,8 +432,6 @@ public abstract class Schema implements Node {
     public abstract Builder setRequired(boolean val);
 
     public abstract Builder setType(Type val);
-
-    public abstract Builder setJsonContents(String contents);
 
     public abstract Schema build();
   }
