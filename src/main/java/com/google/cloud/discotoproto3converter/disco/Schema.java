@@ -127,7 +127,7 @@ public abstract class Schema implements Node {
 
   /** @return a non-null identifier for this schema. */
   public String getIdentifier() {
-    return Strings.isNullOrEmpty(id()) ? key() : id(); // ** vchudnov: if inline, id is unset, key is the parent's key, ie field name: check here. (A) We can call a new method to compute (and memoize) the full path to the field, and then use that path to call into the config or (B) we can pass the Schema path after the fact, as we traverse all schemas. But will this work with RPC requests?
+    return Strings.isNullOrEmpty(id()) ? key() : id();
   }
 
   public static Schema empty() {
@@ -336,7 +336,7 @@ public abstract class Schema implements Node {
     return Objects.hash(
         additionalProperties() == null ? null : additionalProperties().getIdentifier(),
         defaultValue(),
-        description(),  // TODO(vchudnov): Consider excluding description
+        // we explicitly exclude description()
         format(),
         id(),
         isEnum(),
