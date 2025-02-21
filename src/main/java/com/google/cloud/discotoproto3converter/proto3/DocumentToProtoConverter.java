@@ -757,8 +757,7 @@ public class DocumentToProtoConverter {
           schemaToField(
               keyType == null ? sch.items() /* array */ : sch.additionalProperties() /* map */,
               true,
-              currentSchemaPath);  // TODO(vchudnov): maybe we should keep out the last element, because it gets repeated in the recursion. And test. Or maybe we keep it as is; that's how we specify the fields to change
-
+              currentSchemaPath);
       valueType = subField.getValueType();
     }
 
@@ -840,8 +839,7 @@ public class DocumentToProtoConverter {
       messageName = Name.anyCamel(messageName).toUpperCamel();
     }
     if (schemaPath != null) {
-      //      this.config.addInlineSchemaInstance(schemaPath, messageName, sch.jsonContents()); // TODO(vchudnov): consider using just the schema haseh instad. It will make it easier to track changes
-      this.config.addInlineSchemaInstance(schemaPath, messageName, Integer.toHexString(sch.contentHashCode()));  // TODO(vchudnov): use as a straight integer
+      this.config.addInlineSchemaInstance(schemaPath, messageName, Integer.toHexString(sch.contentHashCode()));
     }
     return messageName;
   }
