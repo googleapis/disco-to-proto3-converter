@@ -181,10 +181,10 @@ public class ConversionConfigurationTest {
 
     ConversionConfiguration config = ConversionConfiguration.fromJSON(inputConfig);
 
-    config.addInlineSchemaInstance("schemas.Pond.info", "PondInfo", "an initial schema");
-    config.addInlineSchemaInstance("schemas.BigLake.lakeInfo", "LakeInfo", "an initial schema");
-    config.addInlineSchemaInstance("schemas.Lake.info", "LakeInfo", "an initial schema");
-    config.addInlineSchemaInstance("schemas.BigPond.pondInfo", "PondInfo", "an initial schema");
+    config.addInlineField("schemas.Pond.info", "PondInfo", "an initial schema");
+    config.addInlineField("schemas.BigLake.lakeInfo", "LakeInfo", "an initial schema");
+    config.addInlineField("schemas.Lake.info", "LakeInfo", "an initial schema");
+    config.addInlineField("schemas.BigPond.pondInfo", "PondInfo", "an initial schema");
     String outputConfig = config.toJSON();
 
     System.out.printf("** %s: input\n%s\n%s: output\n%s\n",
@@ -198,11 +198,11 @@ public class ConversionConfigurationTest {
     String label = "readWriteUsingSchemaTwice";
 
     ConversionConfiguration config = ConversionConfiguration.fromJSON(inputConfig);
-    config.addInlineSchemaInstance("schemas.Pond.info", "PondInfo", "an initial schema");
-    config.addInlineSchemaInstance("schemas.BigLake.lakeInfo", "LakeInfo", "an initial schema");
-    config.addInlineSchemaInstance("schemas.Lake.info", "LakeInfo", "an initial schema");
-    config.addInlineSchemaInstance("schemas.Lake.info", "LakeInfo", "an initial schema"); // should cause error
-    config.addInlineSchemaInstance("schemas.BigPond.pondInfo", "PondInfo", "an initial schema");
+    config.addInlineField("schemas.Pond.info", "PondInfo", "an initial schema");
+    config.addInlineField("schemas.BigLake.lakeInfo", "LakeInfo", "an initial schema");
+    config.addInlineField("schemas.Lake.info", "LakeInfo", "an initial schema");
+    config.addInlineField("schemas.Lake.info", "LakeInfo", "an initial schema"); // should cause error
+    config.addInlineField("schemas.BigPond.pondInfo", "PondInfo", "an initial schema");
     System.out.printf("** %s: input\n%s\n", label, inputConfig);
 
     assertThrows(IllegalStateException.class,
@@ -214,9 +214,9 @@ public class ConversionConfigurationTest {
     String label = "readWriteUsingSchemaTwice";
 
     ConversionConfiguration config = ConversionConfiguration.fromJSON(inputConfig);
-    config.addInlineSchemaInstance("schemas.Pond.info", "PondInfo", "an initial schema");
-    config.addInlineSchemaInstance("schemas.Lake.info", "LakeInfo", "an initial schema");
-    config.addInlineSchemaInstance("schemas.BigPond.pondInfo", "PondInfo", "an initial schema");
+    config.addInlineField("schemas.Pond.info", "PondInfo", "an initial schema");
+    config.addInlineField("schemas.Lake.info", "LakeInfo", "an initial schema");
+    config.addInlineField("schemas.BigPond.pondInfo", "PondInfo", "an initial schema");
     // not using schemas.BigLake.lakeInfo should cause an error
     System.out.printf("** %s: input\n%s\n", label, inputConfig);
 
@@ -229,10 +229,10 @@ public class ConversionConfigurationTest {
     String label = "readWriteSplittingSchema";
 
     ConversionConfiguration config = ConversionConfiguration.fromJSON(inputConfig);
-    config.addInlineSchemaInstance("schemas.Pond.info", "FirstPondInfo", "current schema");
-    config.addInlineSchemaInstance("schemas.BigLake.lakeInfo", "AugmentedLakeInfo", "current schema");
-    config.addInlineSchemaInstance("schemas.Lake.info", "LakeInfo", "current schema");
-    config.addInlineSchemaInstance("schemas.BigPond.pondInfo", "SecondPondInfo", "current schema");
+    config.addInlineField("schemas.Pond.info", "FirstPondInfo", "current schema");
+    config.addInlineField("schemas.BigLake.lakeInfo", "AugmentedLakeInfo", "current schema");
+    config.addInlineField("schemas.Lake.info", "LakeInfo", "current schema");
+    config.addInlineField("schemas.BigPond.pondInfo", "SecondPondInfo", "current schema");
     String outputConfig = config.toJSON();
 
     String expectedConfig = """
@@ -265,11 +265,11 @@ public class ConversionConfigurationTest {
     String label = "readWriteAddingSchema";
 
     ConversionConfiguration config = ConversionConfiguration.fromJSON(inputConfig);
-    config.addInlineSchemaInstance("schemas.Pond.info", "PondInfo", "current schema");
-    config.addInlineSchemaInstance("schemas.BigLake.lakeInfo", "LakeInfo", "current schema");
-    config.addInlineSchemaInstance("schemas.Lake.info", "LakeInfo", "current schema");
-    config.addInlineSchemaInstance("schemas.BigPond.pondInfo", "PondInfo", "current schema");
-    config.addInlineSchemaInstance("schemas.River.info", "RiverInfo", "new schema");
+    config.addInlineField("schemas.Pond.info", "PondInfo", "current schema");
+    config.addInlineField("schemas.BigLake.lakeInfo", "LakeInfo", "current schema");
+    config.addInlineField("schemas.Lake.info", "LakeInfo", "current schema");
+    config.addInlineField("schemas.BigPond.pondInfo", "PondInfo", "current schema");
+    config.addInlineField("schemas.River.info", "RiverInfo", "new schema");
     String outputConfig = config.toJSON();
 
     String expectedConfig =         """
@@ -308,11 +308,11 @@ public class ConversionConfigurationTest {
 
     ConversionConfiguration config = ConversionConfiguration.fromJSON(inputConfig);
     // This first call uses a non-literal to ensure we are doing the correct comparisons under the hood.
-    config.addInlineSchemaInstance("schemas.Pond.info", "PondInfo", new String("current schema"));
-    config.addInlineSchemaInstance("schemas.BigLake.lakeInfo", "LakeInfo", "current schema");
-    config.addInlineSchemaInstance("schemas.Lake.info", "LakeInfo", "current schema");
-    config.addInlineSchemaInstance("schemas.BigPond.pondInfo", "PondInfo", "current schema");
-    config.addInlineSchemaInstance("schemas.River.info", "RiverInfo", "new schema");
+    config.addInlineField("schemas.Pond.info", "PondInfo", new String("current schema"));
+    config.addInlineField("schemas.BigLake.lakeInfo", "LakeInfo", "current schema");
+    config.addInlineField("schemas.Lake.info", "LakeInfo", "current schema");
+    config.addInlineField("schemas.BigPond.pondInfo", "PondInfo", "current schema");
+    config.addInlineField("schemas.River.info", "RiverInfo", "new schema");
     String outputConfig = config.toJSON();
 
     String expectedConfig =         """
@@ -350,9 +350,9 @@ public class ConversionConfigurationTest {
   public void readWriteWithoutUsingFieldSchema() {
     String label = "readWriteWithoutUsingFieldSchema";
     ConversionConfiguration config = ConversionConfiguration.fromJSON(inputConfig);
-    config.addInlineSchemaInstance("schemas.Pond.info", "PondInfo", "current schema");
-    config.addInlineSchemaInstance("schemas.BigLake.lakeInfo", "LakeInfo", "current schema");
-    config.addInlineSchemaInstance("schemas.Lake.info", "LakeInfo", "current schema");
+    config.addInlineField("schemas.Pond.info", "PondInfo", "current schema");
+    config.addInlineField("schemas.BigLake.lakeInfo", "LakeInfo", "current schema");
+    config.addInlineField("schemas.Lake.info", "LakeInfo", "current schema");
     // We omit BigPond
 
     System.out.printf("** %s: input\n%s\n", label, inputConfig);

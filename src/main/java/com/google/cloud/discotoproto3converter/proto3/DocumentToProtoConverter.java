@@ -839,7 +839,7 @@ public class DocumentToProtoConverter {
       messageName = Name.anyCamel(messageName).toUpperCamel();
     }
     if (schemaPath != null) {
-      this.config.addInlineSchemaInstance(schemaPath, messageName, Integer.toHexString(sch.contentHashCode()));
+      this.config.addInlineField(schemaPath, messageName, Integer.toHexString(sch.contentHashCode()));
     }
     return messageName;
   }
@@ -1081,7 +1081,7 @@ public class DocumentToProtoConverter {
       messageName = messageName2;
     }
 
-    this.config.addInlineSchemaInstance(messageKey, messageName, Integer.toHexString(method.hashCode()+suffix.hashCode()));
+    this.config.addInlineField(messageKey, messageName, Integer.toHexString(method.hashCode()+suffix.hashCode()));
     return messageName;
   }
 
