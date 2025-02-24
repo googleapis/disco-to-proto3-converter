@@ -263,6 +263,45 @@ public class ConversionConfigurationTest {
     assert checkIdenticalJSON(expectedConfig, outputConfig);
   }
 
+  public void splitSchemasBackwardsCompatible() {
+    String label = "splitSchemasBackwardsCompatible";
+
+    ConversionConfiguration config = ConversionConfiguration.fromJSON(inputConfig);
+    // we update all entries with  the same protobuf message name to refer to the same updated schema. This is valid.
+    config.addInlineField("schemas.Lake.info", "LakeInfo", "updated-schema");
+    config.addInlineField("schemas.BigLake.lakeInfo", "LakeInfo", "updated-schema");
+    String outputConfig = config.toJSON();
+
+    String expectedConfig =
+        """
+        {
+       "converterVersion": "some-identifier",
+       "apiVersion": "gamma",
+       "discoveryRevision": "20250204",
+       "inlineSchemas": [
+          {
+            "schema": "an initial schema",
+            "locations": {
+              "PondInfo": ["schemas.Pond.info", "schemas.BigPond.pondInfo"]
+            }
+          },
+          {
+            "schema": "updated-schema",
+            "locations": {
+              "LakeInfo": ["schemas.Lake.info", "schemas.BigLake.lakeInfo"],
+            }
+           }
+       ]
+       }
+""";
+
+    System.out.printf("** %s: input\n%s\n%s: output\n%s\n%s: expected\n%s\n",
+        label, inputConfig,
+        label, outputConfig,
+        label, expectedConfig);
+    assert checkIdenticalJSON(expectedConfig, outputConfig);
+  }
+
   @Test
   public void readWriteAddingSchema() {
     String label = "readWriteAddingSchema";
@@ -306,7 +345,7 @@ public class ConversionConfigurationTest {
   }
 
    @Test
-  public void readWriteAddingSchemaStrnigVairable() {
+  public void readWriteAddingSchemaStringVariable() {
     String label = "readWriteAddingSchema";
 
     ConversionConfiguration config = ConversionConfiguration.fromJSON(inputConfig);
