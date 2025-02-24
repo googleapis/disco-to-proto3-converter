@@ -302,6 +302,19 @@ public class ConversionConfigurationTest {
     assert checkIdenticalJSON(expectedConfig, outputConfig);
   }
 
+  public void splitSchemasNonBackwardsCompatible() {
+    String label = "splitSchemasNonBackwardsCompatible";
+
+    ConversionConfiguration config = ConversionConfiguration.fromJSON(inputConfig);
+    // We update some but not all entries with the same protobuf message name to refer to an updated
+    // schema. This is invalid because we don't update all entries with the same protobuf message
+    // name.
+    config.addInlineField("schemas.Lake.info", "LakeInfo", "updated-schema");
+
+    assertThrows(IllegalStateException.class,
+        () -> config.toJSON());
+  }
+
   @Test
   public void readWriteAddingSchema() {
     String label = "readWriteAddingSchema";
