@@ -17,6 +17,7 @@ package com.google.cloud.discotoproto3converter;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;;
 import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.discotoproto3converter.proto3.ConversionConfiguration;
@@ -173,6 +174,8 @@ public class ConversionConfigurationTest {
     assert "LakeInfo".equals(config.getMessageNameForPath(new String("schemas.BigLake.lakeInfo")));
     assert "PondInfo".equals(config.getMessageNameForPath(new String("schemas.Pond.info")));
     assert "PondInfo".equals(config.getMessageNameForPath("schemas.BigPond.pondInfo"));
+
+    assertNull(config.getMessageNameForPath("schemas.Mountain.info"));
   }
 
   @Test

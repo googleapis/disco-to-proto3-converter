@@ -73,7 +73,6 @@ public class ConversionConfiguration {
     this.updateTime = updateTime;
   }
 
-  // TODO(vchudnov): test
   public String getMessageNameForPath(String schemaPath) {
     InlineFieldDefinition inlineSchema = this.inlineFields.get(schemaPath);
     if (inlineSchema == null) {
