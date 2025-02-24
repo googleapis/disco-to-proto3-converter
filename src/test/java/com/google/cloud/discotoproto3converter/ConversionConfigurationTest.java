@@ -263,6 +263,7 @@ public class ConversionConfigurationTest {
     assert checkIdenticalJSON(expectedConfig, outputConfig);
   }
 
+  @Test
   public void splitSchemasBackwardsCompatible() {
     String label = "splitSchemasBackwardsCompatible";
 
@@ -270,6 +271,9 @@ public class ConversionConfigurationTest {
     // we update all entries with  the same protobuf message name to refer to the same updated schema. This is valid.
     config.addInlineField("schemas.Lake.info", "LakeInfo", "updated-schema");
     config.addInlineField("schemas.BigLake.lakeInfo", "LakeInfo", "updated-schema");
+    config.addInlineField("schemas.Pond.info", "PondInfo", "an initial schema");
+    config.addInlineField("schemas.BigPond.pondInfo", "PondInfo", "an initial schema");
+
     String outputConfig = config.toJSON();
 
     String expectedConfig =
