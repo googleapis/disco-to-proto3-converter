@@ -359,16 +359,46 @@ public class ConversionConfigurationTest {
 
     assertThrows(IllegalStateException.class,
         () -> config.toJSON());
-
   }
 
-  // TODO: remember to accumulate errors and throw at the end with the list of errors with "\n".join(errorList)
-
-  /*
   @Test
-  public void readWriteWithoutUsage() {
+  public void setConfigMetadata() {
+    String label = "unallowedSetConfigMetadata";
+
     ConversionConfiguration config = ConversionConfiguration.fromJSON(inputConfig);
-assertEquals(inputConfig, config.toJSON());
+
+    // Same metadata as inputConfig
+    config.setConfigMetadata(
+        "some-identifier",
+        "gamma",
+        "20250204",
+        "right-now");
+
+    // different converter version and time are fine
+    config.setConfigMetadata(
+        "something else",
+        "gamma",
+        "20250204",
+        "later");
+
+    assertThrows(IllegalStateException.class,
+        () -> config.setConfigMetadata(
+            "some-identifier",
+            "delta",  // different API version causes exception
+            "20250204",
+            "right-now"));
+
+    assertThrows(IllegalStateException.class,
+        () -> config.setConfigMetadata(
+            "some-identifier",
+            "gamma",
+            "20250203",  // earlier revision causes error
+            "right-now"));
+
+    config.setConfigMetadata(
+        "some-identifier",
+        "gamma",
+        "20250206",  // later revision is OK
+        "right-now");
   }
-  */
 }

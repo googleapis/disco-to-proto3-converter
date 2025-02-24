@@ -48,9 +48,6 @@ public class ConversionConfiguration {
   static public ConversionConfiguration fromJSON(String jsonContents) {
     Gson gson = new Gson();
     ConversionConfiguration config =  gson.fromJson(jsonContents, ConversionConfiguration.class);
-    if (config == null) { // TODO(vchudnov): add tests for this
-      throw new IllegalStateException(String.format("could not parse JSON contents:<<\n%s\n...>>", jsonContents.substring(0, 20)));
-    }
     config.populateInlineFields();
     return config;
   }
@@ -61,7 +58,6 @@ public class ConversionConfiguration {
     return gson.toJson(this);
   }
 
-  // TODO(vchudnov): test
   public void setConfigMetadata(String converterVersion, String apiVersion, String discoveryRevision, String updateTime) {
     if (this.apiVersion.length() > 0 && !this.apiVersion.equals(apiVersion)) {
       throw new IllegalStateException(
