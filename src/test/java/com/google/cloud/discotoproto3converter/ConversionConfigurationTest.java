@@ -166,7 +166,7 @@ public class ConversionConfigurationTest {
 
   @Test
   public void getMessageNameForPath() {
-    String label = "readWriteWithoutAnyChanges";
+    String label = "getMessageNameForPath";
 
     ConversionConfiguration config = ConversionConfiguration.fromJSON(inputConfig);
 
@@ -213,8 +213,8 @@ public class ConversionConfigurationTest {
   }
 
   @Test
-  public void readWriteNotUsingASchema() {
-    String label = "readWriteUsingSchemaTwice";
+  public void readWriteNotUsingOneSchema() {
+    String label = "readWriteNotUsingOneSchema";
 
     ConversionConfiguration config = ConversionConfiguration.fromJSON(inputConfig);
     config.addInlineField("schemas.Pond.info", "PondInfo", "an initial schema");
@@ -272,9 +272,9 @@ public class ConversionConfigurationTest {
           {
             "schema": "updated-schema",
             "locations": {
-              "LakeInfo": ["schemas.Lake.info", "schemas.BigLake.lakeInfo"],
+              "LakeInfo": ["schemas.Lake.info", "schemas.BigLake.lakeInfo"]
             }
-           }
+          }
        ]
        }
 """;
@@ -331,7 +331,7 @@ public class ConversionConfigurationTest {
           {
             "schema": "new schema",
             "locations": {
-           "RiverInfo": ["schemas.River.info"]
+              "RiverInfo": ["schemas.River.info"]
             }
            }
        ]
@@ -369,12 +369,12 @@ public class ConversionConfigurationTest {
             "locations": {
               "LakeInfo": ["schemas.Lake.info", "schemas.BigLake.lakeInfo"],
               "PondInfo": ["schemas.Pond.info", "schemas.BigPond.pondInfo"]
-                  }
+              }
           },
           {
             "schema": "new schema",
             "locations": {
-           "RiverInfo": ["schemas.River.info"]
+              "RiverInfo": ["schemas.River.info"]
             }
            }
        ]
