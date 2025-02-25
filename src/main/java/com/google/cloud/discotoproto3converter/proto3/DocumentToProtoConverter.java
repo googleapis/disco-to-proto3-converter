@@ -576,8 +576,9 @@ public class DocumentToProtoConverter {
   private Field schemaToField(Schema sch, boolean optional, List<String> previousSchemaPath) {
     assert previousSchemaPath.size() > 0; // we should at least have the caller
 
-    // FIXME: SchemaName: use sch.jey() directly
-    String name = Name.anyCamel(sch.key()).toCapitalizedLowerUnderscore();
+    // FIXME: Test the output config.
+    String schemaName = sch.key();
+    String name = Name.anyCamel(schemaName).toCapitalizedLowerUnderscore();
     String description = sch.description();
     Message valueType = null;
     boolean repeated = false;
@@ -585,7 +586,7 @@ public class DocumentToProtoConverter {
 
     List<String> currentSchemaPath = new ArrayList(previousSchemaPath);
     boolean atTopLevel = currentSchemaPath.size() == 2; //  we only have the caller + "schemas"
-    currentSchemaPath.add(name);
+    currentSchemaPath.add(schemaName);
     String currentSchemaPathString = String.join(".", currentSchemaPath);
 
     // In order to record the proto type names corresponding to inline schemas, and to apply
