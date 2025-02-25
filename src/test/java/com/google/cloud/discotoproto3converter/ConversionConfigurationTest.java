@@ -228,40 +228,20 @@ public class ConversionConfigurationTest {
   }
 
   @Test
-  public void readWriteSplittingSchema() {
-    String label = "readWriteSplittingSchema";
+  public void readWriteRenamingProtos() {
+    String label = "readWriteRenamingProtos";
 
     ConversionConfiguration config = ConversionConfiguration.fromJSON(inputConfig);
-    config.addInlineField("schemas.Pond.info", "FirstPondInfo", "current schema");
-    config.addInlineField("schemas.BigLake.lakeInfo", "AugmentedLakeInfo", "current schema");
-    config.addInlineField("schemas.Lake.info", "LakeInfo", "current schema");
-    config.addInlineField("schemas.BigPond.pondInfo", "SecondPondInfo", "current schema");
-    String outputConfig = config.toJSON();
+    config.addInlineField("schemas.Pond.info", "PondInfo", "an initial schema");
+    config.addInlineField("schemas.BigLake.lakeInfo", "LakeInfo", "an initial schema");
+    config.addInlineField("schemas.Lake.info", "LakeInfo", "an initial schema");
+    // Changing the name of a proto field type from what was previously used (as exposed in the
+    // input config) is a breaking change and causes an error:
+    config.addInlineField("schemas.BigPond.pondInfo", "SecondPondInfo", "an initial schema");
 
-    String expectedConfig = """
-        {
-       "converterVersion": "some-identifier",
-       "apiVersion": "gamma",
-       "discoveryRevision": "20250204",
-       "inlineSchemas": [
-          {
-            "schema": "current schema",
-            "locations": {
-           "SecondPondInfo": ["schemas.BigPond.pondInfo"],
-              "FirstPondInfo": ["schemas.Pond.info"],
-              "AugmentedLakeInfo": ["schemas.BigLake.lakeInfo"],
-              "LakeInfo": ["schemas.Lake.info"]
-            }
-           }
-       ]
-       }
-    """;
-    System.out.printf("** %s: input\n%s\n%s: output\n%s\n%s: expected\n%s\n",
-        label, inputConfig,
-        label, outputConfig,
-        label, expectedConfig);
-    assert checkIdenticalJSON(expectedConfig, outputConfig);
-  }
+    assertThrows(IllegalStateException.class,
+        () -> config.toJSON());
+   }
 
   @Test
   public void splitSchemasBackwardsCompatible() {

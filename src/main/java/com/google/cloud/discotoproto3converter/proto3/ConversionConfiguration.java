@@ -97,7 +97,7 @@ public class ConversionConfiguration {
     }
 
     fieldInstance.update(fieldPath, protoTypeName, schema, readingFromFile);
-    errors.addAll(fieldInstance.errors);
+    this.errors.addAll(fieldInstance.errors);
     return fieldInstance;
   }
 
@@ -323,16 +323,19 @@ public class ConversionConfiguration {
     // erroring if schemaUsed was already set.
     public void update(String fieldPath, String protoTypeName, String schema, boolean readingFromFile) {
       if (this.location != null && !this.location.equals(fieldPath)) {
-        this.errors.add(String.format("trying to update location of inline schema instance %s -> %s",
+        this.errors.add(String.format("- inconsistency: trying to update location of inline schema instance %s -> %s",
                 this.location, fieldPath));
       }
       if (this.schemaUsed) {
-        this.errors.add(String.format("- this InlineFieldDefinition was already used: %s:%s:%s\n",
+        this.errors.add(String.format("- inconsistency: this InlineFieldDefinition was already used: %s:%s:%s\n",
                 protoTypeName, fieldPath, schema));
+      }
+      if (!this.protoMessageName.equals(protoTypeName)) {
+        this.errors.add(String.format("- invalid update: trying to rename type for field %s from '%s' to '%s'",
+            fieldPath, this.protoMessageName, protoTypeName));
       }
 
       this.location = fieldPath;
-      this.protoMessageName = protoTypeName;
       this.schema = schema;
       this.schemaUsed = !readingFromFile;
     }
