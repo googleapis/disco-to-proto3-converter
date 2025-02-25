@@ -166,8 +166,6 @@ public class ConversionConfigurationTest {
 
   @Test
   public void getMessageNameForPath() {
-    String label = "getMessageNameForPath";
-
     ConversionConfiguration config = ConversionConfiguration.fromJSON(inputConfig);
 
     assert "LakeInfo".equals(config.getMessageNameForPath("schemas.Lake.info"));
@@ -198,15 +196,12 @@ public class ConversionConfigurationTest {
 
   @Test
   public void readWriteUsingSchemaTwice() {
-    String label = "readWriteUsingSchemaTwice";
-
     ConversionConfiguration config = ConversionConfiguration.fromJSON(inputConfig);
     config.addInlineField("schemas.Pond.info", "PondInfo", "an initial schema");
     config.addInlineField("schemas.BigLake.lakeInfo", "LakeInfo", "an initial schema");
     config.addInlineField("schemas.Lake.info", "LakeInfo", "an initial schema");
     config.addInlineField("schemas.Lake.info", "LakeInfo", "an initial schema"); // should cause error
     config.addInlineField("schemas.BigPond.pondInfo", "PondInfo", "an initial schema");
-    System.out.printf("** %s: input\n%s\n", label, inputConfig);
 
     assertThrows(IllegalStateException.class,
         () -> config.toJSON());
@@ -214,14 +209,11 @@ public class ConversionConfigurationTest {
 
   @Test
   public void readWriteNotUsingOneSchema() {
-    String label = "readWriteNotUsingOneSchema";
-
     ConversionConfiguration config = ConversionConfiguration.fromJSON(inputConfig);
     config.addInlineField("schemas.Pond.info", "PondInfo", "an initial schema");
     config.addInlineField("schemas.Lake.info", "LakeInfo", "an initial schema");
     config.addInlineField("schemas.BigPond.pondInfo", "PondInfo", "an initial schema");
     // not using schemas.BigLake.lakeInfo should cause an error
-    System.out.printf("** %s: input\n%s\n", label, inputConfig);
 
     assertThrows(IllegalStateException.class,
         () -> config.toJSON());
@@ -229,8 +221,6 @@ public class ConversionConfigurationTest {
 
   @Test
   public void readWriteRenamingProtos() {
-    String label = "readWriteRenamingProtos";
-
     ConversionConfiguration config = ConversionConfiguration.fromJSON(inputConfig);
     config.addInlineField("schemas.Pond.info", "PondInfo", "an initial schema");
     config.addInlineField("schemas.BigLake.lakeInfo", "LakeInfo", "an initial schema");
@@ -288,7 +278,6 @@ public class ConversionConfigurationTest {
 
   @Test
   public void splitSchemasNonBackwardsCompatible() {
-    String label = "splitSchemasNonBackwardsCompatible";
 
     ConversionConfiguration config = ConversionConfiguration.fromJSON(inputConfig);
     // We update some but not all entries with the same protobuf message name LakeInfo to refer to
@@ -315,7 +304,7 @@ public class ConversionConfigurationTest {
     config.addInlineField("schemas.River.info", "RiverInfo", "new schema");
     String outputConfig = config.toJSON();
 
-    String expectedConfig =         """
+    String expectedConfig = """
         {
        "converterVersion": "some-identifier",
        "apiVersion": "gamma",
@@ -391,14 +380,11 @@ public class ConversionConfigurationTest {
 
   @Test
   public void readWriteWithoutUsingFieldSchema() {
-    String label = "readWriteWithoutUsingFieldSchema";
     ConversionConfiguration config = ConversionConfiguration.fromJSON(inputConfig);
     config.addInlineField("schemas.Pond.info", "PondInfo", "current schema");
     config.addInlineField("schemas.BigLake.lakeInfo", "LakeInfo", "current schema");
     config.addInlineField("schemas.Lake.info", "LakeInfo", "current schema");
     // We omit BigPond
-
-    System.out.printf("** %s: input\n%s\n", label, inputConfig);
 
     assertThrows(IllegalStateException.class,
         () -> config.toJSON());
@@ -406,8 +392,6 @@ public class ConversionConfigurationTest {
 
   @Test
   public void setConfigMetadata() {
-    String label = "unallowedSetConfigMetadata";
-
     ConversionConfiguration config = ConversionConfiguration.fromJSON(inputConfig);
 
     // Same metadata as inputConfig

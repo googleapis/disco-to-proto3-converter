@@ -260,7 +260,6 @@ public class ConversionConfiguration {
     return this;
   }
 
-  // TODO: Test identical schemas with different names
   /** Consistency check that all the `InlineFieldDefinition` instances from which we populated `inlineSchemas` have consistent message names. */
   private void verifyInlineSchemas() {
     Map<String, Set<String>> protoNameToSchema = new HashMap<String,Set<String>>();
