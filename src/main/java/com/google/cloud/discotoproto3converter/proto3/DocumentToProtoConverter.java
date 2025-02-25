@@ -576,6 +576,7 @@ public class DocumentToProtoConverter {
   private Field schemaToField(Schema sch, boolean optional, List<String> previousSchemaPath) {
     assert previousSchemaPath.size() > 0; // we should at least have the caller
 
+    // FIXME: SchemaName: use sch.jey() directly
     String name = Name.anyCamel(sch.key()).toCapitalizedLowerUnderscore();
     String description = sch.description();
     Message valueType = null;
@@ -850,7 +851,9 @@ public class DocumentToProtoConverter {
     if (isEnum && Character.isUpperCase(messageName.charAt(0))) {
       return Name.anyCamel(messageName).toUpperCamel() + "Enum";
     }
-    return getMessageName(sch, schemaPath);
+    // We always generate enum types as nested within other protobuf messages, so we pass a null
+    // schemaPath so that this message does not get recorded as an inline-defined top-level message.
+    return getMessageName(sch, null);
   }
 
   private void readResources(Document document) {

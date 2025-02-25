@@ -17,8 +17,10 @@ package com.google.cloud.discotoproto3converter.proto3;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -232,7 +234,9 @@ public class ConversionConfiguration {
   // TODO: Test identical schemas with different names
   /** Consistency check that all the `InlineFieldDefinition` instances from which we populated `inlineSchemas` have consistent message names. */
   private void verifyInlineSchemas() {
+    Map<String, Set<String>> protoNameToSchema = new HashMap<String,Set<String>>();
     for (InlineSchema oneInlineSchema : this.inlineSchemas) {
+      String schemaDefinition = oneInlineSchema.schema;
       for (Map.Entry<String, List<String>> entry : oneInlineSchema.locations.entrySet()) {
         String messageName = entry.getKey();
         List<String> messageLocations = entry.getValue();
@@ -247,7 +251,26 @@ public class ConversionConfiguration {
                     messageName, fieldDefinition.protoMessageName,
                     oneLocation));
           }
+          if (!schemaDefinition.equals(fieldDefinition.schema)) {
+            errors.add(String.format("- inconsistency: schema for protobuf name '%s' for field %s is '%s' rather than '%s'",
+                messageName, oneLocation, fieldDefinition.schema, schemaDefinition));
+          }
+
+          Set<String> schemasForThisProtoName = protoNameToSchema.get(messageName);
+          if (schemasForThisProtoName == null) {
+            schemasForThisProtoName = new HashSet<String>();
+            protoNameToSchema.put(messageName, schemasForThisProtoName);
+          }
+          schemasForThisProtoName.add(fieldDefinition.schema);
         }
+      }
+    }  // for this.inlineSchemas
+
+    for (Map.Entry<String, Set<String>> protoMessageSchema : protoNameToSchema.entrySet()) {
+      Set<String> schemas = protoMessageSchema.getValue();
+      if (schemas.size() != 1) {
+        errors.add(String.format("- invalid configuration: proto message '%s' configured for multiple schemas: %s",
+                protoMessageSchema.getKey(), String.join(", ", schemas)));
       }
     }
   }
