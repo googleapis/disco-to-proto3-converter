@@ -16,6 +16,7 @@
 package com.google.cloud.discotoproto3converter.proto3;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -57,6 +58,7 @@ public class ConversionConfiguration {
   public String toJSON() {
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
     this.populateInlineSchemas();
+    Collections.sort(this.inlineSchemas);
     return gson.toJson(this);
   }
 
@@ -130,7 +132,7 @@ public class ConversionConfiguration {
    * defined in multiple places and possibly assigned different proto3 message type names for each
    * of those places. These data are reflected in the external config.
    */
-  static class InlineSchema {
+  static class InlineSchema implements Comparable<InlineSchema>{
     // A human-readable representation of the schema. This is not inspected by the code in anyway
     // except to check for equality.
     private String schema;
@@ -139,8 +141,11 @@ public class ConversionConfiguration {
     // this type.
     private Map<String, List<String>> locations;
 
+    transient String sortKey;
+
     private InlineSchema() {
       this.locations = new HashMap<String, List<String>>();
+      this.sortKey = null;
     }
 
     /**
@@ -172,6 +177,31 @@ public class ConversionConfiguration {
       }
       currentLocations.add(newLocation);
       return errors;
+    }
+
+    public String getSortKey() {
+      if (this.sortKey == null) {
+        int numLocations = 0;
+        String firstMessageName = null;
+        for (Map.Entry<String,List<String>> oneEntry : this.locations.entrySet()) {
+          String messageName = oneEntry.getKey();
+          numLocations += oneEntry.getValue().size();
+          if (firstMessageName == null ||
+              messageName.compareTo(firstMessageName) < 0) {
+            firstMessageName = messageName;
+          }
+        }
+
+        // Sort schemas with most instances first. Break ties by sorting schemas with the lowest
+        // proto message name first.
+        this.sortKey = String.format("%03d.%s", 999-numLocations, firstMessageName);
+      }
+      return this.sortKey;
+    }
+
+    @Override
+    public int compareTo(InlineSchema other) {
+      return this.getSortKey().compareTo(other.getSortKey());
     }
   }
 
@@ -227,7 +257,6 @@ public class ConversionConfiguration {
 
     this.throwIfError();
 
-    // TODO: Consider sorting the schemas by number of instances
     return this;
   }
 
