@@ -796,10 +796,7 @@ public class DocumentToProtoConverter {
         putAllMessages(valueType.getName(), valueType);
       }
       if (!valueType.equals(existingMessage)) {
-        throw new IllegalArgumentException(String.format(
-            "Message collision detected. Existing message = %s; new message = %s @ %s",
-            existingMessage,
-            valueType, currentSchemaPathString));
+        throw new MessageCollisionException(existingMessage.toString(), valueType.toString(), currentSchemaPathString);
       }
     }
     return field;
@@ -1152,6 +1149,14 @@ public class DocumentToProtoConverter {
           String.format(
               "configured message name conflicts with already defined message: %s : %s",
               configKey, candidateMessageName));
+    }
+  }
+
+  public class MessageCollisionException extends IllegalArgumentException {
+    public MessageCollisionException(String existingMessage, String newMessage, String fieldPath) {
+      super(String.format(
+            "Message collision detected. Existing message = %s; new message = %s @ %s",
+          existingMessage, newMessage, fieldPath));
     }
   }
 }

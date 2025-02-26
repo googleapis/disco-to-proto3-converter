@@ -20,6 +20,8 @@ import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.discotoproto3converter.proto3.ConversionConfiguration;
 import com.google.cloud.discotoproto3converter.proto3.DocumentToProtoConverter;
+import com.google.cloud.discotoproto3converter.proto3.DocumentToProtoConverter.MessageCollisionException;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -557,13 +559,13 @@ public class DiscoToProto3ConverterAppTest {
   }
 
   @Test
-  public void protoParserBigNoConfig() throws IOException {
+  public void protoParserNamingConflict() throws IOException {
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path prefix = Paths.get("google", "cloud", "compute", "v1");
     Path discoPath = Paths.get("src", "test", "resources", prefix.toString(), "compute.v1.json");
 
     Path convPath = Paths.get(outputDir.toString(), prefix.toString(), "compute_big_converted.proto");
-    assertThrows(IllegalArgumentException.class,
+    assertThrows(MessageCollisionException.class,
         () ->
         app.convert(discoPath.toString(), null, convPath.toString(), "", "", null, "false", "false"));
   }
