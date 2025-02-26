@@ -50,10 +50,6 @@ public class ConversionConfigurationTest {
        }
 """;
 
- boolean checkIdenticalJSON(String expected, String actual) {
-  return ConversionConfiguration.fromJSON(expected).publicFieldsEqual(ConversionConfiguration.fromJSON(actual), true);
-}
-
   @Test
   public void publicFieldsEqual() {
     System.out.printf("** publicFieldsEqual\n");
@@ -81,7 +77,7 @@ public class ConversionConfigurationTest {
        ]
        }
     """;
-        assert checkIdenticalJSON(referenceConfig, referenceConfig);
+        assert ConversionConfiguration.checkIdenticalJSON(referenceConfig, referenceConfig);
 
     // Check that changing the order of the lists or maps doesn't affect equality.
     String variantConfig = """
@@ -107,7 +103,7 @@ public class ConversionConfigurationTest {
        ]
        }
     """;
-        assert checkIdenticalJSON(referenceConfig, variantConfig);
+        assert ConversionConfiguration.checkIdenticalJSON(referenceConfig, variantConfig);
 
     // Changing the schema makes the configs not equal
     variantConfig = """
@@ -133,7 +129,7 @@ public class ConversionConfigurationTest {
        ]
        }
     """;
-        assertFalse(checkIdenticalJSON(referenceConfig, variantConfig));
+        assertFalse(ConversionConfiguration.checkIdenticalJSON(referenceConfig, variantConfig));
 
     // Changing the locations makes the configs not equal
     variantConfig = """
@@ -160,7 +156,7 @@ public class ConversionConfigurationTest {
        }
     """;
         System.out.printf("    locations check\n");
-        assertFalse(checkIdenticalJSON(referenceConfig, variantConfig));
+        assertFalse(ConversionConfiguration.checkIdenticalJSON(referenceConfig, variantConfig));
 
   }
 
@@ -191,7 +187,7 @@ public class ConversionConfigurationTest {
     System.out.printf("** %s: input\n%s\n%s: output\n%s\n",
         label, inputConfig,
         label, outputConfig);
-    assert checkIdenticalJSON(inputConfig, outputConfig);
+    assert ConversionConfiguration.checkIdenticalJSON(inputConfig, outputConfig);
   }
 
   @Test
@@ -273,7 +269,7 @@ public class ConversionConfigurationTest {
         label, inputConfig,
         label, outputConfig,
         label, expectedConfig);
-    assert checkIdenticalJSON(expectedConfig, outputConfig);
+    assert ConversionConfiguration.checkIdenticalJSON(expectedConfig, outputConfig);
   }
 
   @Test
@@ -331,7 +327,7 @@ public class ConversionConfigurationTest {
         label, inputConfig,
         label, outputConfig,
         label, expectedConfig);
-    assert checkIdenticalJSON(expectedConfig, outputConfig);
+    assert ConversionConfiguration.checkIdenticalJSON(expectedConfig, outputConfig);
   }
 
    @Test
@@ -374,7 +370,7 @@ public class ConversionConfigurationTest {
         label, inputConfig,
         label, outputConfig,
         label, expectedConfig);
-    assert checkIdenticalJSON(expectedConfig, outputConfig);
+    assert ConversionConfiguration.checkIdenticalJSON(expectedConfig, outputConfig);
   }
 
 

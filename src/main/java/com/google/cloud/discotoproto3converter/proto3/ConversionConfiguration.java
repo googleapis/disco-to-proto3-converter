@@ -15,6 +15,7 @@
  */
 package com.google.cloud.discotoproto3converter.proto3;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -107,8 +108,9 @@ public class ConversionConfiguration {
     return addInlineField(fieldPath, protoTypeName, schema, false);
   }
 
-  public boolean publicFieldsEqual(ConversionConfiguration other, boolean matchDiscoveryRevision) {
-    if (!(this.converterVersion.equals(other.converterVersion) &&
+  public boolean publicFieldsEqual(ConversionConfiguration other, boolean matchDiscoveryRevision, boolean matchConverterVersion, boolean matchSchema) {
+    if (!(
+        (!matchConverterVersion) || (this.converterVersion.equals(other.converterVersion)) &&
         this.apiVersion.equals(other.apiVersion) &&
         (!matchDiscoveryRevision || (this.discoveryRevision.equals(other.discoveryRevision))) &&
         this.inlineSchemas.size() == other.inlineSchemas.size() &&
@@ -120,11 +122,21 @@ public class ConversionConfiguration {
       String fieldPath = thisEntry.getKey();
       InlineFieldDefinition thisInlineField = thisEntry.getValue();
       InlineFieldDefinition otherInlineField = other.inlineFields.get(fieldPath);
-      if (otherInlineField == null || !thisInlineField.equals(otherInlineField)){
+      if (otherInlineField == null || !thisInlineField.equals(otherInlineField, matchSchema)){
         return false;
       }
     }
     return true;
+  }
+
+  static public boolean checkIdenticalJSON(String expected, String actual) {
+    return ConversionConfiguration.fromJSON(expected).publicFieldsEqual(
+        ConversionConfiguration.fromJSON(actual), true, true, true);
+  }
+
+  static public boolean checkEquivalentJSON(String expected, String actual) {
+    return ConversionConfiguration.fromJSON(expected).publicFieldsEqual(
+        ConversionConfiguration.fromJSON(actual), false, false, false);
   }
 
   /**
@@ -370,6 +382,10 @@ public class ConversionConfiguration {
 
     @Override
     public boolean equals(Object obj) {
+      return this.equals(obj, true);
+    }
+
+    public boolean equals(Object obj, boolean matchSchema) {
       if (obj == this) {
         return true;
       }
@@ -379,7 +395,8 @@ public class ConversionConfiguration {
       InlineFieldDefinition other = (InlineFieldDefinition) obj;
       if (other == null ||
           !this.protoMessageName.equals(other.protoMessageName) ||
-          (this.schema != null && !this.schema.equals(other.schema)) ||
+          (matchSchema &&
+              (this.schema != null && !this.schema.equals(other.schema))) ||
           ((this.location == null) != (other.location == null)) ||
           ((this.location != null && !this.location.equals(other.location))) ){
         return false;

@@ -18,6 +18,7 @@ package com.google.cloud.discotoproto3converter;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
+import com.google.cloud.discotoproto3converter.proto3.ConversionConfiguration;
 import com.google.cloud.discotoproto3converter.proto3.DocumentToProtoConverter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -64,6 +65,62 @@ public class DiscoToProto3ConverterAppTest {
   }
 
   @Test
+  public void convertWithConfig() throws IOException {
+    // In this test, the input config explicitly renames the
+    // `schemas.Operation.warnings.warnings.data.data` field to be a proto message `OperationData`,
+    // even though the same schema is used elsewhere. The output proto should reflect this (compare
+    // with the output proto in the `convert()` test function above), as should the output config.
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.json");
+    Path inputConfigPath = Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.config.in.json");
+
+    Path generatedProtoPath = Paths.get(outputDir.toString(), prefix.toString(), "compute.v1small.config.proto");
+    Path generatedOutputConfigPath = Paths.get(outputDir.toString(), prefix.toString(), "compute.v1small.config.out.json");
+
+    Path baselineProtoPath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.config.baseline.proto");
+    Path baselineOutputConfigPath =
+        Paths.get("src", "test", "resources", prefix.toString(), "compute.v1small.config.out.baseline.json");
+
+    System.out.printf(
+        "***@Test: convertWithConfig\n" +
+        "   Discovery doc:           %s\n" +
+        "   Input config:            %s\n" +
+        "   Generated proto:         %s\n" +
+        "   Baseline proto:          %s\n" +
+        "   Generated output config: %s\n" +
+        "   Baseline output config:  %s\n",
+        discoveryDocPath.toAbsolutePath(),
+        inputConfigPath.toAbsolutePath(),
+        generatedProtoPath.toAbsolutePath(),
+        baselineProtoPath.toAbsolutePath(),
+        generatedOutputConfigPath.toAbsolutePath(),
+        baselineOutputConfigPath.toAbsolutePath());
+
+    app.convert(
+        discoveryDocPath.toString(),
+        null,
+        generatedProtoPath.toString(),
+        inputConfigPath.toString(),
+        generatedOutputConfigPath.toString(),
+        "",
+        "",
+        "https://cloud.google.com",
+        "false",
+        "true");
+
+    String actualBody = readFile(generatedProtoPath);
+    String baselineBody = readFile(baselineProtoPath);
+    assertEquals(baselineBody.trim(), actualBody.trim());
+
+    String actualConfig = readFile(generatedOutputConfigPath);
+    String baselineConfig = readFile(baselineOutputConfigPath);
+    assert ConversionConfiguration.checkEquivalentJSON(baselineConfig, actualConfig);
+  }
+
+  @Test
   public void convertVersioned() throws IOException {
     // Tests that when all the methods for a single service have identical, non-empty "apiVersion"
     // fields in the Discovery file, the proto service gets annotated with the corresponding
@@ -93,7 +150,7 @@ public class DiscoToProto3ConverterAppTest {
             "src", "test", "resources", prefix.toString(), "compute-versioned.proto.baseline");
     String baselineBody = readFile(baselineFilePath);
     System.out.printf(
-        "*** @Test:convertVersioned():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
+        "*** @Test: convertVersioned():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
         discoveryDocPath.toAbsolutePath(),
         generatedFilePath.toAbsolutePath(),
         baselineFilePath.toAbsolutePath());
@@ -203,7 +260,7 @@ public class DiscoToProto3ConverterAppTest {
             "compute-versioned-two-services.proto.baseline");
     String baselineBody = readFile(baselineFilePath);
     System.out.printf(
-        "*** @Test:convertVersionedTwoServices():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
+        "*** @Test: convertVersionedTwoServices():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
         discoveryDocPath.toAbsolutePath(),
         generatedFilePath.toAbsolutePath(),
         baselineFilePath.toAbsolutePath());
@@ -380,7 +437,7 @@ public class DiscoToProto3ConverterAppTest {
         Paths.get(
             "src", "test", "resources", prefix.toString(), "compute.error-any.proto.baseline");
     System.out.printf(
-        "*** @Test:convertAnyFieldInError():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
+        "*** @Test: convertAnyFieldInError():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
         discoveryDocPath.toAbsolutePath(),
         generatedFilePath.toAbsolutePath(),
         baselineFilePath.toAbsolutePath());
@@ -523,7 +580,7 @@ public class DiscoToProto3ConverterAppTest {
     Path secondProtoPath = Paths.get(outputDir.toString(), prefix.toString(), "compute_big_second.proto");
 
     System.out.printf(
-        "*** @Test:idempotentConversionWithOutputConfig():\n    Discovery path: %s\n    Input config: %s\n" +
+        "*** @Test: idempotentConversionWithOutputConfig():\n    Discovery path: %s\n    Input config: %s\n" +
         "    First output config:  %s\n" +
         "    First output proto:   %s\n" +
         "    Second output config: %s\n" +
@@ -588,7 +645,7 @@ public class DiscoToProto3ConverterAppTest {
         Paths.get(
             "src", "test", "resources", prefix.toString(), "compute.any-format.proto.baseline");
     System.out.printf(
-        "*** @Test:convertAnyFieldWithFormat():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
+        "*** @Test: convertAnyFieldWithFormat():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
         discoveryDocPath.toAbsolutePath(),
         generatedFilePath.toAbsolutePath(),
         baselineFilePath.toAbsolutePath());
@@ -636,7 +693,7 @@ public class DiscoToProto3ConverterAppTest {
             prefix.toString(),
             "compute.request-message-name-conflict.proto.baseline");
     System.out.printf(
-        "*** @Test:convertRequestMessageNameConflicts():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
+        "*** @Test: convertRequestMessageNameConflicts():\n    Discovery path: %s\n    Generated file: %s\n    Baseline file: %s\n",
         discoveryDocPath.toAbsolutePath(),
         generatedFilePath.toAbsolutePath(),
         baselineFilePath.toAbsolutePath());
@@ -680,7 +737,7 @@ public class DiscoToProto3ConverterAppTest {
             prefix.toString(),
             "compute.request-message-name-conflict-unrecoverable.proto");
     System.out.printf(
-        "*** @Test:convertRequestMessageNameUnrecoverableConflicts():\n    Discovery path: %s\n    Generated file: %s\n",
+        "*** @Test: convertRequestMessageNameUnrecoverableConflicts():\n    Discovery path: %s\n    Generated file: %s\n",
         discoveryDocPath.toAbsolutePath(), generatedFilePath.toAbsolutePath());
 
     assertThrows(

@@ -1,0 +1,13 @@
+{
+  "converterVersion": "",
+  "apiVersion": "",
+  "discoveryRevision": "",
+  "inlineSchemas" : [{
+      "schema": "foo",
+      "locations": {
+        "OperationData": [
+          "schemas.Operation.warnings.warnings.data.data"
+        ]
+      }
+    }]
+}
