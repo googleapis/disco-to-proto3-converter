@@ -31,11 +31,10 @@ def com_google_disco_to_proto3_converter_repositories():
     _maybe(
         jvm_maven_import_external,
         name = "google_java_format_all_deps",
-        artifact = "com.google.googlejavaformat:google-java-format:jar:all-deps:1.6",
+        artifact = "com.google.googlejavaformat:google-java-format:jar:all-deps:1.25.2",
         server_urls = ["https://repo.maven.apache.org/maven2/", "http://repo1.maven.org/maven2/"],
         licenses = ["notice", "reciprocal"],
     )
-
 
 # If a dependency with the same name is already imported ignore this one
 # as a duplicate, otherwise import this one. It is a typical construct used
