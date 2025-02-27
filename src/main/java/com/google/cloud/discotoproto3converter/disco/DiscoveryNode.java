@@ -48,7 +48,9 @@ public class DiscoveryNode {
     this.jsonNode = jsonNode;
   }
 
-  /** @return a valid string representation of this node. */
+  /**
+   * @return a valid string representation of this node.
+   */
   public String asText() {
     Preconditions.checkArgument(jsonNode.isTextual());
     return jsonNode.asText();
@@ -160,12 +162,16 @@ public class DiscoveryNode {
     return jsonNode.has(fieldName);
   }
 
-  /** @return true if this node has no children. */
+  /**
+   * @return true if this node has no children.
+   */
   public boolean isEmpty() {
     return jsonNode.size() == 0;
   }
 
-  /** @return the number of child nodes this node contains. */
+  /**
+   * @return the number of child nodes this node contains.
+   */
   public int size() {
     return jsonNode.size();
   }

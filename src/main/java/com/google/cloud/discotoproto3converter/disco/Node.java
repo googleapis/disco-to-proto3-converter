@@ -23,11 +23,15 @@ import javax.annotation.Nullable;
  * <p>Represents a node in a tree of nodes.
  */
 public interface Node {
-  /** @return the ID of this node. */
+  /**
+   * @return the ID of this node.
+   */
   @Nullable
   String id();
 
-  /** @return the immediate parent of this node. */
+  /**
+   * @return the immediate parent of this node.
+   */
   @Nullable
   Node parent();
 }

@@ -130,7 +130,7 @@ public abstract class ConverterApp {
   }
 
   /** Convenience method when we automatically set the time to right now. */
-    public void convert(
+  public void convert(
       String discoveryDocPath,
       String previousProtoPath,
       String outputFilePath,
@@ -141,23 +141,22 @@ public abstract class ConverterApp {
       String relativeLinkPrefix,
       String enumsAsStrings,
       String outputComments)
-        throws IOException {
-  convert(
-      discoveryDocPath,
-      previousProtoPath,
-      outputFilePath,
-      inputConfigPath,
-      outputConfigPath,
-      serviceIgnorelist,
-      messageIgnorelist,
-      relativeLinkPrefix,
-      enumsAsStrings,
-      outputComments,
-      OffsetDateTime
-      .now()
-      .truncatedTo(ChronoUnit.SECONDS)
-      .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-    }
+      throws IOException {
+    convert(
+        discoveryDocPath,
+        previousProtoPath,
+        outputFilePath,
+        inputConfigPath,
+        outputConfigPath,
+        serviceIgnorelist,
+        messageIgnorelist,
+        relativeLinkPrefix,
+        enumsAsStrings,
+        outputComments,
+        OffsetDateTime.now()
+            .truncatedTo(ChronoUnit.SECONDS)
+            .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+  }
 
   /** Convenience method when we don't deal with input or output configs. */
   public void convert(
@@ -170,7 +169,8 @@ public abstract class ConverterApp {
       String enumsAsStrings,
       String outputComments)
       throws IOException {
-    convert(discoveryDocPath,
+    convert(
+        discoveryDocPath,
         previousProtoPath,
         outputFilePath,
         "",

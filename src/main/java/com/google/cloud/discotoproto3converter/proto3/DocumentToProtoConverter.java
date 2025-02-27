@@ -21,8 +21,8 @@ import com.google.cloud.discotoproto3converter.disco.Method;
 import com.google.cloud.discotoproto3converter.disco.Name;
 import com.google.cloud.discotoproto3converter.disco.Schema;
 import com.google.cloud.discotoproto3converter.disco.Schema.Format;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -77,12 +77,13 @@ public class DocumentToProtoConverter {
     this.enumsAsStrings = enumsAsStrings;
     this.usesStructProto = false;
 
-    if (inputConfig==null) {
-       inputConfig = "{}";
-     }
+    if (inputConfig == null) {
+      inputConfig = "{}";
+    }
 
     this.config = ConversionConfiguration.fromJSON(inputConfig);
-    this.config.setConfigMetadata(getConverterVersion(), document.version(), document.revision(), timeStamp);
+    this.config.setConfigMetadata(
+        getConverterVersion(), document.version(), document.revision(), timeStamp);
 
     readSchema(document);
     readResources(document);
@@ -95,7 +96,7 @@ public class DocumentToProtoConverter {
     this.outputConfigContents = this.config.toJSON();
   }
 
- static public String getConverterVersion() {
+  public static String getConverterVersion() {
     Properties gitProperties = getGitProperties();
     String converterVersion = gitProperties.getProperty("git.commit.id.abbrev", "not-found");
     if (gitProperties.getProperty("git.dirty").equals("true")) {
@@ -104,15 +105,16 @@ public class DocumentToProtoConverter {
     return converterVersion;
   }
 
- static public Properties getGitProperties() {
+  public static Properties getGitProperties() {
     Properties properties = new Properties();
     try {
-      InputStream is = DocumentToProtoConverter.class.getClassLoader().getResourceAsStream("git.properties");
+      InputStream is =
+          DocumentToProtoConverter.class.getClassLoader().getResourceAsStream("git.properties");
       properties.load(is);
     } catch (IOException io) {
       System.out.printf("*** could not get git properties\n");
     }
-  return properties;
+    return properties;
   }
 
   public String getOutputConfig() {
@@ -316,9 +318,7 @@ public class DocumentToProtoConverter {
       SortedSet<Field> enumFields = new TreeSet<>();
       for (Field field : message.getFields()) {
         // Enums declared in Operation must remain intact
-        if (field
-            .getOptions()
-            .stream()
+        if (field.getOptions().stream()
             .anyMatch(a -> "google.cloud.operation_field".equals(a.getName()))) {
           enumFields.clear();
           break;
@@ -427,9 +427,7 @@ public class DocumentToProtoConverter {
         }
 
         Optional<Option> optHttp =
-            method
-                .getOptions()
-                .stream()
+            method.getOptions().stream()
                 .filter(a -> "google.api.http".equals(a.getName()))
                 .findFirst();
 
@@ -492,9 +490,7 @@ public class DocumentToProtoConverter {
         }
 
         Optional<Option> optHttp =
-            method
-                .getOptions()
-                .stream()
+            method.getOptions().stream()
                 .filter(a -> "google.api.http".equals(a.getName()))
                 .findFirst();
 
@@ -594,7 +590,8 @@ public class DocumentToProtoConverter {
     // the name overrides to inline schemas, so we don't need to stringify the path otherwise.
     String inlineSchemaPathString = null;
     if (!atTopLevel) {
-      inlineSchemaPathString = String.join(".", currentSchemaPath.subList(1, currentSchemaPath.size()));
+      inlineSchemaPathString =
+          String.join(".", currentSchemaPath.subList(1, currentSchemaPath.size()));
     }
 
     if (trace) {
@@ -609,7 +606,7 @@ public class DocumentToProtoConverter {
             this.usesStructProto = true;
             break;
           case EMPTY:
-            // intentional fall-through
+          // intentional fall-through
           case ANY:
             valueType = Message.PRIMITIVES.get("google.protobuf.Any");
             break;
@@ -643,7 +640,7 @@ public class DocumentToProtoConverter {
       case INTEGER:
         switch (sch.format()) {
           case EMPTY:
-            // intentional fall-through: if there's no format, we default to `int32`.
+          // intentional fall-through: if there's no format, we default to `int32`.
           case INT32:
             valueType = Message.PRIMITIVES.get("int32");
             break;
@@ -672,7 +669,7 @@ public class DocumentToProtoConverter {
       case NUMBER:
         switch (sch.format()) {
           case EMPTY:
-            // intentional fall-through: if there's no format, we default to `float`.
+          // intentional fall-through: if there's no format, we default to `float`.
           case FLOAT:
             valueType = Message.PRIMITIVES.get("float");
             break;
@@ -700,10 +697,14 @@ public class DocumentToProtoConverter {
           case EMPTY:
             if (sch.additionalProperties() != null) {
               repeated = true;
-              keyType = Message.PRIMITIVES.get("string");  // schema corresponds to map<String, ...>
+              keyType = Message.PRIMITIVES.get("string"); // schema corresponds to map<String, ...>
             } else {
               valueType =
-                  new Message(getMessageName(sch, inlineSchemaPathString), false, false, sanitizeDescr(description));
+                  new Message(
+                      getMessageName(sch, inlineSchemaPathString),
+                      false,
+                      false,
+                      sanitizeDescr(description));
             }
             break;
           default:
@@ -717,7 +718,10 @@ public class DocumentToProtoConverter {
         if (sch.isEnum() && !"".equals(sch.getIdentifier())) {
           valueType =
               constructEnumMessage(
-                  getMessageName(sch, true, inlineSchemaPathString), description, sch.enumValues(), sch.enumDescriptions());
+                  getMessageName(sch, true, inlineSchemaPathString),
+                  description,
+                  sch.enumValues(),
+                  sch.enumDescriptions());
         } else {
           switch (sch.format()) {
             case INT64:
@@ -736,10 +740,10 @@ public class DocumentToProtoConverter {
               valueType = Message.PRIMITIVES.get("double");
               break;
             case BYTE:
-              // intentional fall-through for backwards compatibility. Ideally, we'd make this refer
-              // to the protobuf primitive type `byte`.
-              //
-              // TODO: use `byte` for new messages.
+            // intentional fall-through for backwards compatibility. Ideally, we'd make this refer
+            // to the protobuf primitive type `byte`.
+            //
+            // TODO: use `byte` for new messages.
             case EMPTY:
               // If there's no format, we default to `string`.
               valueType = Message.PRIMITIVES.get("string");
@@ -796,7 +800,8 @@ public class DocumentToProtoConverter {
         putAllMessages(valueType.getName(), valueType);
       }
       if (!valueType.equals(existingMessage)) {
-        throw new MessageCollisionException(existingMessage.toString(), valueType.toString(), currentSchemaPathString);
+        throw new MessageCollisionException(
+            existingMessage.toString(), valueType.toString(), currentSchemaPathString);
       }
     }
     return field;
@@ -827,8 +832,8 @@ public class DocumentToProtoConverter {
     return enumMessage;
   }
 
-
-  // NOTE that if schema path is null, nothing is looked up (implicitly) and nothing is recorded (explicitly)
+  // NOTE that if schema path is null, nothing is looked up (implicitly) and nothing is recorded
+  // (explicitly)
   private String getMessageName(Schema sch, String schemaPath) {
     String messageName = this.config.getMessageNameForPath(schemaPath);
     if (messageName == null) {
@@ -838,7 +843,8 @@ public class DocumentToProtoConverter {
       messageName = Name.anyCamel(messageName).toUpperCamel();
     }
     if (schemaPath != null) {
-      this.config.addInlineField(schemaPath, messageName, Integer.toHexString(sch.contentHashCode()));
+      this.config.addInlineField(
+          schemaPath, messageName, Integer.toHexString(sch.contentHashCode()));
     }
     return messageName;
   }
@@ -1053,14 +1059,15 @@ public class DocumentToProtoConverter {
     return Name.anyCamel(nameParts);
   }
 
-  private String setRpcMessageName(Method method, String grpcServiceName, String methodName, String suffix) {
+  private String setRpcMessageName(
+      Method method, String grpcServiceName, String methodName, String suffix) {
     String messageKey = getRpcMessageConfigKey(method, "_" + suffix);
 
     // The proto RPC request message is a new message that wraps the Discovery file's request
     // schema for this RPC.
     String messageName = this.config.getMessageNameForPath(messageKey);
     boolean messageNameConfigured = messageName != null;
-    if (!messageNameConfigured){
+    if (!messageNameConfigured) {
       messageName = getRpcMessageName(method, suffix).toUpperCamel();
     }
     if (protoFile.getMessages().containsKey(messageName)) {
@@ -1070,8 +1077,7 @@ public class DocumentToProtoConverter {
 
       if (messageNameConfigured) {
         // We don't override explicit configuration, so if there's a conflict, we just  error.
-        throw new RpcRequestConfiguredMessageConflictException(
-            messageKey, methodName);
+        throw new RpcRequestConfiguredMessageConflictException(messageKey, methodName);
       }
 
       String messageName2 = getRpcMessageName(method, "rpc", suffix).toUpperCamel();
@@ -1082,7 +1088,8 @@ public class DocumentToProtoConverter {
       messageName = messageName2;
     }
 
-    this.config.addInlineField(messageKey, messageName, Integer.toHexString(method.hashCode()+suffix.hashCode()));
+    this.config.addInlineField(
+        messageKey, messageName, Integer.toHexString(method.hashCode() + suffix.hashCode()));
     return messageName;
   }
 
@@ -1121,8 +1128,7 @@ public class DocumentToProtoConverter {
               serviceName,
               String.join(
                   " ",
-                  methodVersions
-                      .stream()
+                  methodVersions.stream()
                       .map(version -> String.format("\"%s\"", version))
                       .collect(Collectors.toList()))));
     }
@@ -1143,8 +1149,7 @@ public class DocumentToProtoConverter {
 
   public class RpcRequestConfiguredMessageConflictException extends InternalError {
     public RpcRequestConfiguredMessageConflictException(
-        String configKey,
-        String candidateMessageName) {
+        String configKey, String candidateMessageName) {
       super(
           String.format(
               "configured message name conflicts with already defined message: %s : %s",
@@ -1154,9 +1159,10 @@ public class DocumentToProtoConverter {
 
   public class MessageCollisionException extends IllegalArgumentException {
     public MessageCollisionException(String existingMessage, String newMessage, String fieldPath) {
-      super(String.format(
-            "Message collision detected. Existing message = %s; new message = %s @ %s",
-          existingMessage, newMessage, fieldPath));
+      super(
+          String.format(
+              "Message collision detected. Existing message = %s; new message = %s @ %s",
+              existingMessage, newMessage, fieldPath));
     }
   }
 }

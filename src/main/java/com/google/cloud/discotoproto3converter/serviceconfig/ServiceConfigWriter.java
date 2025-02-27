@@ -45,9 +45,7 @@ public class ServiceConfigWriter implements ConverterWriter {
     for (GrpcService service : protoFile.getServices().values()) {
       for (GrpcMethod method : service.getMethods()) {
         Optional<Option> opt =
-            method
-                .getOptions()
-                .stream()
+            method.getOptions().stream()
                 .filter(o -> o.getName().equals("google.api.http"))
                 .findFirst();
 
