@@ -15,7 +15,6 @@
  */
 package com.google.cloud.discotoproto3converter.proto3;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,16 +26,35 @@ import java.util.Set;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+/** Represents the input or output configuration guiding the Discovery-to-proto conversion.
+ *
+ * This class captures the external configuration (typically read in from a file), is available as a
+ * reference/tracker during conversion, and emits the output configuration with the information
+ * recorded from usage during conversion, so that future runs using this output config as their
+ * input config achieve consistent (backwards-compatible) results.
+ */
 public class ConversionConfiguration {
 
   /* Only these fields are exposed in the external proto config. Other fields defined later in this
-   * file are used in the course of processing the config.*/
-
+   file are used in the course of processing the config.*/
   private String converterVersion;
   private String updateTime;
   private String apiVersion;
   private String discoveryRevision;
   private List<InlineSchema> inlineSchemas;
+  // ^-- end of publicly exposed fields
+
+
+  // Map of distinct field paths to a InlineFieldDefinition. Fields that use identical schemas
+  // will still point to unique InlineFieldDefinition objects. The schemas are combined in
+  // populateInlineSchemas, which is called before writing out the output config.
+  private transient Map<String, InlineFieldDefinition> inlineFields;
+
+  // We accumulate a list of errors encountered so that we can display as many errors as possible
+  // simultaneously when we throw exceptions.
+  private transient List<String> errors = new ArrayList<String>();
+
+
 
   public ConversionConfiguration() {
     this.inlineSchemas = new ArrayList<InlineSchema>();
@@ -49,6 +67,7 @@ public class ConversionConfiguration {
     this.errors = new ArrayList<String>();
   }
 
+  /** Constructs an instance of this class from a string holding a JSON representation. */
   static public ConversionConfiguration fromJSON(String jsonContents) {
     Gson gson = new Gson();
     ConversionConfiguration config =  gson.fromJson(jsonContents, ConversionConfiguration.class);
@@ -56,6 +75,7 @@ public class ConversionConfiguration {
     return config;
   }
 
+  /** Dumps the public representation of this class into a JSON string. */
   public String toJSON() {
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
     this.populateInlineSchemas();
@@ -63,6 +83,11 @@ public class ConversionConfiguration {
     return gson.toJson(this);
   }
 
+  /** Sets the metadata for the configuration.
+   *
+   * In so doing, this method applies some validation tests to ensure that we are using the config
+   * in permissible ways: the correct API version, the same or later Discovery revision as the
+   * input, */
   public void setConfigMetadata(String converterVersion, String apiVersion, String discoveryRevision, String updateTime) {
     if (this.apiVersion.length() > 0 && !this.apiVersion.equals(apiVersion)) {
       throw new IllegalStateException(
@@ -78,6 +103,7 @@ public class ConversionConfiguration {
     this.updateTime = updateTime;
   }
 
+  /** Returns a previously configured proto message name for the specified path, or null if none exists. */
   public String getMessageNameForPath(String schemaPath) {
     InlineFieldDefinition inlineSchema = this.inlineFields.get(schemaPath);
     if (inlineSchema == null) {
@@ -87,8 +113,9 @@ public class ConversionConfiguration {
   }
 
   /**
-   * Registers in this.inlineFields a single instance of schema being used as the protoTypeName
-   * type of the field at fieldPath.
+   * Registers in this.inlineFields a single instance of `schema` being used as the `protoTypeName`
+   * type of the field at `fieldPath`. If `readingFromFile`, performs some consistency checks that
+   * the config is valid.
    */
   public InlineFieldDefinition addInlineField(String fieldPath, String protoTypeName, String schema, boolean readingFromFile) {
     InlineFieldDefinition fieldInstance = this.inlineFields.get(fieldPath);
@@ -104,10 +131,15 @@ public class ConversionConfiguration {
     return fieldInstance;
   }
 
+  /** Override of addInlineField for more concise use in the converter, when we're no longer reading
+   * from the input config file. */
   public InlineFieldDefinition addInlineField(String fieldPath, String protoTypeName, String schema) {
     return addInlineField(fieldPath, protoTypeName, schema, false);
   }
 
+  /** Utility function that just the public fields of two instances are equal. The parameters
+   * `matchDiscoveryRevision`, `matchConverterversion`, and `matchSchema` determine whether the
+   * corresponding fields are included in the match, which we may not always want (eg for tests). */
   public boolean publicFieldsEqual(ConversionConfiguration other, boolean matchDiscoveryRevision, boolean matchConverterVersion, boolean matchSchema) {
     if (!(
         (!matchConverterVersion) || (this.converterVersion.equals(other.converterVersion)) &&
@@ -129,11 +161,14 @@ public class ConversionConfiguration {
     return true;
   }
 
+  /** Determines whether two instances have all their public fields, except for the time, being equal. */
   static public boolean checkIdenticalJSON(String expected, String actual) {
     return ConversionConfiguration.fromJSON(expected).publicFieldsEqual(
         ConversionConfiguration.fromJSON(actual), true, true, true);
   }
 
+  /** Determines whether two instances have all their important public fields being equal; this
+   * excludes the Discovery revision, converter version, and schema summaries. */
   static public boolean checkEquivalentJSON(String expected, String actual) {
     return ConversionConfiguration.fromJSON(expected).publicFieldsEqual(
         ConversionConfiguration.fromJSON(actual), false, false, false);
@@ -153,6 +188,7 @@ public class ConversionConfiguration {
     // this type.
     private Map<String, List<String>> locations;
 
+    // This is used for sorting, and is not output
     transient String sortKey;
 
     private InlineSchema() {
@@ -161,7 +197,7 @@ public class ConversionConfiguration {
     }
 
     /**
-     * Adds fieldSchemaInstance to this, meaning that it registers fieldSchemaInstance.locations as
+     * Adds inlineField to this, meaning that it registers inlineField.locations as
      * field paths (in this.locations) associated with this schema under the proto3 message name
      * inlineField.protoMessageName.  This checks that this.schema equals inlineField.schema, or, if
      * the former is null, sets it to the latter.
@@ -191,6 +227,9 @@ public class ConversionConfiguration {
       return errors;
     }
 
+    /** Memoizes a sort key based on the number of fields where the schema is used, and the
+     * lexicographically earliest proto message name used for this message. This must be called
+     * after conversion has occurred so that both of those values are stable. */
     public String getSortKey() {
       if (this.sortKey == null) {
         int numLocations = 0;
@@ -218,16 +257,9 @@ public class ConversionConfiguration {
   }
 
 
-  // Map of distinct field paths to a InlineFieldDefinition. Fields that use identical schemas
-  // will still point to unique InlineFieldDefinition objects. The schemas are combined in
-  // populateInlineSchemas, which is called before writing out the output config.
-  private transient Map<String, InlineFieldDefinition> inlineFields;
-
-  private transient List<String> errors = new ArrayList<String>();
-
   /**
    * Populates this.inlineFields (checked to be initially empty) from this.inlineSchemas,
-   * as would have been read in from an external config. Returns this.fieldToProtoType.
+   * as would have been read in from an external config. Returns this.inlineFields.
    */
   private Map<String, InlineFieldDefinition> populateInlineFields() {
     assert this.inlineFields.size() == 0;
@@ -244,7 +276,11 @@ public class ConversionConfiguration {
   }
 
   /**
-   * Clears and populates this.inlineSchemas from this.inlineFields, which would have been updated by the converter processing the current Discovery file.
+   * Populates this.inlineSchemas from this.inlineFields, which would have been updated by the
+   * converter processing the current Discovery file. In so doing, it verifies that all initially
+   * configured inline schemas have been used during conversion, since a failure to do that would
+   * constitute a breaking change. It also invoked `verifyInlineSchemas` to do a final
+   * consistency check.
    */
   private ConversionConfiguration populateInlineSchemas() {
     Map<String,InlineSchema> schemaToDetails = new HashMap<String, InlineSchema>(); // Keys are schemas
@@ -272,7 +308,8 @@ public class ConversionConfiguration {
     return this;
   }
 
-  /** Consistency check that all the `InlineFieldDefinition` instances from which we populated `inlineSchemas` have consistent message names. */
+  /** Consistency check that all the `InlineFieldDefinition` instances from which we populated
+   * `inlineSchemas` have consistent message names and schema definitions. */
   private void verifyInlineSchemas() {
     Map<String, Set<String>> protoNameToSchema = new HashMap<String,Set<String>>();
     for (InlineSchema oneInlineSchema : this.inlineSchemas) {
@@ -315,6 +352,7 @@ public class ConversionConfiguration {
     }
   }
 
+  /** Throw an exception surfacing the accumulated errors. */
   private void throwIfError() {
     if (this.errors.size() > 0) {
       throw new IllegalStateException(String.join("\n", this.errors));
@@ -340,6 +378,7 @@ public class ConversionConfiguration {
     // Any location should appear at most once in this field across all InlineFieldDefinition instances.
     private String location;
 
+    // We accumulate errors so we can surface as many as possible when we throw an exception.
     private List<String> errors;
 
     public InlineFieldDefinition(String protoTypeName, String schema) {
@@ -349,6 +388,8 @@ public class ConversionConfiguration {
       this.errors = new ArrayList<String>();
     }
 
+    /** Returns the proto message name for `schemaPath`, or registers an error if no such proto
+     * message name exists (because this shouldn't have been called in that case). */
     private String findProtoTypeNameForPath(String schemaPath) {
       if (this.location != null && this.location.equals(schemaPath)) {
         return this.protoMessageName;
@@ -359,9 +400,9 @@ public class ConversionConfiguration {
       return null;
     }
 
-    // Updates this InlineFieldDefinition, setting schemaUsed if not readingFromFile, and
-    // erroring if schemaUsed was already set.
-    public void update(String fieldPath, String protoTypeName, String schema, boolean readingFromFile) {
+    /** Updates this InlineFieldDefinition, setting schemaUsed if not readingFromFile, and erroring
+     * if schemaUsed was already set. */
+    public void update(String fieldPath, String protoTypeName, String schema, boolean markUnused) {
       if (this.location != null && !this.location.equals(fieldPath)) {
         this.errors.add(String.format("- inconsistency: trying to update location of inline schema instance %s -> %s",
                 this.location, fieldPath));
@@ -377,7 +418,7 @@ public class ConversionConfiguration {
 
       this.location = fieldPath;
       this.schema = schema;
-      this.schemaUsed = !readingFromFile;
+      this.schemaUsed = !markUnused;
     }
 
     @Override
@@ -405,7 +446,4 @@ public class ConversionConfiguration {
       return true;
     }
   }
-
-
-
 }
