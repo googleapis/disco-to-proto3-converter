@@ -31,7 +31,7 @@ def com_google_disco_to_proto3_converter_repositories():
     _maybe(
         jvm_maven_import_external,
         name = "google_java_format_all_deps",
-        artifact = "com.google.googlejavaformat:google-java-format:jar:all-deps:1.25.2",
+        artifact = "com.google.googlejavaformat:google-java-format:jar:all-deps:1.6",  # works: 1.6  latest: 1.25.2
         server_urls = ["https://repo.maven.apache.org/maven2/", "http://repo1.maven.org/maven2/"],
         licenses = ["notice", "reciprocal"],
     )

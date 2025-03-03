@@ -7,9 +7,9 @@ load(
 
 _JAVA_COPTS = [
     "-source",
-    "23.0.2",
+    "1.8",
     "-target",
-    "23.0.2",
+    "1.8",
 ]
 
 _COMPILE_DEPS = [
