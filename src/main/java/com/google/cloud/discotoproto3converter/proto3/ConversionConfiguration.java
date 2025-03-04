@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -491,6 +492,13 @@ public class ConversionConfiguration {
       }
 
       return true;
+    }
+
+
+    // Classes that override equals should also override hashCode.
+    @Override
+    public int hashCode() {
+      return Objects.hash(protoMessageName, schema, location);
     }
   }
 }
