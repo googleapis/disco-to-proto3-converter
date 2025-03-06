@@ -43,7 +43,9 @@ public class GapicYamlWriter implements ConverterWriter {
 
       for (GrpcMethod method : service.getMethods()) {
         Optional<Option> opt =
-            method.getOptions().stream()
+            method
+                .getOptions()
+                .stream()
                 .filter(o -> o.getName().equals("google.cloud.operation_service"))
                 .findFirst();
 

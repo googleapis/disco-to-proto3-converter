@@ -9,8 +9,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: gcr.io/gapic-images/googleapis-bazel:20250306
-    # Dockerfile for this image is at the top level of this repo.
+    container: gcr.io/gapic-images/googleapis-bazel:20210105
+    # Dockerfile for this image is here:
+    # https://github.com/googleapis/googleapis-discovery/blob/main/Dockerfile
     # If you update its version, please also update it below in
     # 'Cache Bazel files' - unfortunately it cannot accept variables at this
     # time.
@@ -22,7 +23,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.cache/bazel
-        key: ${{ runner.os }}-bazel-20250306-${{ secrets.CACHE_VERSION }}
+        key: ${{ runner.os }}-bazel-20210105-${{ secrets.CACHE_VERSION }}
 
     - name: Cache not found
       if: steps.cache-bazel.outputs.cache-hit != 'true'
@@ -44,7 +45,7 @@ jobs:
       run: bazel --version
 
     - name: Run bazel build
-      run: bazel build  '//...'
+      run: bazel build '//...'
 
     - name: Run bazel test
-      run: bazel test  '//...'
+      run: bazel test '//...'

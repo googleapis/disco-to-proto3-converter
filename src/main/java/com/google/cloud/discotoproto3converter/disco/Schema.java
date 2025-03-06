@@ -125,9 +125,7 @@ public abstract class Schema implements Node {
     return thisSchema;
   }
 
-  /**
-   * @return a non-null identifier for this schema.
-   */
+  /** @return a non-null identifier for this schema. */
   public String getIdentifier() {
     return Strings.isNullOrEmpty(id()) ? key() : id();
   }
@@ -147,9 +145,7 @@ public abstract class Schema implements Node {
 
   @JsonIgnore @Nullable private Node parent;
 
-  /**
-   * @return the {@link Node} that contains this Schema.
-   */
+  /** @return the {@link Node} that contains this Schema. */
   @Nullable
   public Node parent() {
     return parent;
@@ -159,35 +155,23 @@ public abstract class Schema implements Node {
     this.parent = parent;
   }
 
-  /**
-   * @return the schema of the additionalProperties, or null if none.
-   */
+  /** @return the schema of the additionalProperties, or null if none. */
   @Nullable
   public abstract Schema additionalProperties();
 
-  /**
-   * @return the default value.
-   */
+  /** @return the default value. */
   public abstract String defaultValue();
 
-  /**
-   * @return the description.
-   */
+  /** @return the description. */
   public abstract String description();
 
-  /**
-   * @return the format.
-   */
+  /** @return the format. */
   public abstract Format format();
 
-  /**
-   * @return the ID.
-   */
+  /** @return the ID. */
   public abstract String id();
 
-  /**
-   * @return whether or not the schema is an enum.
-   */
+  /** @return whether or not the schema is an enum. */
   public abstract boolean isEnum();
 
   public abstract List<String> enumValues();
@@ -200,19 +184,13 @@ public abstract class Schema implements Node {
   @Nullable
   public abstract Schema items();
 
-  /**
-   * @return the key that this object's parent uses to map to this Schema.
-   */
+  /** @return the key that this object's parent uses to map to this Schema. */
   public abstract String key();
 
-  /**
-   * @return the location.
-   */
+  /** @return the location. */
   public abstract String location();
 
-  /**
-   * @return the pattern.
-   */
+  /** @return the pattern. */
   public abstract String pattern();
 
   /**
@@ -221,33 +199,23 @@ public abstract class Schema implements Node {
    */
   public abstract ImmutableMap<String, Schema> properties();
 
-  /**
-   * @return the reference.
-   */
+  /** @return the reference. */
   public abstract String reference();
 
-  /**
-   * @return whether or not the schema is repeated.
-   */
+  /** @return whether or not the schema is repeated. */
   public abstract boolean repeated();
 
-  /**
-   * @return whether or not the schema is required.
-   */
+  /** @return whether or not the schema is required. */
   public abstract boolean required();
 
-  /**
-   * @return whether or not the schema is a map.
-   */
+  /** @return whether or not the schema is a map. */
   public abstract boolean isMap();
 
   public boolean isRepeated() {
     return type() == Type.ARRAY;
   }
 
-  /**
-   * @return the type.
-   */
+  /** @return the type. */
   public abstract Type type();
 
   /** The set of types a schema can represent. */

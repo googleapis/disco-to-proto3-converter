@@ -5,30 +5,11 @@ load(
     "java_tests",
 )
 
-load(
-    "@bazel_tools//tools/jdk:default_java_toolchain.bzl",
-    "JDK9_JVM_OPTS",
-    "BASE_JDK9_JVM_OPTS",
-    "default_java_toolchain",
-)
-
-default_java_toolchain(
-    name = "error_prone_warnings_toolchain_java17",
-    java_runtime = "@bazel_tools//tools/jdk:remotejdk_17",
-    jvm_opts = BASE_JDK9_JVM_OPTS,
-    # package_configuration = [
-    #     ":error_prone",
-    # ],
-    source_version = "17",
-    target_version = "17",
-    visibility = ["//visibility:public"],
-)
-
 _JAVA_COPTS = [
     "-source",
-    "17",
+    "1.8",
     "-target",
-    "17",
+    "1.8",
 ]
 
 _COMPILE_DEPS = [
@@ -124,13 +105,6 @@ java_binary(
     jvm_flags = [
         # Not letting the formatter consume too much memory (essential for CI builds)
         "-Xmx512m",
-        # ref: https://github.com/google/google-java-format?tab=readme-ov-file#as-a-library
-        "--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
-        "--add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED",
-        "--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
-                 "--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED",
-        "--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
-        "--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
         # Useful when upgrading the version
         "-showversion"
     ],

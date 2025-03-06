@@ -24,133 +24,129 @@ import com.google.gson.Gson;
 import org.junit.Test;
 
 public class ConversionConfigurationTest {
+  // TODO: Until we can get JDK17support throughput this toolchain, we are breaking up what would
+  // ideally be multi-line strings ("text blocks") in concatenated lies.
   String inputConfig =
-      """
-        {
-       "converterVersion": "some-identifier",
-       "apiVersion": "gamma",
-       "discoveryRevision": "20250204",
-       "inlineSchemas": [
-          {
-            "schema": "an initial schema",
-            "locations": {
-              "LakeInfo": ["schemas.Lake.info", "schemas.BigLake.lakeInfo"],
-              "PondInfo": ["schemas.Pond.info", "schemas.BigPond.pondInfo"]
-            }
-           }
-       ]
-       }
-""";
+      "        {"
+          + "      \"converterVersion\": \"some-identifier\","
+          + "       \"apiVersion\": \"gamma\","
+          + "       \"discoveryRevision\": \"20250204\","
+          + "       \"inlineSchemas\": ["
+          + "          {"
+          + "            \"schema\": \"an initial schema\","
+          + "            \"locations\": {"
+          + "              \"LakeInfo\": [\"schemas.Lake.info\", \"schemas.BigLake.lakeInfo\"],"
+          + "              \"PondInfo\": [\"schemas.Pond.info\", \"schemas.BigPond.pondInfo\"]"
+          + "            }"
+          + "           }"
+          + "       ]"
+          + "       }";
 
   @Test
   public void publicFieldsEqual() {
     System.out.printf("** publicFieldsEqual\n");
     Gson gson = new Gson();
     String referenceConfig =
-        """
-            {
-           "converterVersion": "A",
-           "apiVersion": "B",
-           "discoveryRevision": "C",
-           "inlineSchemas": [
-              {
-                "schema": "D",
-                "locations": {
-                  "E": ["F", "G"],
-                  "H": ["I", "J"]
-                }
-              },
-              {
-                "schema": "K",
-                "locations": {
-                  "L": ["M", "N"],
-                  "O": ["P", "Q"]
-                }
-               }
-           ]
-           }
-        """;
+        "            {"
+            + "           \"converterVersion\": \"A\","
+            + "           \"apiVersion\": \"B\","
+            + "           \"discoveryRevision\": \"C\","
+            + "           \"inlineSchemas\": ["
+            + "              {"
+            + "                \"schema\": \"D\","
+            + "                \"locations\": {"
+            + "                  \"E\": [\"F\", \"G\"],"
+            + "                  \"H\": [\"I\", \"J\"]"
+            + "                }"
+            + "              },"
+            + "              {"
+            + "                \"schema\": \"K\","
+            + "                \"locations\": {"
+            + "                  \"L\": [\"M\", \"N\"],"
+            + "                  \"O\": [\"P\", \"Q\"]"
+            + "                }"
+            + "               }"
+            + "           ]"
+            + "           }";
+
     assert ConversionConfiguration.checkIdenticalJSON(referenceConfig, referenceConfig);
 
     // Check that changing the order of the lists or maps doesn't affect equality.
     String variantConfig =
-        """
-            {
-           "converterVersion": "A",
-           "apiVersion": "B",
-           "discoveryRevision": "C",
-           "inlineSchemas": [
-              {
-                "schema": "K",
-                "locations": {
-                  "L": ["M", "N"],
-                  "O": ["Q", "P"]
-                }
-              },
-              {
-                "schema": "D",
-                "locations": {
-               "H": ["I", "J"],
-                  "E": ["G", "F"]
-                }
-              }
-           ]
-           }
-        """;
+        "            {"
+            + "           \"converterVersion\": \"A\","
+            + "           \"apiVersion\": \"B\","
+            + "           \"discoveryRevision\": \"C\","
+            + "           \"inlineSchemas\": ["
+            + "              {"
+            + "                \"schema\": \"K\","
+            + "                \"locations\": {"
+            + "                  \"L\": [\"M\", \"N\"],"
+            + "                  \"O\": [\"Q\", \"P\"]"
+            + "                }"
+            + "              },"
+            + "              {"
+            + "                \"schema\": \"D\","
+            + "                \"locations\": {"
+            + "               \"H\": [\"I\", \"J\"],"
+            + "                  \"E\": [\"G\", \"F\"]"
+            + "                }"
+            + "              }"
+            + "           ]"
+            + "           }";
+
     assert ConversionConfiguration.checkIdenticalJSON(referenceConfig, variantConfig);
 
     // Changing the schema makes the configs not equal
     variantConfig =
-        """
-            {
-           "converterVersion": "A",
-           "apiVersion": "B",
-           "discoveryRevision": "C",
-           "inlineSchemas": [
-              {
-                "schema": "NOT-D",
-                "locations": {
-                  "E": ["F", "G"],
-                  "H": ["I", "J"]
-                }
-              },
-              {
-                "schema": "K",
-                "locations": {
-                  "L": ["M", "N"],
-                  "O": ["P", "Q"]
-                }
-               }
-           ]
-           }
-        """;
+        "            {"
+            + "           \"converterVersion\": \"A\","
+            + "           \"apiVersion\": \"B\","
+            + "           \"discoveryRevision\": \"C\","
+            + "           \"inlineSchemas\": ["
+            + "              {"
+            + "                \"schema\": \"NOT-D\","
+            + "                \"locations\": {"
+            + "                  \"E\": [\"F\", \"G\"],"
+            + "                  \"H\": [\"I\", \"J\"]"
+            + "                }"
+            + "              },"
+            + "              {"
+            + "                \"schema\": \"K\","
+            + "                \"locations\": {"
+            + "                  \"L\": [\"M\", \"N\"],"
+            + "                  \"O\": [\"P\", \"Q\"]"
+            + "                }"
+            + "               }"
+            + "           ]"
+            + "           }";
+
     assertFalse(ConversionConfiguration.checkIdenticalJSON(referenceConfig, variantConfig));
 
     // Changing the locations makes the configs not equal
     variantConfig =
-        """
-            {
-           "converterVersion": "A",
-           "apiVersion": "B",
-           "discoveryRevision": "C",
-           "inlineSchemas": [
-              {
-                "schema": "D",
-                "locations": {
-                  "E": ["NOT-F", "G"],
-                  "H": ["I", "J"]
-                }
-              },
-              {
-                "schema": "K",
-                "locations": {
-                  "L": ["M", "N"],
-                  "O": ["P", "Q"]
-                }
-               }
-           ]
-           }
-        """;
+        "            {"
+            + "           \"converterVersion\": \"A\","
+            + "           \"apiVersion\": \"B\","
+            + "           \"discoveryRevision\": \"C\","
+            + "           \"inlineSchemas\": ["
+            + "              {"
+            + "                \"schema\": \"D\","
+            + "                \"locations\": {"
+            + "                  \"E\": [\"NOT-F\", \"G\"],"
+            + "                  \"H\": [\"I\", \"J\"]"
+            + "                }"
+            + "              },"
+            + "              {"
+            + "                \"schema\": \"K\","
+            + "                \"locations\": {"
+            + "                  \"L\": [\"M\", \"N\"],"
+            + "                  \"O\": [\"P\", \"Q\"]"
+            + "                }"
+            + "               }"
+            + "           ]"
+            + "           }";
+
     System.out.printf("    locations check\n");
     assertFalse(ConversionConfiguration.checkIdenticalJSON(referenceConfig, variantConfig));
   }
@@ -236,27 +232,25 @@ public class ConversionConfigurationTest {
     String outputConfig = config.toJSON();
 
     String expectedConfig =
-        """
-        {
-       "converterVersion": "some-identifier",
-       "apiVersion": "gamma",
-       "discoveryRevision": "20250204",
-       "inlineSchemas": [
-          {
-            "schema": "an initial schema",
-            "locations": {
-              "PondInfo": ["schemas.Pond.info", "schemas.BigPond.pondInfo"]
-            }
-          },
-          {
-            "schema": "updated-schema",
-            "locations": {
-              "LakeInfo": ["schemas.Lake.info", "schemas.BigLake.lakeInfo"]
-            }
-          }
-       ]
-       }
-""";
+        "        {"
+            + "       \"converterVersion\": \"some-identifier\","
+            + "       \"apiVersion\": \"gamma\","
+            + "       \"discoveryRevision\": \"20250204\","
+            + "       \"inlineSchemas\": ["
+            + "          {"
+            + "            \"schema\": \"an initial schema\","
+            + "            \"locations\": {"
+            + "              \"PondInfo\": [\"schemas.Pond.info\", \"schemas.BigPond.pondInfo\"]"
+            + "            }"
+            + "          },"
+            + "          {"
+            + "            \"schema\": \"updated-schema\","
+            + "            \"locations\": {"
+            + "              \"LakeInfo\": [\"schemas.Lake.info\", \"schemas.BigLake.lakeInfo\"]"
+            + "            }"
+            + "          }"
+            + "       ]"
+            + "       }";
 
     System.out.printf(
         "** %s: input\n%s\n%s: output\n%s\n%s: expected\n%s\n",
@@ -292,28 +286,26 @@ public class ConversionConfigurationTest {
     String outputConfig = config.toJSON();
 
     String expectedConfig =
-        """
-        {
-       "converterVersion": "some-identifier",
-       "apiVersion": "gamma",
-       "discoveryRevision": "20250204",
-       "inlineSchemas": [
-          {
-            "schema": "current schema",
-            "locations": {
-              "LakeInfo": ["schemas.Lake.info", "schemas.BigLake.lakeInfo"],
-              "PondInfo": ["schemas.Pond.info", "schemas.BigPond.pondInfo"]
-                  }
-          },
-          {
-            "schema": "new schema",
-            "locations": {
-              "RiverInfo": ["schemas.River.info"]
-            }
-           }
-       ]
-       }
-""";
+        "        {"
+            + "       \"converterVersion\": \"some-identifier\","
+            + "       \"apiVersion\": \"gamma\","
+            + "       \"discoveryRevision\": \"20250204\","
+            + "       \"inlineSchemas\": ["
+            + "          {"
+            + "            \"schema\": \"current schema\","
+            + "            \"locations\": {"
+            + "              \"LakeInfo\": [\"schemas.Lake.info\", \"schemas.BigLake.lakeInfo\"],"
+            + "              \"PondInfo\": [\"schemas.Pond.info\", \"schemas.BigPond.pondInfo\"]"
+            + "                  }"
+            + "          },"
+            + "          {"
+            + "            \"schema\": \"new schema\","
+            + "            \"locations\": {"
+            + "              \"RiverInfo\": [\"schemas.River.info\"]"
+            + "            }"
+            + "           }"
+            + "       ]"
+            + "       }";
 
     System.out.printf(
         "** %s: input\n%s\n%s: output\n%s\n%s: expected\n%s\n",
@@ -336,28 +328,26 @@ public class ConversionConfigurationTest {
     String outputConfig = config.toJSON();
 
     String expectedConfig =
-        """
-        {
-       "converterVersion": "some-identifier",
-       "apiVersion": "gamma",
-       "discoveryRevision": "20250204",
-       "inlineSchemas": [
-          {
-            "schema": "current schema",
-            "locations": {
-              "LakeInfo": ["schemas.Lake.info", "schemas.BigLake.lakeInfo"],
-              "PondInfo": ["schemas.Pond.info", "schemas.BigPond.pondInfo"]
-              }
-          },
-          {
-            "schema": "new schema",
-            "locations": {
-              "RiverInfo": ["schemas.River.info"]
-            }
-           }
-       ]
-       }
-""";
+        "        {"
+            + "       \"converterVersion\": \"some-identifier\","
+            + "       \"apiVersion\": \"gamma\","
+            + "       \"discoveryRevision\": \"20250204\","
+            + "       \"inlineSchemas\": ["
+            + "          {"
+            + "            \"schema\": \"current schema\","
+            + "            \"locations\": {"
+            + "              \"LakeInfo\": [\"schemas.Lake.info\", \"schemas.BigLake.lakeInfo\"],"
+            + "              \"PondInfo\": [\"schemas.Pond.info\", \"schemas.BigPond.pondInfo\"]"
+            + "              }"
+            + "          },"
+            + "          {"
+            + "            \"schema\": \"new schema\","
+            + "            \"locations\": {"
+            + "              \"RiverInfo\": [\"schemas.River.info\"]"
+            + "            }"
+            + "           }"
+            + "       ]"
+            + "       }";
 
     System.out.printf(
         "** %s: input\n%s\n%s: output\n%s\n%s: expected\n%s\n",

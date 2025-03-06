@@ -332,7 +332,9 @@ public class DocumentToProtoConverter {
       SortedSet<Field> enumFields = new TreeSet<>();
       for (Field field : message.getFields()) {
         // Enums declared in Operation must remain intact
-        if (field.getOptions().stream()
+        if (field
+            .getOptions()
+            .stream()
             .anyMatch(a -> "google.cloud.operation_field".equals(a.getName()))) {
           enumFields.clear();
           break;
@@ -441,7 +443,9 @@ public class DocumentToProtoConverter {
         }
 
         Optional<Option> optHttp =
-            method.getOptions().stream()
+            method
+                .getOptions()
+                .stream()
                 .filter(a -> "google.api.http".equals(a.getName()))
                 .findFirst();
 
@@ -504,7 +508,9 @@ public class DocumentToProtoConverter {
         }
 
         Optional<Option> optHttp =
-            method.getOptions().stream()
+            method
+                .getOptions()
+                .stream()
                 .filter(a -> "google.api.http".equals(a.getName()))
                 .findFirst();
 
@@ -620,7 +626,7 @@ public class DocumentToProtoConverter {
             this.usesStructProto = true;
             break;
           case EMPTY:
-          // intentional fall-through
+            // intentional fall-through
           case ANY:
             valueType = Message.PRIMITIVES.get("google.protobuf.Any");
             break;
@@ -654,7 +660,7 @@ public class DocumentToProtoConverter {
       case INTEGER:
         switch (sch.format()) {
           case EMPTY:
-          // intentional fall-through: if there's no format, we default to `int32`.
+            // intentional fall-through: if there's no format, we default to `int32`.
           case INT32:
             valueType = Message.PRIMITIVES.get("int32");
             break;
@@ -683,7 +689,7 @@ public class DocumentToProtoConverter {
       case NUMBER:
         switch (sch.format()) {
           case EMPTY:
-          // intentional fall-through: if there's no format, we default to `float`.
+            // intentional fall-through: if there's no format, we default to `float`.
           case FLOAT:
             valueType = Message.PRIMITIVES.get("float");
             break;
@@ -754,10 +760,10 @@ public class DocumentToProtoConverter {
               valueType = Message.PRIMITIVES.get("double");
               break;
             case BYTE:
-            // intentional fall-through for backwards compatibility. Ideally, we'd make this refer
-            // to the protobuf primitive type `byte`.
-            //
-            // TODO: use `byte` for new messages.
+              // intentional fall-through for backwards compatibility. Ideally, we'd make this refer
+              // to the protobuf primitive type `byte`.
+              //
+              // TODO: use `byte` for new messages.
             case EMPTY:
               // If there's no format, we default to `string`.
               valueType = Message.PRIMITIVES.get("string");
@@ -1142,7 +1148,8 @@ public class DocumentToProtoConverter {
               serviceName,
               String.join(
                   " ",
-                  methodVersions.stream()
+                  methodVersions
+                      .stream()
                       .map(version -> String.format("\"%s\"", version))
                       .collect(Collectors.toList()))));
     }

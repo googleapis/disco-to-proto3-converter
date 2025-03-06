@@ -11,5 +11,3 @@ com_google_disco_to_proto3_converter_properties(
 load("//:repositories.bzl", "com_google_disco_to_proto3_converter_repositories")
 
 com_google_disco_to_proto3_converter_repositories()
-
-register_toolchains("//:error_prone_warnings_toolchain_java17_definition")

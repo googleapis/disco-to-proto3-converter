@@ -70,7 +70,9 @@ public abstract class Method implements Comparable<Method>, Node {
     }
 
     List<String> requiredParamNames =
-        root.getArray("parameterOrder").getElements().stream()
+        root.getArray("parameterOrder")
+            .getElements()
+            .stream()
             .map(DiscoveryNode::asText)
             .collect(Collectors.toList());
 
@@ -125,9 +127,7 @@ public abstract class Method implements Comparable<Method>, Node {
     return id().compareTo(other.id());
   }
 
-  /**
-   * @return the parent Node.
-   */
+  /** @return the parent Node. */
   private Node parent;
 
   void setParent(Node parent) {
@@ -139,82 +139,52 @@ public abstract class Method implements Comparable<Method>, Node {
     return parent;
   }
 
-  /**
-   * @return the description.
-   */
+  /** @return the description. */
   public abstract String description();
 
-  /**
-   * @return the flat URI path of this REST method.
-   */
+  /** @return the flat URI path of this REST method. */
   public abstract String flatPath();
 
-  /**
-   * @return the HTTP method.
-   */
+  /** @return the HTTP method. */
   public abstract String httpMethod();
 
-  /**
-   * @return the ID. This should be unique, within the context of the parent Document.
-   */
+  /** @return the ID. This should be unique, within the context of the parent Document. */
   @Override
   public abstract String id();
 
-  /**
-   * @return the map of parameter names to schemas.
-   */
+  /** @return the map of parameter names to schemas. */
   public abstract Map<String, Schema> parameters();
 
-  /**
-   * @return the URI path of this REST method.
-   */
+  /** @return the URI path of this REST method. */
   public abstract String path();
 
-  /**
-   * @return the list of path parameters.
-   */
+  /** @return the list of path parameters. */
   public abstract Map<String, Schema> pathParams();
 
-  /**
-   * @return the list of query parameters.
-   */
+  /** @return the list of query parameters. */
   public abstract Map<String, Schema> queryParams();
 
-  /**
-   * @return the list of required parameters.
-   */
+  /** @return the list of required parameters. */
   public abstract List<String> requiredParamNames();
 
-  /**
-   * @return the request's resource object schema, or null if none.
-   */
+  /** @return the request's resource object schema, or null if none. */
   @Nullable
   public abstract Schema request();
 
-  /**
-   * @return the response schema, or null if none.
-   */
+  /** @return the response schema, or null if none. */
   @Nullable
   public abstract Schema response();
 
-  /**
-   * @return the list of scopes.
-   */
+  /** @return the list of scopes. */
   public abstract List<String> scopes();
 
-  /**
-   * @return whether or not the method supports media download.
-   */
+  /** @return whether or not the method supports media download. */
   public abstract boolean supportsMediaDownload();
 
-  /**
-   * @return whether or not the method supports media upload.
-   */
+  /** @return whether or not the method supports media upload. */
   public abstract boolean supportsMediaUpload();
 
-  /**
-   * @return the API version for this method.
-   */
+  /** @return the API version for this method. */
   public abstract String apiVersion();
 
   /**

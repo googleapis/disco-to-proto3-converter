@@ -171,9 +171,7 @@ public abstract class Document implements Node {
     return schemas;
   }
 
-  /**
-   * @return the parent Node that contains this node.
-   */
+  /** @return the parent Node that contains this node. */
   @JsonIgnore @Nullable private Node parent;
 
   @Override
@@ -186,117 +184,79 @@ public abstract class Document implements Node {
     this.parent = parent;
   }
 
-  /**
-   * @return the auth instructions URL.
-   */
+  /** @return the auth instructions URL. */
   @JsonProperty("authInstructionsUrl")
   public abstract String authInstructionsUrl();
 
-  /**
-   * @return The list of OAuth2 scopes; this can be empty.
-   */
+  /** @return The list of OAuth2 scopes; this can be empty. */
   public abstract List<String> authScopes();
 
-  /**
-   * @return the auth type.
-   */
+  /** @return the auth type. */
   @JsonProperty("authType")
   public abstract AuthType authType();
 
-  /**
-   * @return the base URL.
-   */
+  /** @return the base URL. */
   @JsonProperty("baseUrl")
   public abstract String baseUrl();
 
-  /**
-   * @return the canonical name.
-   */
+  /** @return the canonical name. */
   @JsonProperty("canonicalName")
   public abstract String canonicalName();
 
-  /**
-   * @return the description.
-   */
+  /** @return the description. */
   @JsonProperty("description")
   public abstract String description();
 
-  /**
-   * @return the discovery document URL.
-   */
+  /** @return the discovery document URL. */
   @JsonProperty("discoveryDocUrl")
   public abstract String discoveryDocUrl();
 
-  /**
-   * @return the ID of the Discovery document for the API.
-   */
+  /** @return the ID of the Discovery document for the API. */
   @Override
   @JsonProperty("id")
   public abstract String id();
 
-  /**
-   * @return the list of all methods.
-   */
+  /** @return the list of all methods. */
   @JsonProperty("methods")
   public abstract List<Method> methods();
 
-  /**
-   * @return the name.
-   */
+  /** @return the name. */
   @JsonProperty("name")
   public abstract String name();
 
-  /**
-   * @return the name.
-   */
+  /** @return the name. */
   @JsonProperty("name")
   public abstract String ownerDomain();
 
-  /**
-   * @return the revision.
-   */
+  /** @return the revision. */
   @JsonProperty("revision")
   public abstract Map<String, List<Method>> resources();
 
-  /**
-   * @return the revision.
-   */
+  /** @return the revision. */
   @JsonProperty("revision")
   public abstract String revision();
 
-  /**
-   * @return the root URL.
-   */
+  /** @return the root URL. */
   @JsonProperty("rootUrl")
   public abstract String rootUrl();
 
-  /**
-   * @return the map of schema IDs to schemas.
-   */
+  /** @return the map of schema IDs to schemas. */
   @JsonProperty("schemas")
   public abstract Map<String, Schema> schemas();
 
-  /**
-   * @return the service path.
-   */
+  /** @return the service path. */
   @JsonProperty("servicePath")
   public abstract String servicePath();
 
-  /**
-   * @return the title.
-   */
+  /** @return the title. */
   @JsonProperty("title")
   public abstract String title();
 
-  /**
-   * @return the version.
-   */
+  /** @return the version. */
   @JsonProperty("version")
   public abstract String version();
 
-  /**
-   * @return whether or not to version the module.
-   */
+  /** @return whether or not to version the module. */
   @JsonProperty("versionModule")
   public abstract boolean versionModule();
 

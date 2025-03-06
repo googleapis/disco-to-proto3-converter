@@ -4,8 +4,8 @@
 
 ### Requirements
 To build and run this tool, you will need the following tools:
-- JDK 17+
-- Maven 3.8.8+
+- JDK 8+
+- Maven 3.3.9+
 
 ### Build
 To build the standalone jar, run the following command from the repository root:
