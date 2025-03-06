@@ -102,8 +102,19 @@ google_java_format(
 # google-java-format
 java_binary(
     name = "google_java_format_binary",
-    # Not letting the formatter consume too much memory (essential for CI builds)
-    jvm_flags = ["-Xmx512m", "-showversion"],
+    jvm_flags = [
+        # Not letting the formatter consume too much memory (essential for CI builds)
+        "-Xmx512m",
+        # ref: https://github.com/google/google-java-format?tab=readme-ov-file#as-a-library
+        "--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
+                 "--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+        # Useful when upgrading the version
+        "-showversion"
+    ],
     main_class = "com.google.googlejavaformat.java.Main",
     visibility = ["//visibility:public"],
     runtime_deps = ["@google_java_format_all_deps//jar"],
