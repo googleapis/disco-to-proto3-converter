@@ -114,9 +114,11 @@ public class DocumentToProtoConverter {
       InputStream is =
           DocumentToProtoConverter.class.getClassLoader().getResourceAsStream("git.properties");
       if (is == null) {
-        // We can get here when running via Bazel rather than MVN.... or when running a pre-compiled JAR, since right now the git info is put into the target/classes/ directory by Maven.
+        // We can get here when running via Bazel rather than MVN.... or when running a pre-compiled
+        // JAR, since right now the git info is put into the target/classes/ directory by Maven.
         //
-        // TODO: Make this work with Bazel. We could perhaps use a git hook on checkout, and load resources that way. Some related ideas:
+        // TODO: Make this work with Bazel. We could perhaps use a git hook on checkout, and load
+        // resources that way. Some related ideas:
         // - https://coderanch.com/t/757738/java/resources-folder
         // - https://github.com/JulianSchmid/example-bazel-add-git-hash
         // - https://stackoverflow.com/a/1792913

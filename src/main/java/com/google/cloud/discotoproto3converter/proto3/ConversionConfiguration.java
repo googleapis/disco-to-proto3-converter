@@ -494,7 +494,6 @@ public class ConversionConfiguration {
       return true;
     }
 
-
     // Classes that override equals should also override hashCode.
     @Override
     public int hashCode() {

@@ -15,25 +15,17 @@
  */
 package com.google.cloud.discotoproto3converter;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 
 import com.google.cloud.discotoproto3converter.proto3.ConversionConfiguration;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import org.junit.Before;
-import org.junit.Test;
-
 import com.google.gson.Gson;
+import org.junit.Test;
 
 public class ConversionConfigurationTest {
   String inputConfig =
-        """
+      """
         {
        "converterVersion": "some-identifier",
        "apiVersion": "gamma",
@@ -54,110 +46,113 @@ public class ConversionConfigurationTest {
   public void publicFieldsEqual() {
     System.out.printf("** publicFieldsEqual\n");
     Gson gson = new Gson();
-    String referenceConfig = """
-        {
-       "converterVersion": "A",
-       "apiVersion": "B",
-       "discoveryRevision": "C",
-       "inlineSchemas": [
-          {
-            "schema": "D",
-            "locations": {
-              "E": ["F", "G"],
-              "H": ["I", "J"]
-            }
-          },
-          {
-            "schema": "K",
-            "locations": {
-              "L": ["M", "N"],
-              "O": ["P", "Q"]
-            }
+    String referenceConfig =
+        """
+            {
+           "converterVersion": "A",
+           "apiVersion": "B",
+           "discoveryRevision": "C",
+           "inlineSchemas": [
+              {
+                "schema": "D",
+                "locations": {
+                  "E": ["F", "G"],
+                  "H": ["I", "J"]
+                }
+              },
+              {
+                "schema": "K",
+                "locations": {
+                  "L": ["M", "N"],
+                  "O": ["P", "Q"]
+                }
+               }
+           ]
            }
-       ]
-       }
-    """;
-        assert ConversionConfiguration.checkIdenticalJSON(referenceConfig, referenceConfig);
+        """;
+    assert ConversionConfiguration.checkIdenticalJSON(referenceConfig, referenceConfig);
 
     // Check that changing the order of the lists or maps doesn't affect equality.
-    String variantConfig = """
-        {
-       "converterVersion": "A",
-       "apiVersion": "B",
-       "discoveryRevision": "C",
-       "inlineSchemas": [
-          {
-            "schema": "K",
-            "locations": {
-              "L": ["M", "N"],
-              "O": ["Q", "P"]
-            }
-          },
-          {
-            "schema": "D",
-            "locations": {
-           "H": ["I", "J"],
-              "E": ["G", "F"]
-            }
-          }
-       ]
-       }
-    """;
-        assert ConversionConfiguration.checkIdenticalJSON(referenceConfig, variantConfig);
+    String variantConfig =
+        """
+            {
+           "converterVersion": "A",
+           "apiVersion": "B",
+           "discoveryRevision": "C",
+           "inlineSchemas": [
+              {
+                "schema": "K",
+                "locations": {
+                  "L": ["M", "N"],
+                  "O": ["Q", "P"]
+                }
+              },
+              {
+                "schema": "D",
+                "locations": {
+               "H": ["I", "J"],
+                  "E": ["G", "F"]
+                }
+              }
+           ]
+           }
+        """;
+    assert ConversionConfiguration.checkIdenticalJSON(referenceConfig, variantConfig);
 
     // Changing the schema makes the configs not equal
-    variantConfig = """
-        {
-       "converterVersion": "A",
-       "apiVersion": "B",
-       "discoveryRevision": "C",
-       "inlineSchemas": [
-          {
-            "schema": "NOT-D",
-            "locations": {
-              "E": ["F", "G"],
-              "H": ["I", "J"]
-            }
-          },
-          {
-            "schema": "K",
-            "locations": {
-              "L": ["M", "N"],
-              "O": ["P", "Q"]
-            }
+    variantConfig =
+        """
+            {
+           "converterVersion": "A",
+           "apiVersion": "B",
+           "discoveryRevision": "C",
+           "inlineSchemas": [
+              {
+                "schema": "NOT-D",
+                "locations": {
+                  "E": ["F", "G"],
+                  "H": ["I", "J"]
+                }
+              },
+              {
+                "schema": "K",
+                "locations": {
+                  "L": ["M", "N"],
+                  "O": ["P", "Q"]
+                }
+               }
+           ]
            }
-       ]
-       }
-    """;
-        assertFalse(ConversionConfiguration.checkIdenticalJSON(referenceConfig, variantConfig));
+        """;
+    assertFalse(ConversionConfiguration.checkIdenticalJSON(referenceConfig, variantConfig));
 
     // Changing the locations makes the configs not equal
-    variantConfig = """
-        {
-       "converterVersion": "A",
-       "apiVersion": "B",
-       "discoveryRevision": "C",
-       "inlineSchemas": [
-          {
-            "schema": "D",
-            "locations": {
-              "E": ["NOT-F", "G"],
-              "H": ["I", "J"]
-            }
-          },
-          {
-            "schema": "K",
-            "locations": {
-              "L": ["M", "N"],
-              "O": ["P", "Q"]
-            }
+    variantConfig =
+        """
+            {
+           "converterVersion": "A",
+           "apiVersion": "B",
+           "discoveryRevision": "C",
+           "inlineSchemas": [
+              {
+                "schema": "D",
+                "locations": {
+                  "E": ["NOT-F", "G"],
+                  "H": ["I", "J"]
+                }
+              },
+              {
+                "schema": "K",
+                "locations": {
+                  "L": ["M", "N"],
+                  "O": ["P", "Q"]
+                }
+               }
+           ]
            }
-       ]
-       }
-    """;
-        System.out.printf("    locations check\n");
-        assertFalse(ConversionConfiguration.checkIdenticalJSON(referenceConfig, variantConfig));
-
+        """;
+    System.out.printf("    locations check\n");
+    assertFalse(ConversionConfiguration.checkIdenticalJSON(referenceConfig, variantConfig));
   }
 
   @Test
@@ -184,9 +179,8 @@ public class ConversionConfigurationTest {
     config.addInlineField("schemas.BigPond.pondInfo", "PondInfo", "an initial schema");
     String outputConfig = config.toJSON();
 
-    System.out.printf("** %s: input\n%s\n%s: output\n%s\n",
-        label, inputConfig,
-        label, outputConfig);
+    System.out.printf(
+        "** %s: input\n%s\n%s: output\n%s\n", label, inputConfig, label, outputConfig);
     assert ConversionConfiguration.checkIdenticalJSON(inputConfig, outputConfig);
   }
 
@@ -196,11 +190,11 @@ public class ConversionConfigurationTest {
     config.addInlineField("schemas.Pond.info", "PondInfo", "an initial schema");
     config.addInlineField("schemas.BigLake.lakeInfo", "LakeInfo", "an initial schema");
     config.addInlineField("schemas.Lake.info", "LakeInfo", "an initial schema");
-    config.addInlineField("schemas.Lake.info", "LakeInfo", "an initial schema"); // should cause error
+    config.addInlineField(
+        "schemas.Lake.info", "LakeInfo", "an initial schema"); // should cause error
     config.addInlineField("schemas.BigPond.pondInfo", "PondInfo", "an initial schema");
 
-    assertThrows(IllegalStateException.class,
-        () -> config.toJSON());
+    assertThrows(IllegalStateException.class, () -> config.toJSON());
   }
 
   @Test
@@ -211,8 +205,7 @@ public class ConversionConfigurationTest {
     config.addInlineField("schemas.BigPond.pondInfo", "PondInfo", "an initial schema");
     // not using schemas.BigLake.lakeInfo should cause an error
 
-    assertThrows(IllegalStateException.class,
-        () -> config.toJSON());
+    assertThrows(IllegalStateException.class, () -> config.toJSON());
   }
 
   @Test
@@ -225,16 +218,16 @@ public class ConversionConfigurationTest {
     // input config) is a breaking change and causes an error:
     config.addInlineField("schemas.BigPond.pondInfo", "SecondPondInfo", "an initial schema");
 
-    assertThrows(IllegalStateException.class,
-        () -> config.toJSON());
-   }
+    assertThrows(IllegalStateException.class, () -> config.toJSON());
+  }
 
   @Test
   public void splitSchemasBackwardsCompatible() {
     String label = "splitSchemasBackwardsCompatible";
 
     ConversionConfiguration config = ConversionConfiguration.fromJSON(inputConfig);
-    // we update all entries with  the same protobuf message name to refer to the same updated schema. This is valid.
+    // we update all entries with  the same protobuf message name to refer to the same updated
+    // schema. This is valid.
     config.addInlineField("schemas.Lake.info", "LakeInfo", "updated-schema");
     config.addInlineField("schemas.BigLake.lakeInfo", "LakeInfo", "updated-schema");
     config.addInlineField("schemas.Pond.info", "PondInfo", "an initial schema");
@@ -265,10 +258,9 @@ public class ConversionConfigurationTest {
        }
 """;
 
-    System.out.printf("** %s: input\n%s\n%s: output\n%s\n%s: expected\n%s\n",
-        label, inputConfig,
-        label, outputConfig,
-        label, expectedConfig);
+    System.out.printf(
+        "** %s: input\n%s\n%s: output\n%s\n%s: expected\n%s\n",
+        label, inputConfig, label, outputConfig, label, expectedConfig);
     assert ConversionConfiguration.checkIdenticalJSON(expectedConfig, outputConfig);
   }
 
@@ -284,8 +276,7 @@ public class ConversionConfigurationTest {
     config.addInlineField("schemas.Pond.info", "PondInfo", "an initial schema");
     config.addInlineField("schemas.BigPond.pondInfo", "PondInfo", "an initial schema");
 
-    assertThrows(IllegalStateException.class,
-        () -> config.toJSON());
+    assertThrows(IllegalStateException.class, () -> config.toJSON());
   }
 
   @Test
@@ -300,7 +291,8 @@ public class ConversionConfigurationTest {
     config.addInlineField("schemas.River.info", "RiverInfo", "new schema");
     String outputConfig = config.toJSON();
 
-    String expectedConfig = """
+    String expectedConfig =
+        """
         {
        "converterVersion": "some-identifier",
        "apiVersion": "gamma",
@@ -323,19 +315,19 @@ public class ConversionConfigurationTest {
        }
 """;
 
-    System.out.printf("** %s: input\n%s\n%s: output\n%s\n%s: expected\n%s\n",
-        label, inputConfig,
-        label, outputConfig,
-        label, expectedConfig);
+    System.out.printf(
+        "** %s: input\n%s\n%s: output\n%s\n%s: expected\n%s\n",
+        label, inputConfig, label, outputConfig, label, expectedConfig);
     assert ConversionConfiguration.checkIdenticalJSON(expectedConfig, outputConfig);
   }
 
-   @Test
+  @Test
   public void readWriteAddingSchemaStringVariable() {
     String label = "readWriteAddingSchema";
 
     ConversionConfiguration config = ConversionConfiguration.fromJSON(inputConfig);
-    // This first call uses a non-literal to ensure we are doing the correct comparisons under the hood.
+    // This first call uses a non-literal to ensure we are doing the correct comparisons under the
+    // hood.
     config.addInlineField("schemas.Pond.info", "PondInfo", new String("current schema"));
     config.addInlineField("schemas.BigLake.lakeInfo", "LakeInfo", "current schema");
     config.addInlineField("schemas.Lake.info", "LakeInfo", "current schema");
@@ -343,7 +335,8 @@ public class ConversionConfigurationTest {
     config.addInlineField("schemas.River.info", "RiverInfo", "new schema");
     String outputConfig = config.toJSON();
 
-    String expectedConfig =         """
+    String expectedConfig =
+        """
         {
        "converterVersion": "some-identifier",
        "apiVersion": "gamma",
@@ -366,13 +359,11 @@ public class ConversionConfigurationTest {
        }
 """;
 
-    System.out.printf("** %s: input\n%s\n%s: output\n%s\n%s: expected\n%s\n",
-        label, inputConfig,
-        label, outputConfig,
-        label, expectedConfig);
+    System.out.printf(
+        "** %s: input\n%s\n%s: output\n%s\n%s: expected\n%s\n",
+        label, inputConfig, label, outputConfig, label, expectedConfig);
     assert ConversionConfiguration.checkIdenticalJSON(expectedConfig, outputConfig);
   }
-
 
   @Test
   public void readWriteWithoutUsingFieldSchema() {
@@ -382,8 +373,7 @@ public class ConversionConfigurationTest {
     config.addInlineField("schemas.Lake.info", "LakeInfo", "current schema");
     // We omit BigPond
 
-    assertThrows(IllegalStateException.class,
-        () -> config.toJSON());
+    assertThrows(IllegalStateException.class, () -> config.toJSON());
   }
 
   @Test
@@ -391,37 +381,33 @@ public class ConversionConfigurationTest {
     ConversionConfiguration config = ConversionConfiguration.fromJSON(inputConfig);
 
     // Same metadata as inputConfig
-    config.setConfigMetadata(
-        "some-identifier",
-        "gamma",
-        "20250204",
-        "right-now");
+    config.setConfigMetadata("some-identifier", "gamma", "20250204", "right-now");
 
     // different converter version and time are fine
-    config.setConfigMetadata(
-        "something else",
-        "gamma",
-        "20250204",
-        "later");
+    config.setConfigMetadata("something else", "gamma", "20250204", "later");
 
-    assertThrows(IllegalStateException.class,
-        () -> config.setConfigMetadata(
-            "some-identifier",
-            "delta",  // different API version causes exception
-            "20250204",
-            "right-now"));
+    assertThrows(
+        IllegalStateException.class,
+        () ->
+            config.setConfigMetadata(
+                "some-identifier",
+                "delta", // different API version causes exception
+                "20250204",
+                "right-now"));
 
-    assertThrows(IllegalStateException.class,
-        () -> config.setConfigMetadata(
-            "some-identifier",
-            "gamma",
-            "20250203",  // earlier revision causes error
-            "right-now"));
+    assertThrows(
+        IllegalStateException.class,
+        () ->
+            config.setConfigMetadata(
+                "some-identifier",
+                "gamma",
+                "20250203", // earlier revision causes error
+                "right-now"));
 
     config.setConfigMetadata(
         "some-identifier",
         "gamma",
-        "20250206",  // later revision is OK
+        "20250206", // later revision is OK
         "right-now");
   }
 }
