@@ -12,7 +12,6 @@ jobs:
     container: gcr.io/gapic-images/googleapis:20250305
     # Dockerfile for this image is here:
     # https://github.com/googleapis/googleapis/blob/master/.kokoro/Dockerfile
-    # TODO: (currently a locally modified copy, not yet synced with the repo)
     # If you update its version, please also update it below in
     # 'Cache Bazel files' - unfortunately it cannot accept variables at this
     # time.
@@ -43,7 +42,7 @@ jobs:
         echo "The old one will disappear after 7 days."
 
     - name: Run bazel build
-      run: bazel build '//...'
+      run: bazel build --enable_workspace '//...'
 
     - name: Run bazel test
-      run: bazel test '//...'
+      run: bazel test --enable_workspace '//...'
