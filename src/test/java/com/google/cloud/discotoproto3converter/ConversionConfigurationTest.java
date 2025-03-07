@@ -24,8 +24,9 @@ import com.google.gson.Gson;
 import org.junit.Test;
 
 public class ConversionConfigurationTest {
-  // TODO: Until we can get JDK17support throughput this toolchain, we are breaking up what would
-  // ideally be multi-line strings ("text blocks") in concatenated lies.
+  // TODO(https://github.com/googleapis/disco-to-proto3-converter/issues/149): Until we can get
+  // JDK17 support throughput this toolchain, we are breaking up what would ideally be multi-line
+  // strings ("text blocks") in concatenated lies.
   String inputConfig =
       "        {"
           + "      \"converterVersion\": \"some-identifier\","
