@@ -31,12 +31,16 @@ def _proto_from_disco_impl(ctx):
     _set_args(attr.relative_link_prefix, "--relative_link_prefix=", arguments)
     _set_args(attr.enums_as_strings, "--enums_as_strings=", arguments)
     _set_args(attr.output_comments, "--output_comments=", arguments)
+    _set_args(attr.input_config_path, "--input_config_path=", arguments, inputs)
 
     converter = ctx.executable.converter
     ctx.actions.run(
         inputs = inputs,
-        outputs = [ctx.outputs.output],
-        arguments = arguments + ["--output_file_path=%s" % ctx.outputs.output.path],
+        outputs = [ctx.outputs.output, ctx.outputs.output_config],
+        arguments = arguments + [
+            "--output_file_path=%s" % ctx.outputs.output.path,
+            "--output_config_path=%s" % (ctx.outputs.output_config.path if attr.output_config_suffix else ""),
+        ],
         progress_message = "%s: `%s %s`" % (ctx.label, converter.path, " ".join(arguments)),
         executable = converter,
     )
@@ -56,9 +60,13 @@ proto_from_disco = rule(
             cfg = "host",
         ),
         "extension": attr.string(mandatory = False, default = ".proto"),
+        "input_config_path": attr.label(mandatory = False, allow_single_file = True),
+        # provide an empty string to omit the output config
+        "output_config_suffix": attr.string(mandatory = False, default = ".config.out"),
     },
     outputs = {
         "output": "%{name}%{extension}",
+        "output_config": "%{name}%{output_config_suffix}.json",
     },
     implementation = _proto_from_disco_impl,
 )
@@ -66,6 +74,8 @@ proto_from_disco = rule(
 def grpc_service_config_from_disco(
         name,
         src,
+        input_config_path = None,
+        output_config_suffix = ".config.out",
         previous_proto = None,
         service_ignorelist = None,
         message_ignorelist = None,
@@ -75,6 +85,8 @@ def grpc_service_config_from_disco(
     proto_from_disco(
         name = name,
         src = src,
+        input_config_path = input_config_path,
+        output_config_suffix = output_config_suffix,
         previous_proto = previous_proto,
         service_ignorelist = service_ignorelist,
         message_ignorelist = message_ignorelist,
@@ -87,6 +99,8 @@ def grpc_service_config_from_disco(
 def gapic_yaml_from_disco(
         name,
         src,
+        input_config_path = None,
+        output_config_suffix = ".config.out",
         previous_proto = None,
         service_ignorelist = None,
         message_ignorelist = None,
@@ -96,6 +110,8 @@ def gapic_yaml_from_disco(
     proto_from_disco(
         name = name,
         src = src,
+        input_config_path = input_config_path,
+        output_config_suffix = output_config_suffix,
         previous_proto = previous_proto,
         service_ignorelist = service_ignorelist,
         message_ignorelist = message_ignorelist,
