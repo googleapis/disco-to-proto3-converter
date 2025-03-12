@@ -54,6 +54,9 @@ public class ConversionConfiguration {
   // simultaneously when we throw exceptions.
   private transient List<String> errors = new ArrayList<String>();
 
+  // Every time we start a sort, we update htis field to ensure we use correctly memoized values.
+  protected transient int currentSortID;
+
   public ConversionConfiguration() {
     this.inlineSchemas = new ArrayList<InlineSchema>();
     this.inlineFields = new HashMap<String, InlineFieldDefinition>();
@@ -61,6 +64,7 @@ public class ConversionConfiguration {
     this.updateTime = "";
     this.apiVersion = "";
     this.discoveryRevision = "";
+    this.currentSortID = 0;
 
     this.errors = new ArrayList<String>();
   }
@@ -77,7 +81,7 @@ public class ConversionConfiguration {
   public String toJSON() {
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
     this.populateInlineSchemas();
-    Collections.sort(this.inlineSchemas);
+    this.sortInlineSchemas();
     return gson.toJson(this);
   }
 
@@ -183,7 +187,7 @@ public class ConversionConfiguration {
    * defined in multiple places and possibly assigned different proto3 message type names for each
    * of those places. These data are reflected in the external config.
    */
-  static class InlineSchema implements Comparable<InlineSchema> {
+  class InlineSchema implements Comparable<InlineSchema> {
     // A human-readable representation of the schema. This is not inspected by the code in anyway
     // except to check for equality.
     private String schema;
@@ -192,12 +196,14 @@ public class ConversionConfiguration {
     // this type.
     private Map<String, List<String>> locations;
 
-    // This is used for sorting, and is not output
-    transient String sortKey;
+    // These are used for sorting, and are not output
+    transient String sortKey;  // memoized
+    transient int sortID; // a change in this value clears sortKey
 
     private InlineSchema() {
       this.locations = new HashMap<String, List<String>>();
       this.sortKey = null;
+      this.sortID = 0;
     }
 
     /**
@@ -237,7 +243,7 @@ public class ConversionConfiguration {
      * after conversion has occurred so that both of those values are stable.
      */
     public String getSortKey() {
-      if (this.sortKey == null) {
+      if (this.sortKey == null || this.sortID != currentSortID) {
         int numLocations = 0;
         String firstMessageName = null;
         for (Map.Entry<String, List<String>> oneEntry : this.locations.entrySet()) {
@@ -251,6 +257,7 @@ public class ConversionConfiguration {
         // Sort schemas with most instances first. Break ties by sorting schemas with the lowest
         // proto message name first.
         this.sortKey = String.format("%03d.%s", 999 - numLocations, firstMessageName);
+        this.sortID = currentSortID;
       }
       return this.sortKey;
     }
@@ -314,6 +321,14 @@ public class ConversionConfiguration {
     this.throwIfError();
 
     return this;
+  }
+
+  /**
+   * Sorts inlineSchemas, ensuring that memoized values are updated.
+   */
+  private void sortInlineSchemas() {
+    this.currentSortID++;
+    Collections.sort(this.inlineSchemas);
   }
 
   /**
