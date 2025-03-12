@@ -179,24 +179,6 @@ public class ConversionConfiguration {
   }
 
   /**
-   * Determines whether two instances have all their public fields, except for the time, being
-   * equal.
-   */
-  public static boolean checkIdenticalJSON(String expected, String actual) {
-    return ConversionConfiguration.fromJSON(expected)
-        .publicFieldsEqual(ConversionConfiguration.fromJSON(actual), true, true, true);
-  }
-
-  /**
-   * Determines whether two instances have all their important public fields being equal; this
-   * excludes the Discovery revision, converter version, and schema summaries.
-   */
-  public static boolean checkEquivalentJSON(String expected, String actual) {
-    return ConversionConfiguration.fromJSON(expected)
-        .publicFieldsEqual(ConversionConfiguration.fromJSON(actual), false, false, false);
-  }
-
-  /**
    * Inner class to capture the occurrences of exactly one inline schema, possibly identically
    * defined in multiple places and possibly assigned different proto3 message type names for each
    * of those places. These data are reflected in the external config.

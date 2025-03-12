@@ -26,7 +26,7 @@ import org.junit.Test;
 public class ConversionConfigurationTest {
   // TODO(https://github.com/googleapis/disco-to-proto3-converter/issues/149): Until we can get
   // JDK17 support throughput this toolchain, we are breaking up what would ideally be multi-line
-  // strings ("text blocks") in concatenated lies.
+  // strings ("text blocks") in concatenated lines.
   String inputConfig =
       "        {"
           + "      \"converterVersion\": \"some-identifier\","
@@ -70,7 +70,7 @@ public class ConversionConfigurationTest {
             + "           ]"
             + "           }";
 
-    assert ConversionConfiguration.checkIdenticalJSON(referenceConfig, referenceConfig);
+    assert checkIdenticalJSON(referenceConfig, referenceConfig);
 
     // Check that changing the order of the lists or maps doesn't affect equality.
     String variantConfig =
@@ -96,7 +96,7 @@ public class ConversionConfigurationTest {
             + "           ]"
             + "           }";
 
-    assert ConversionConfiguration.checkIdenticalJSON(referenceConfig, variantConfig);
+    assert checkIdenticalJSON(referenceConfig, variantConfig);
 
     // Changing the schema makes the configs not equal
     variantConfig =
@@ -122,7 +122,7 @@ public class ConversionConfigurationTest {
             + "           ]"
             + "           }";
 
-    assertFalse(ConversionConfiguration.checkIdenticalJSON(referenceConfig, variantConfig));
+    assertFalse(checkIdenticalJSON(referenceConfig, variantConfig));
 
     // Changing the locations makes the configs not equal
     variantConfig =
@@ -149,7 +149,7 @@ public class ConversionConfigurationTest {
             + "           }";
 
     System.out.printf("    locations check\n");
-    assertFalse(ConversionConfiguration.checkIdenticalJSON(referenceConfig, variantConfig));
+    assertFalse(checkIdenticalJSON(referenceConfig, variantConfig));
   }
 
   @Test
@@ -178,7 +178,7 @@ public class ConversionConfigurationTest {
 
     System.out.printf(
         "** %s: input\n%s\n%s: output\n%s\n", label, inputConfig, label, outputConfig);
-    assert ConversionConfiguration.checkIdenticalJSON(inputConfig, outputConfig);
+    assert checkIdenticalJSON(inputConfig, outputConfig);
   }
 
   @Test
@@ -256,7 +256,7 @@ public class ConversionConfigurationTest {
     System.out.printf(
         "** %s: input\n%s\n%s: output\n%s\n%s: expected\n%s\n",
         label, inputConfig, label, outputConfig, label, expectedConfig);
-    assert ConversionConfiguration.checkIdenticalJSON(expectedConfig, outputConfig);
+    assert checkIdenticalJSON(expectedConfig, outputConfig);
   }
 
   @Test
@@ -311,7 +311,7 @@ public class ConversionConfigurationTest {
     System.out.printf(
         "** %s: input\n%s\n%s: output\n%s\n%s: expected\n%s\n",
         label, inputConfig, label, outputConfig, label, expectedConfig);
-    assert ConversionConfiguration.checkIdenticalJSON(expectedConfig, outputConfig);
+    assert checkIdenticalJSON(expectedConfig, outputConfig);
   }
 
   @Test
@@ -353,7 +353,7 @@ public class ConversionConfigurationTest {
     System.out.printf(
         "** %s: input\n%s\n%s: output\n%s\n%s: expected\n%s\n",
         label, inputConfig, label, outputConfig, label, expectedConfig);
-    assert ConversionConfiguration.checkIdenticalJSON(expectedConfig, outputConfig);
+    assert checkIdenticalJSON(expectedConfig, outputConfig);
   }
 
   @Test
@@ -401,4 +401,14 @@ public class ConversionConfigurationTest {
         "20250206", // later revision is OK
         "right-now");
   }
+
+  /**
+   * Determines whether two instances have all their public fields, except for the time, being
+   * equal.
+   */
+  public static boolean checkIdenticalJSON(String expected, String actual) {
+    return ConversionConfiguration.fromJSON(expected)
+            .publicFieldsEqual(ConversionConfiguration.fromJSON(actual), true, true, true);
+  }
+
 }

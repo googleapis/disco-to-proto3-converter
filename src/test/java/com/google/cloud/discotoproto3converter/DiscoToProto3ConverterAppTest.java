@@ -127,7 +127,7 @@ public class DiscoToProto3ConverterAppTest {
 
     String actualConfig = readFile(generatedOutputConfigPath);
     String baselineConfig = readFile(baselineOutputConfigPath);
-    assert ConversionConfiguration.checkEquivalentJSON(baselineConfig, actualConfig);
+    assert checkEquivalentJSON(baselineConfig, actualConfig);
   }
 
   @Test
@@ -836,4 +836,14 @@ public class DiscoToProto3ConverterAppTest {
   private static String readFile(Path path) throws IOException {
     return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
   }
+
+  /**
+   * Determines whether two instances have all their important public fields being equal; this
+   * excludes the Discovery revision, converter version, and schema summaries.
+   */
+  public static boolean checkEquivalentJSON(String expected, String actual) {
+    return ConversionConfiguration.fromJSON(expected)
+            .publicFieldsEqual(ConversionConfiguration.fromJSON(actual), false, false, false);
+  }
+
 }
