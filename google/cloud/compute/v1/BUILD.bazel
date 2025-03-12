@@ -35,6 +35,7 @@ _SERVICE_IGNORE_LIST = [
 proto_from_disco(
     name = "compute",
     src = "//:src/test/resources/google/cloud/compute/v1/compute.v1.json",
+    input_config_path = "//:src/test/resources/google/cloud/compute/v1/compute.v1.config.input.json",
     message_ignorelist = _MESSAGE_IGNORE_LIST,
     relative_link_prefix = "https://cloud.google.com",
     service_ignorelist = _SERVICE_IGNORE_LIST,
@@ -43,6 +44,7 @@ proto_from_disco(
 grpc_service_config_from_disco(
     name = "compute_grpc_service_config",
     src = "//:src/test/resources/google/cloud/compute/v1/compute.v1.json",
+    input_config_path = "//:src/test/resources/google/cloud/compute/v1/compute.v1.config.input.json",
     message_ignorelist = _MESSAGE_IGNORE_LIST,
     service_ignorelist = _SERVICE_IGNORE_LIST,
 )
@@ -50,6 +52,7 @@ grpc_service_config_from_disco(
 gapic_yaml_from_disco(
     name = "compute_gapic",
     src = "//:src/test/resources/google/cloud/compute/v1/compute.v1.json",
+    input_config_path = "//:src/test/resources/google/cloud/compute/v1/compute.v1.config.input.json",
     message_ignorelist = _MESSAGE_IGNORE_LIST,
     service_ignorelist = _SERVICE_IGNORE_LIST,
 )

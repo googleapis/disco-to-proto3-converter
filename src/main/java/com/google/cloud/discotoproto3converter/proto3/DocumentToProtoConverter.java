@@ -21,6 +21,8 @@ import com.google.cloud.discotoproto3converter.disco.Method;
 import com.google.cloud.discotoproto3converter.disco.Name;
 import com.google.cloud.discotoproto3converter.disco.Schema;
 import com.google.cloud.discotoproto3converter.disco.Schema.Format;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,6 +32,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -48,6 +51,8 @@ public class DocumentToProtoConverter {
   private final boolean enumsAsStrings;
   private boolean schemaRead;
   private boolean usesStructProto;
+  private ConversionConfiguration config;
+  private String outputConfigContents;
 
   // Set this to "true" to get some tracing output on stderr during development. Leave this as
   // "false" for production code.
@@ -62,13 +67,23 @@ public class DocumentToProtoConverter {
       Set<String> serviceIgnoreSet,
       Set<String> messageIgnoreSet,
       String relativeLinkPrefix,
-      boolean enumsAsStrings) {
+      boolean enumsAsStrings,
+      String inputConfig,
+      String timeStamp) {
     this.serviceIgnoreSet = serviceIgnoreSet;
     this.messageIgnoreSet = messageIgnoreSet;
     this.relativeLinkPrefix = relativeLinkPrefix;
     this.protoFile.setMetadata(readDocumentMetadata(document, documentFileName));
     this.enumsAsStrings = enumsAsStrings;
     this.usesStructProto = false;
+
+    if (inputConfig == null) {
+      inputConfig = "{}";
+    }
+
+    this.config = ConversionConfiguration.fromJSON(inputConfig);
+    this.config.setConfigMetadata(
+        getConverterVersion(), document.version(), document.revision(), timeStamp);
 
     readSchema(document);
     readResources(document);
@@ -77,6 +92,47 @@ public class DocumentToProtoConverter {
     this.protoFile.setHasAnyFields(checkAnyFields());
     this.protoFile.setUsesStructProto(this.usesStructProto);
     convertEnumFieldsToStrings();
+
+    this.outputConfigContents = this.config.toJSON();
+  }
+
+  public static String getConverterVersion() {
+    Properties gitProperties = getGitProperties();
+    if (gitProperties == null) {
+      return "";
+    }
+    String converterVersion = gitProperties.getProperty("git.commit.id.abbrev", "not-found");
+    if (gitProperties.getProperty("git.dirty").equals("true")) {
+      converterVersion = converterVersion + "+";
+    }
+    return converterVersion;
+  }
+
+  public static Properties getGitProperties() {
+    Properties properties = new Properties();
+    try {
+      InputStream is =
+          DocumentToProtoConverter.class.getClassLoader().getResourceAsStream("git.properties");
+      if (is == null) {
+        // We can get here when running via Bazel rather than MVN.... or when running a pre-compiled
+        // JAR, since right now the git info is put into the target/classes/ directory by Maven.
+        //
+        // TODO: Make this work with Bazel. We could perhaps use a git hook on checkout, and load
+        // resources that way. Some related ideas:
+        // - https://coderanch.com/t/757738/java/resources-folder
+        // - https://github.com/JulianSchmid/example-bazel-add-git-hash
+        // - https://stackoverflow.com/a/1792913
+        return null;
+      }
+      properties.load(is);
+    } catch (IOException io) {
+      System.out.printf("*** could not get git properties\n");
+    }
+    return properties;
+  }
+
+  public String getOutputConfig() {
+    return this.outputConfigContents;
   }
 
   public ProtoFile getProtoFile() {
@@ -526,16 +582,39 @@ public class DocumentToProtoConverter {
     return option;
   }
 
-  private Field schemaToField(Schema sch, boolean optional, String debugPreviousPath) {
-    String name = Name.anyCamel(sch.key()).toCapitalizedLowerUnderscore();
+  private Field schemaToField(Schema sch, boolean optional, String caller) {
+    List<String> currentSchemaPath = new ArrayList();
+    currentSchemaPath.add(caller);
+    currentSchemaPath.add("schemas");
+    return schemaToField(sch, optional, currentSchemaPath);
+  }
+
+  private Field schemaToField(Schema sch, boolean optional, List<String> previousSchemaPath) {
+    assert previousSchemaPath.size() > 0; // we should at least have the caller
+
+    String schemaName = sch.key();
+    String name = Name.anyCamel(schemaName).toCapitalizedLowerUnderscore();
     String description = sch.description();
     Message valueType = null;
     boolean repeated = false;
     Message keyType = null;
-    String debugCurrentPath = String.format("%s.%s", debugPreviousPath, name);
+
+    List<String> currentSchemaPath = new ArrayList(previousSchemaPath);
+    boolean atTopLevel = currentSchemaPath.size() == 2; //  we only have the caller + "schemas"
+    currentSchemaPath.add(schemaName);
+    String currentSchemaPathString = String.join(".", currentSchemaPath);
+
+    // In order to record the proto type names corresponding to inline schemas, and to apply
+    // configured name overrides, we need the path to the schema without the caller. We only apply
+    // the name overrides to inline schemas, so we don't need to stringify the path otherwise.
+    String inlineSchemaPathString = null;
+    if (!atTopLevel) {
+      inlineSchemaPathString =
+          String.join(".", currentSchemaPath.subList(1, currentSchemaPath.size()));
+    }
 
     if (trace) {
-      System.err.printf("*** schemaToField: %s\n", debugCurrentPath);
+      System.err.printf("*** schemaToField: %s\n", currentSchemaPathString);
     }
 
     switch (sch.type()) {
@@ -554,7 +633,7 @@ public class DocumentToProtoConverter {
             throw new IllegalStateException(
                 String.format(
                     "unexpected 'format' value (%s:'%s') when processing ANY type in schema %s",
-                    sch.format().name(), sch.format().toString(), debugCurrentPath));
+                    sch.format().name(), sch.format().toString(), currentSchemaPathString));
         }
         break;
       case ARRAY:
@@ -603,7 +682,7 @@ public class DocumentToProtoConverter {
             throw new IllegalStateException(
                 String.format(
                     "unexpected 'format' value ('%s') when processing INTEGER type in schema %s",
-                    sch.format().toString(), debugCurrentPath));
+                    sch.format().toString(), currentSchemaPathString));
         }
         break;
       case NUMBER:
@@ -620,7 +699,7 @@ public class DocumentToProtoConverter {
             throw new IllegalStateException(
                 String.format(
                     "unexpected 'format' value ('%s') when processing NUMBER type in schema %s",
-                    sch.format().toString(), debugCurrentPath));
+                    sch.format().toString(), currentSchemaPathString));
         }
         break;
       case OBJECT:
@@ -637,24 +716,31 @@ public class DocumentToProtoConverter {
           case EMPTY:
             if (sch.additionalProperties() != null) {
               repeated = true;
-              keyType = Message.PRIMITIVES.get("string");
+              keyType = Message.PRIMITIVES.get("string"); // schema corresponds to map<String, ...>
             } else {
               valueType =
-                  new Message(getMessageName(sch), false, false, sanitizeDescr(description));
+                  new Message(
+                      getMessageName(sch, inlineSchemaPathString),
+                      false,
+                      false,
+                      sanitizeDescr(description));
             }
             break;
           default:
             throw new IllegalStateException(
                 String.format(
                     "unexpected 'format' value (%s:'%s') when processing OBJECT type in schema %s",
-                    sch.format().name(), sch.format().toString(), debugCurrentPath));
+                    sch.format().name(), sch.format().toString(), currentSchemaPathString));
         }
         break;
       case STRING:
         if (sch.isEnum() && !"".equals(sch.getIdentifier())) {
           valueType =
               constructEnumMessage(
-                  getMessageName(sch, true), description, sch.enumValues(), sch.enumDescriptions());
+                  getMessageName(sch, true, inlineSchemaPathString),
+                  description,
+                  sch.enumValues(),
+                  sch.enumDescriptions());
         } else {
           switch (sch.format()) {
             case INT64:
@@ -685,7 +771,7 @@ public class DocumentToProtoConverter {
               throw new IllegalStateException(
                   String.format(
                       "unexpected 'format' value ('%s') when processing STRING type in schema %s",
-                      sch.format().toString(), debugCurrentPath));
+                      sch.format().toString(), currentSchemaPathString));
           }
         }
         break;
@@ -694,9 +780,9 @@ public class DocumentToProtoConverter {
     if (repeated) {
       Field subField =
           schemaToField(
-              keyType == null ? sch.items() /* array */ : sch.additionalProperties() /* object */,
+              keyType == null ? sch.items() /* array */ : sch.additionalProperties() /* map */,
               true,
-              debugCurrentPath);
+              currentSchemaPath);
       valueType = subField.getValueType();
     }
 
@@ -709,7 +795,7 @@ public class DocumentToProtoConverter {
 
     // Recurse for nested messages
     for (Map.Entry<String, Schema> entry : sch.properties().entrySet()) {
-      Field valueTypeField = schemaToField(entry.getValue(), true, debugCurrentPath);
+      Field valueTypeField = schemaToField(entry.getValue(), true, currentSchemaPath);
       valueType.getFields().add(valueTypeField);
       if (valueTypeField.getValueType().isEnum()) {
         valueType.getEnums().add(valueTypeField.getValueType());
@@ -733,26 +819,8 @@ public class DocumentToProtoConverter {
         putAllMessages(valueType.getName(), valueType);
       }
       if (!valueType.equals(existingMessage)) {
-        if (!"Errors".equals(valueType.getName())) {
-          // ManagedInstanceLastAttempt has the following ridiculous internal Errors message
-          // definition:
-          // message ManagedInstanceLastAttempt {
-          //   message Errors {
-          //       message Errors {}
-          //       repeated Errors errors = 1;
-          //   }
-          //   Errors errors = 1;
-          // }
-          // (i.e. Errors inside Errors with repeated Errors inside and singular Errors outside
-          // (O_o))
-          // This is the only place where something like this happens, so simply ignoring it for
-          // now.
-          throw new IllegalArgumentException(
-              "Message collision detected. Existing message = "
-                  + existingMessage
-                  + ", new message = "
-                  + valueType);
-        }
+        throw new MessageCollisionException(
+            existingMessage.toString(), valueType.toString(), currentSchemaPathString);
       }
     }
     return field;
@@ -783,21 +851,32 @@ public class DocumentToProtoConverter {
     return enumMessage;
   }
 
-  private String getMessageName(Schema sch) {
-    String messageName = sch.getIdentifier();
+  // NOTE that if schema path is null, nothing is looked up (implicitly) and nothing is recorded
+  // (explicitly)
+  private String getMessageName(Schema sch, String schemaPath) {
+    String messageName = this.config.getMessageNameForPath(schemaPath);
+    if (messageName == null) {
+      messageName = sch.getIdentifier();
+    }
     if (Character.isLowerCase(messageName.charAt(0))) {
       messageName = Name.anyCamel(messageName).toUpperCamel();
+    }
+    if (schemaPath != null) {
+      this.config.addInlineField(
+          schemaPath, messageName, Integer.toHexString(sch.contentHashCode()));
     }
     return messageName;
   }
 
-  private String getMessageName(Schema sch, Boolean isEnum) {
+  private String getMessageName(Schema sch, Boolean isEnum, String schemaPath) {
     String messageName = sch.getIdentifier();
     // For the enum name start with uppercase letter, add the "Enum" suffix.
     if (isEnum && Character.isUpperCase(messageName.charAt(0))) {
       return Name.anyCamel(messageName).toUpperCamel() + "Enum";
     }
-    return getMessageName(sch);
+    // We always generate enum types as nested within other protobuf messages, so we pass a null
+    // schemaPath so that this message does not get recorded as an inline-defined top-level message.
+    return getMessageName(sch, isEnum ? null : schemaPath);
   }
 
   private void readResources(Document document) {
@@ -841,21 +920,7 @@ public class DocumentToProtoConverter {
         // Request
         String methodname = getRpcMethodName(method).toUpperCamel();
 
-        // The proto RPC request message is a new message that wraps the Discovery file's request
-        // schema for this RPC.
-        String requestName = getRpcMessageName(method, "request").toUpperCamel();
-        if (protoFile.getMessages().containsKey(requestName)) {
-          // In some cases, the request schema name specified in the Discovery file exactly matches
-          // the proto service RPC request message name (requestName) we determined above. We avoid
-          // name collisions in what follows.
-
-          String requestName2 = getRpcMessageName(method, "rpc", "request").toUpperCamel();
-          if (protoFile.getMessages().containsKey(requestName2)) {
-            throw new RpcRequestMessageConflictException(
-                grpcServiceName, methodname, requestName, requestName2);
-          }
-          requestName = requestName2;
-        }
+        String requestName = setRpcMessageName(method, grpcServiceName, methodname, "request");
 
         String inputDescription = getInputMessageDescription(grpcServiceName, methodname);
         Message input = new Message(requestName, false, false, sanitizeDescr(inputDescription));
@@ -925,7 +990,7 @@ public class DocumentToProtoConverter {
         if (method.response() != null) {
           output = protoFile.getMessages().get(method.response().reference());
         } else {
-          String responseName = getRpcMessageName(method, "response").toUpperCamel();
+          String responseName = setRpcMessageName(method, grpcServiceName, methodname, "response");
           String outputDescription = getOutputMessageDescription(grpcServiceName, methodname);
           output = new Message(responseName, false, false, outputDescription);
           putAllMessages(responseName, output);
@@ -989,6 +1054,13 @@ public class DocumentToProtoConverter {
     return "The " + serviceName + " API.";
   }
 
+  private String getRpcMessageConfigKey(Method method, String suffix) {
+    String[] pieces = method.id().split("\\.");
+    String methodName = pieces[pieces.length - 1];
+    String resourceName = pieces[pieces.length - 2];
+    return String.format("resources.%s.%s.%s", resourceName, methodName, suffix);
+  }
+
   private Name getRpcMessageName(Method method, String... suffixes) {
     String[] pieces = method.id().split("\\.");
     String methodName = pieces[pieces.length - 1];
@@ -1004,6 +1076,40 @@ public class DocumentToProtoConverter {
     System.arraycopy(suffixes, 0, nameParts, 2, numSuffixes);
 
     return Name.anyCamel(nameParts);
+  }
+
+  private String setRpcMessageName(
+      Method method, String grpcServiceName, String methodName, String suffix) {
+    String messageKey = getRpcMessageConfigKey(method, "_" + suffix);
+
+    // The proto RPC request message is a new message that wraps the Discovery file's request
+    // schema for this RPC.
+    String messageName = this.config.getMessageNameForPath(messageKey);
+    boolean messageNameConfigured = messageName != null;
+    if (!messageNameConfigured) {
+      messageName = getRpcMessageName(method, suffix).toUpperCamel();
+    }
+    if (protoFile.getMessages().containsKey(messageName)) {
+      // In some cases, the request schema name specified in the Discovery file exactly matches
+      // the proto service RPC request message name (requestName) we determined above. We avoid
+      // name collisions in what follows.
+
+      if (messageNameConfigured) {
+        // We don't override explicit configuration, so if there's a conflict, we just  error.
+        throw new RpcRequestConfiguredMessageConflictException(messageKey, methodName);
+      }
+
+      String messageName2 = getRpcMessageName(method, "rpc", suffix).toUpperCamel();
+      if (protoFile.getMessages().containsKey(messageName2)) {
+        throw new RpcRequestMessageConflictException(
+            grpcServiceName, methodName, messageName, messageName2);
+      }
+      messageName = messageName2;
+    }
+
+    this.config.addInlineField(
+        messageKey, messageName, Integer.toHexString(method.hashCode() + suffix.hashCode()));
+    return messageName;
   }
 
   private Name getRpcMethodName(Method method) {
@@ -1058,6 +1164,25 @@ public class DocumentToProtoConverter {
           String.format(
               "could not construct request message name for %s.%s: tried '%s', '%s'",
               serviceName, rpcName, candidateMessageName1, candidateMessageName2));
+    }
+  }
+
+  public class RpcRequestConfiguredMessageConflictException extends InternalError {
+    public RpcRequestConfiguredMessageConflictException(
+        String configKey, String candidateMessageName) {
+      super(
+          String.format(
+              "configured message name conflicts with already defined message: %s : %s",
+              configKey, candidateMessageName));
+    }
+  }
+
+  public class MessageCollisionException extends IllegalArgumentException {
+    public MessageCollisionException(String existingMessage, String newMessage, String fieldPath) {
+      super(
+          String.format(
+              "Message collision detected. Existing message = %s; new message = %s @ %s",
+              existingMessage, newMessage, fieldPath));
     }
   }
 }

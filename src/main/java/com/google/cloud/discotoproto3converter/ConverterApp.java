@@ -36,6 +36,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -51,6 +54,8 @@ public abstract class ConverterApp {
               "--discovery_doc_path",
               "--previous_proto_file_path",
               "--output_file_path",
+              "--input_config_path",
+              "--output_config_path",
               "--service_ignorelist",
               "--message_ignorelist",
               "--relative_link_prefix",
@@ -68,14 +73,22 @@ public abstract class ConverterApp {
       String discoveryDocPath,
       String previousProtoPath,
       String outputFilePath,
+      String inputConfigPath,
+      String outputConfigPath,
       String serviceIgnorelist,
       String messageIgnorelist,
       String relativeLinkPrefix,
       String enumsAsStrings,
-      String outputComments)
+      String outputComments,
+      String timeStamp)
       throws IOException {
+    String inputConfig = null;
+    if (inputConfigPath.length() > 0) {
+      inputConfig = Files.readString(Paths.get(inputConfigPath));
+    }
 
     ProtoFile newProtoFile = null;
+
     if (discoveryDocPath != null) {
       Document document = createDocument(discoveryDocPath);
       DocumentToProtoConverter converter =
@@ -85,8 +98,16 @@ public abstract class ConverterApp {
               new HashSet<>(Arrays.asList(serviceIgnorelist.split(","))),
               new HashSet<>(Arrays.asList(messageIgnorelist.split(","))),
               relativeLinkPrefix,
-              Boolean.valueOf(enumsAsStrings));
+              Boolean.valueOf(enumsAsStrings),
+              inputConfig,
+              timeStamp);
       newProtoFile = converter.getProtoFile();
+
+      if (outputConfigPath.length() > 0) {
+        Path outputPath = Paths.get(outputConfigPath);
+        Files.createDirectories(outputPath.getParent());
+        Files.writeString(outputPath, converter.getOutputConfig());
+      }
     }
 
     ProtoFile previousProtoFile = null;
@@ -108,12 +129,68 @@ public abstract class ConverterApp {
     }
   }
 
+  /** Convenience method when we automatically set the time to right now. */
+  public void convert(
+      String discoveryDocPath,
+      String previousProtoPath,
+      String outputFilePath,
+      String inputConfigPath,
+      String outputConfigPath,
+      String serviceIgnorelist,
+      String messageIgnorelist,
+      String relativeLinkPrefix,
+      String enumsAsStrings,
+      String outputComments)
+      throws IOException {
+    convert(
+        discoveryDocPath,
+        previousProtoPath,
+        outputFilePath,
+        inputConfigPath,
+        outputConfigPath,
+        serviceIgnorelist,
+        messageIgnorelist,
+        relativeLinkPrefix,
+        enumsAsStrings,
+        outputComments,
+        OffsetDateTime.now()
+            .truncatedTo(ChronoUnit.SECONDS)
+            .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+  }
+
+  /** Convenience method when we don't deal with input or output configs. */
+  public void convert(
+      String discoveryDocPath,
+      String previousProtoPath,
+      String outputFilePath,
+      String serviceIgnorelist,
+      String messageIgnorelist,
+      String relativeLinkPrefix,
+      String enumsAsStrings,
+      String outputComments)
+      throws IOException {
+    convert(
+        discoveryDocPath,
+        previousProtoPath,
+        outputFilePath,
+        "",
+        "",
+        serviceIgnorelist,
+        messageIgnorelist,
+        relativeLinkPrefix,
+        enumsAsStrings,
+        outputComments,
+        "");
+  }
+
   public void convert(String[] args) throws IOException {
     Map<String, String> parsedArgs = parseArgs(args);
     convert(
         parsedArgs.get("--discovery_doc_path"),
         parsedArgs.get("--previous_proto_file_path"),
         parsedArgs.get("--output_file_path"),
+        parsedArgs.get("--input_config_path"),
+        parsedArgs.get("--output_config_path"),
         parsedArgs.get("--service_ignorelist"),
         parsedArgs.get("--message_ignorelist"),
         parsedArgs.get("--relative_link_prefix"),
@@ -129,6 +206,8 @@ public abstract class ConverterApp {
     parsedArgs.put("--message_ignorelist", "");
     parsedArgs.put("--enums_as_strings", "false");
     parsedArgs.put("--output_comments", "true");
+    parsedArgs.put("--input_config_path", "");
+    parsedArgs.put("--output_config_path", "");
 
     for (String arg : args) {
       String[] argNameVal = arg.split("=");

@@ -38,7 +38,7 @@ def google_java_format(name, srcs, formatter):
         srcs = srcs,
         # TODO: this may fail if list of files is too long (exceeds max command line limit in shell).
         #       Split the command into multiple executions if this ever fails (good enough for now)
-        cmd = "echo ' $(location %s) --replace $(SRCS)' > $@" % formatter,
+        cmd = "echo ' echo === Running formatter $(location %s)  ===; $(location %s) --replace $(SRCS)' > $@" % (formatter, formatter),
         executable = True,
         tools = [formatter],
         local = 1,

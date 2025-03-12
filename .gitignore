@@ -9,3 +9,6 @@ bazel-*
 .ijwb
 out
 *.iml
+
+# Emacs
+*~

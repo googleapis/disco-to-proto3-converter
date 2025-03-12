@@ -332,6 +332,25 @@ public abstract class Schema implements Node {
         type());
   }
 
+  public int contentHashCode() {
+    return Objects.hash(
+        additionalProperties() == null ? null : additionalProperties().getIdentifier(),
+        defaultValue(),
+        // we explicitly exclude description()
+        format(),
+        id(),
+        isEnum(),
+        items() == null ? null : items().getIdentifier(),
+        key(),
+        location(),
+        pattern(),
+        properties().keySet(),
+        reference(),
+        repeated(),
+        required(),
+        type());
+  }
+
   @Override
   public boolean equals(Object other) {
     if (!(other instanceof Schema)) {

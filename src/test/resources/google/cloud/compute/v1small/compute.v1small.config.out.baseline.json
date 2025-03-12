@@ -1,0 +1,103 @@
+{
+  "converterVersion": "0b4d6028+",
+  "updateTime": "2025-02-26T12:44:14-08:00",
+  "apiVersion": "v1small",
+  "discoveryRevision": "20200302",
+  "inlineSchemas": [
+    {
+      "schema": "950d9687",
+      "locations": {
+        "OperationData": [
+          "schemas.Operation.warnings.warnings.data.data"
+        ],
+        "Data": [
+          "schemas.AddressList.warning.data.data",
+          "schemas.AddressesScopedList.warning.data.data",
+          "schemas.AddressAggregatedList.warning.data.data"
+        ]
+      }
+    },
+    {
+      "schema": "29c13923",
+      "locations": {
+        "Warning": [
+          "schemas.AddressesScopedList.warning",
+          "schemas.AddressList.warning",
+          "schemas.AddressAggregatedList.warning"
+        ]
+      }
+    },
+    {
+      "schema": "df7cd4f5",
+      "locations": {
+        "AggregatedListAddressesRequest": [
+          "resources.addresses.aggregatedList._request"
+        ]
+      }
+    },
+    {
+      "schema": "cc3898dd",
+      "locations": {
+        "DeleteAddressRequest": [
+          "resources.addresses.delete._request"
+        ]
+      }
+    },
+    {
+      "schema": "bd1be884",
+      "locations": {
+        "Error": [
+          "schemas.Operation.error"
+        ]
+      }
+    },
+    {
+      "schema": "b48394ff",
+      "locations": {
+        "Errors": [
+          "schemas.Operation.error.errors.errors"
+        ]
+      }
+    },
+    {
+      "schema": "4d69d24e",
+      "locations": {
+        "GetRegionOperationRequest": [
+          "resources.regionOperations.get._request"
+        ]
+      }
+    },
+    {
+      "schema": "d542d5eb",
+      "locations": {
+        "InsertAddressRequest": [
+          "resources.addresses.insert._request"
+        ]
+      }
+    },
+    {
+      "schema": "3a8a9090",
+      "locations": {
+        "ListAddressesRequest": [
+          "resources.addresses.list._request"
+        ]
+      }
+    },
+    {
+      "schema": "b89740bb",
+      "locations": {
+        "WaitRegionOperationRequest": [
+          "resources.regionOperations.wait._request"
+        ]
+      }
+    },
+    {
+      "schema": "eb43ec08",
+      "locations": {
+        "Warnings": [
+          "schemas.Operation.warnings.warnings"
+        ]
+      }
+    }
+  ]
+}
