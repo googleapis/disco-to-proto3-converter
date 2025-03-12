@@ -592,7 +592,6 @@ public class DocumentToProtoConverter {
   private Field schemaToField(Schema sch, boolean optional, List<String> previousSchemaPath) {
     assert previousSchemaPath.size() > 0; // we should at least have the caller
 
-    // FIXME: Test the output config.
     String schemaName = sch.key();
     String name = Name.anyCamel(schemaName).toCapitalizedLowerUnderscore();
     String description = sch.description();
@@ -877,7 +876,7 @@ public class DocumentToProtoConverter {
     }
     // We always generate enum types as nested within other protobuf messages, so we pass a null
     // schemaPath so that this message does not get recorded as an inline-defined top-level message.
-    return getMessageName(sch, null);
+    return getMessageName(sch, isEnum? null : schemaPath);
   }
 
   private void readResources(Document document) {
