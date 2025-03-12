@@ -876,7 +876,7 @@ public class DocumentToProtoConverter {
     }
     // We always generate enum types as nested within other protobuf messages, so we pass a null
     // schemaPath so that this message does not get recorded as an inline-defined top-level message.
-    return getMessageName(sch, isEnum? null : schemaPath);
+    return getMessageName(sch, isEnum ? null : schemaPath);
   }
 
   private void readResources(Document document) {

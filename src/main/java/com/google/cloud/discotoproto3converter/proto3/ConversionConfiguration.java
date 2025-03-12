@@ -197,7 +197,7 @@ public class ConversionConfiguration {
     private Map<String, List<String>> locations;
 
     // These are used for sorting, and are not output
-    transient String sortKey;  // memoized
+    transient String sortKey; // memoized
     transient int sortID; // a change in this value clears sortKey
 
     private InlineSchema() {
@@ -323,9 +323,7 @@ public class ConversionConfiguration {
     return this;
   }
 
-  /**
-   * Sorts inlineSchemas, ensuring that memoized values are updated.
-   */
+  /** Sorts inlineSchemas, ensuring that memoized values are updated. */
   private void sortInlineSchemas() {
     this.currentSortID++;
     Collections.sort(this.inlineSchemas);

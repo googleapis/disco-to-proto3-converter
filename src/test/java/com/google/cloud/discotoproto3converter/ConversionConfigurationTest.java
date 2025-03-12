@@ -408,7 +408,6 @@ public class ConversionConfigurationTest {
    */
   public static boolean checkIdenticalJSON(String expected, String actual) {
     return ConversionConfiguration.fromJSON(expected)
-            .publicFieldsEqual(ConversionConfiguration.fromJSON(actual), true, true, true);
+        .publicFieldsEqual(ConversionConfiguration.fromJSON(actual), true, true, true);
   }
-
 }

@@ -843,7 +843,6 @@ public class DiscoToProto3ConverterAppTest {
    */
   public static boolean checkEquivalentJSON(String expected, String actual) {
     return ConversionConfiguration.fromJSON(expected)
-            .publicFieldsEqual(ConversionConfiguration.fromJSON(actual), false, false, false);
+        .publicFieldsEqual(ConversionConfiguration.fromJSON(actual), false, false, false);
   }
-
 }
