@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: gcr.io/gapic-images/googleapis-bazel:20210105
+    container: gcr.io/gapic-images/googleapis-bazel:20250306
     # Dockerfile for this image is here:
     # https://github.com/googleapis/googleapis-discovery/blob/main/Dockerfile
     # If you update its version, please also update it below in
