@@ -12,18 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM maven:3.9.9-eclipse-temurin-11 AS builder
+FROM maven:3.9.9-eclipse-temurin-21 AS builder
 WORKDIR /repo
 
-COPY . .
-RUN test -d .git || { echo "** ERROR ** Build this Docker image from a full repo, not a workspace (.git must be a directory, not a file)" ; return ; }
-RUN test -d .git  # intentional repeat so we fail out of `docker build`
-
+# --- Optimized Caching Strategy ---
+# 1. Copy only the pom.xml to leverage Docker's layer caching.
+#    Dependencies will only be re-downloaded if pom.xml changes.
+COPY pom.xml .
 RUN mvn dependency:go-offline
+
+# 2. Copy source tree.
+COPY . .
+
+# A clear, concise check that will fail the build if .git is not a directory.
+RUN test -d /repo/.git || (echo "ERROR: .git is not a directory. Build from a full repo clone, not a worktree." && ls -la  /repo && exit 1)
 
 RUN mvn package
 
 FROM eclipse-temurin:21
 WORKDIR /app
-COPY --from=builder /repo/target/disco-to-proto3-converter-0.0.1-SNAPSHOT-jar-with-dependencies.jar disco-to-proto3-converter.jar
+
+# --- Robust Artifact Handling ---
+# Use an ARG to define the JAR path with a wildcard to avoid hardcoding versions.
+ARG JAR_FILE=target/disco-to-proto3-converter-*-jar-with-dependencies.jar
+
+# Copy the built JAR from the builder stage and give it a consistent name.
+COPY --from=builder /repo/${JAR_FILE} disco-to-proto3-converter.jar
+
+# Define the entrypoint to run the application.
 ENTRYPOINT ["java", "-jar", "disco-to-proto3-converter.jar"]
