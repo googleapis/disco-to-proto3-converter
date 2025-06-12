@@ -1,0 +1,16 @@
+# Ignore Maven's build output directory
+target/
+
+# Ignore IDE and OS-specific files
+.idea/
+*.iml
+.vscode/
+*~
+.DS_Store
+
+# Ignore logs
+*.log
+
+# Allowlist the files and directories needed for the Maven build
+!.git/
+!.git/**
