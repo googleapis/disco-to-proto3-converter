@@ -185,6 +185,10 @@ public abstract class ConverterApp {
 
   public void convert(String[] args) throws IOException {
     Map<String, String> parsedArgs = parseArgs(args);
+    convert(parsedArgs);
+  }
+
+  public void convert(Map<String, String> parsedArgs) throws IOException {
     convert(
         parsedArgs.get("--discovery_doc_path"),
         parsedArgs.get("--previous_proto_file_path"),
@@ -198,7 +202,7 @@ public abstract class ConverterApp {
         parsedArgs.get("--output_comments"));
   }
 
-  protected Map<String, String> parseArgs(String[] args) {
+  protected static Map<String, String> parseArgs(String[] args) {
     Map<String, String> parsedArgs = new HashMap<>();
 
     // Optional Parameters

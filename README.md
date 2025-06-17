@@ -35,16 +35,33 @@ following command from the repository root:
 java \
   -jar target/target/disco-to-proto3-converter-app.jar \
   --discovery_doc_path=src/test/resources/google/cloud/compute/v1/compute.v1.json \
+  --output_file_path=google/cloud/compute/v1/compute.- \
+  --input_config_path=src/test/resources/google/cloud/compute/v1/compute.v1.config.input.json \
+  --output_config_path=google/cloud/compute/v1/compute.v1.config.output.json \
+  --enums_as_strings=True
+```
+
+Note the `.-` suffix in the value of `--output_file_path`. This causes all three
+generated files (the proto and the config files) to be generated together. Check
+the `google/cloud/compute/v1` directory for the resulting `compute.proto`,
+`compute_grpc_service_config.json`, and `compute_gapic.yaml` files.
+
+#### (Alternative) Generate each file individually
+You can also generate each of the files above individually by using distinct generator binaries for each.
+
+* To generate just `compute.proto`, run:
+
+```sh
+java \
+  -jar target/target/disco-to-proto3-converter-app.jar \
+  --discovery_doc_path=src/test/resources/google/cloud/compute/v1/compute.v1.json \
   --output_file_path=google/cloud/compute/v1/compute.proto \
   --input_config_path=src/test/resources/google/cloud/compute/v1/compute.v1.config.input.json \
   --output_config_path=google/cloud/compute/v1/compute.v1.config.output.json \
   --enums_as_strings=True
 ```
 
-Check the `google/cloud/compute/v1` directory for the converted `compute.proto`
-file.
-
-To get the corresponding auxiliary config files, run
+To generate just `compute_grpc_service_config.json`, run:
 
 ```sh
 java \
@@ -56,7 +73,7 @@ java \
   --enums_as_strings=True
 ```
 
-and
+To generate just `compute_gapic.yaml`, run:
 
 ```sh
 java \
@@ -67,10 +84,6 @@ java \
   --output_config_path=google/cloud/compute/v1/compute.v1.config.output.json \
   --enums_as_strings=True
 ```
-
-The config files generated from these example invocations,
-`compute_grpc_service_config.json` and `compute_gapic.yaml`, respectively, will
-also appear in the `google/cloud/compute/v1` directory.
 
 
 ### Docker
@@ -94,7 +107,7 @@ You can package the converter in a Docker image and run it as follows:
    ```sh
    docker run -v $(pwd):/apis converter:test \
      --discovery_doc_path=/apis/src/test/resources/google/cloud/compute/v1/compute.v1.json \
-     --output_file_path=/apis/google/cloud/compute/v1/compute.proto \
+     --output_file_path=/apis/google/cloud/compute/v1/compute.- \
      --input_config_path=/apis/src/test/resources/google/cloud/compute/v1/compute.v1.config.input.json \
      --output_config_path=/apis/google/cloud/compute/v1/compute.v1.config.output.json  \
      --enums_as_strings=True

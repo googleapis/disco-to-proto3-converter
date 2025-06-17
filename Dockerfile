@@ -32,12 +32,10 @@ RUN mvn package
 FROM eclipse-temurin:21
 WORKDIR /app
 
-# --- Robust Artifact Handling ---
-# Use an ARG to define the JAR path with a wildcard to avoid hardcoding versions.
-ARG JAR_FILE=target/disco-to-proto3-converter-*-jar-with-dependencies.jar
-
 # Copy the built JAR from the builder stage and give it a consistent name.
-COPY --from=builder /repo/${JAR_FILE} disco-to-proto3-converter.jar
+COPY --from=builder /repo/disco-to-proto3-converter-app.jar ./
+COPY --from=builder /repo/service-config-generator-app.jar ./
+COPY --from=builder /repo/gapic-yaml-generator-app.jar ./
 
 # Define the entrypoint to run the application.
-ENTRYPOINT ["java", "-jar", "disco-to-proto3-converter.jar"]
+ENTRYPOINT ["java", "-jar", "disco-to-proto3-converter-app.jar"]
