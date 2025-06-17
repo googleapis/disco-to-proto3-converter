@@ -27,12 +27,13 @@ bazel run :google_java_format --enable_workspace
 ```
 
 ### Run
-After performing the build, to run the converter using `compute.v1.json` as a
-sample input (included in this repository) run the following command from the
-repository root:
+After performing the build, to obtain the proto from the converter using
+`compute.v1.json` (included in this repository) as a sample input, run the
+following command from the repository root:
+
 ```sh
 java \
-  -jar target/disco-to-proto3-converter-0.0.1-SNAPSHOT-jar-with-dependencies.jar \
+  -jar target/target/disco-to-proto3-converter-app.jar \
   --discovery_doc_path=src/test/resources/google/cloud/compute/v1/compute.v1.json \
   --output_file_path=google/cloud/compute/v1/compute.proto \
   --input_config_path=src/test/resources/google/cloud/compute/v1/compute.v1.config.input.json \
@@ -42,6 +43,34 @@ java \
 
 Check the `google/cloud/compute/v1` directory for the converted `compute.proto`
 file.
+
+To get the corresponding auxiliary config files, run
+
+```sh
+java \
+  -jar target/service-config-generator-app.jar \
+  --discovery_doc_path=src/test/resources/google/cloud/compute/v1/compute.v1.json \
+  --output_file_path=google/cloud/compute/v1/compute_grpc_service_config.json \
+  --input_config_path=src/test/resources/google/cloud/compute/v1/compute.v1.config.input.json \
+  --output_config_path=google/cloud/compute/v1/compute.v1.config.output.json \
+  --enums_as_strings=True
+```
+
+and
+
+```sh
+java \
+  -jar target/gapic-yaml-generator-app.jar \
+  --discovery_doc_path=src/test/resources/google/cloud/compute/v1/compute.v1.json \
+  --output_file_path=google/cloud/compute/v1/compute_gapic.yaml \
+  --input_config_path=src/test/resources/google/cloud/compute/v1/compute.v1.config.input.json \
+  --output_config_path=google/cloud/compute/v1/compute.v1.config.output.json \
+  --enums_as_strings=True
+```
+
+The config files generated from these example invocations,
+`compute_grpc_service_config.json` and `compute_gapic.yaml`, respectively, will
+also appear in the `google/cloud/compute/v1` directory.
 
 
 ### Docker
