@@ -25,9 +25,7 @@ public class DiscoToProto3ConverterApp extends ConverterApp {
     super(new Proto3Writer());
   }
 
-  /**
-     Returns `text` with the suffix `target` changed to `replacement`.
-   */
+  /** Returns `text` with the suffix `target` changed to `replacement`. */
   public static String replaceSuffixWith(String text, String target, String replacement) {
     int start = text.lastIndexOf(target);
     StringBuilder builder = new StringBuilder();
@@ -37,13 +35,13 @@ public class DiscoToProto3ConverterApp extends ConverterApp {
   }
 
   /**
-     Generates the proto file and, if the value of the argument "--output_file_path" ends in `.-`,
-     also the gRPC service config and the GAPIC YAML config files.
+   * Generates the proto file and, if the value of the argument "--output_file_path" ends in `.-`,
+   * also the gRPC service config and the GAPIC YAML config files.
    */
   public static void main(String[] args) throws IOException {
     String suffixForMultiFileGeneration = ".-";
     Map<String, String> parsedArgs = parseArgs(args);
-    String outputFilePathArgument="--output_file_path";
+    String outputFilePathArgument = "--output_file_path";
     String outputFileStem = parsedArgs.get(outputFilePathArgument);
 
     if (!outputFileStem.endsWith(suffixForMultiFileGeneration)) {
@@ -56,19 +54,23 @@ public class DiscoToProto3ConverterApp extends ConverterApp {
     // run all three converters
 
     System.err.print("\n\n\n*** generating protocol buffer file");
-    parsedArgs.put(outputFilePathArgument,
+    parsedArgs.put(
+        outputFilePathArgument,
         replaceSuffixWith(outputFileStem, suffixForMultiFileGeneration, ".proto"));
     DiscoToProto3ConverterApp protoConverterApp = new DiscoToProto3ConverterApp();
     protoConverterApp.convert(parsedArgs);
 
     System.err.print("\n\n\n*** generating grpc service config");
-    parsedArgs.put(outputFilePathArgument,
-        replaceSuffixWith(outputFileStem, suffixForMultiFileGeneration, "_grpc_service_config.json"));
+    parsedArgs.put(
+        outputFilePathArgument,
+        replaceSuffixWith(
+            outputFileStem, suffixForMultiFileGeneration, "_grpc_service_config.json"));
     ServiceConfigGeneratorApp serviceConfigConverterApp = new ServiceConfigGeneratorApp();
     serviceConfigConverterApp.convert(parsedArgs);
 
     System.err.print("\n\n\n*** generating gapic yaml config");
-    parsedArgs.put(outputFilePathArgument,
+    parsedArgs.put(
+        outputFilePathArgument,
         replaceSuffixWith(outputFileStem, suffixForMultiFileGeneration, "_gapic.yaml"));
     GapicYamlGeneratorApp gapicYamlGeneratorApp = new GapicYamlGeneratorApp();
     gapicYamlGeneratorApp.convert(parsedArgs);
