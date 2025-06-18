@@ -76,6 +76,11 @@
         <version>3.6.0</version> <!-- Use a recent version -->
         <executions>
 
+          <!-- TODO: Get rid of executions 1, 2, and 3, only retaining
+               4. Not doing that yet as we want this config to remain
+               relatively parallel to the Bazel BUILD rules for
+               now. -->
+
           <!-- Execution #1: DiscoToProto3ConverterApp -->
           <execution>
             <id>shade-proto3-generator</id>
