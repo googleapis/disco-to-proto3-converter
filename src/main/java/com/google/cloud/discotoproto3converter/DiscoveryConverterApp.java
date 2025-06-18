@@ -16,17 +16,13 @@
 
 package com.google.cloud.discotoproto3converter;
 
-import com.google.cloud.discotoproto3converter.proto3.Proto3Writer;
 import java.io.IOException;
 import java.util.Map;
 
-public class DiscoveryConverterApp extends ConverterApp {
-  public DiscoveryConverterApp() {
-    super(new Proto3Writer());
-  }
+public class DiscoveryConverterApp {
 
   public static void main(String[] args) throws IOException {
-    Map<String, String> parsedArgs = parseArgs(args);
+    Map<String, String> parsedArgs = ConverterApp.parseArgs(args);
     String outputFilePathArgument = "--output_file_path";
     String outputFileStem = parsedArgs.get(outputFilePathArgument);
 

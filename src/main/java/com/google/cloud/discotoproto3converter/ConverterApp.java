@@ -202,7 +202,7 @@ public abstract class ConverterApp {
         parsedArgs.get("--output_comments"));
   }
 
-  protected static Map<String, String> parseArgs(String[] args) {
+  public static Map<String, String> parseArgs(String[] args) {
     Map<String, String> parsedArgs = new HashMap<>();
 
     // Optional Parameters
