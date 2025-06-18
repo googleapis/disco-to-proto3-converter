@@ -27,22 +27,24 @@ public class DiscoveryConverterApp extends ConverterApp {
 
   public static void main(String[] args) throws IOException {
     Map<String, String> parsedArgs = parseArgs(args);
-    String outputFilePathArgument="--output_file_path";
+    String outputFilePathArgument = "--output_file_path";
     String outputFileStem = parsedArgs.get(outputFilePathArgument);
 
-    System.err.print("\n\n\n*** Generating protocol buffer file");
+    System.err.print("Generating protocol buffer file...");
     parsedArgs.put(outputFilePathArgument, outputFileStem.concat(".proto"));
     DiscoToProto3ConverterApp protoConverterApp = new DiscoToProto3ConverterApp();
     protoConverterApp.convert(parsedArgs);
 
-    System.err.print("\n\n\n*** Generating grpc service config");
+    System.err.print("\nGenerating grpc service config...");
     parsedArgs.put(outputFilePathArgument, outputFileStem.concat("_grpc_service_config.json"));
     ServiceConfigGeneratorApp serviceConfigConverterApp = new ServiceConfigGeneratorApp();
     serviceConfigConverterApp.convert(parsedArgs);
 
-    System.err.print("\n\n\n*** Generating gapic yaml config");
+    System.err.print("\nGenerating gapic yaml config...");
     parsedArgs.put(outputFilePathArgument, outputFileStem.concat("_gapic.yaml"));
     GapicYamlGeneratorApp gapicYamlGeneratorApp = new GapicYamlGeneratorApp();
     gapicYamlGeneratorApp.convert(parsedArgs);
+
+    System.err.print("\nDone.\n");
   }
 }

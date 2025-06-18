@@ -27,23 +27,22 @@ bazel run :google_java_format --enable_workspace
 ```
 
 ### Run
-After performing the build, to obtain the proto from the converter using
-`compute.v1.json` (included in this repository) as a sample input, run the
-following command from the repository root:
+After performing the build, you obtain the API protocol buffer file and GAPIC
+configuration files derived from the sample `compute.v1.json` Discovery file
+(included in this repository) by running the following command from the
+repository root:
 
 ```sh
 java \
-  -jar target/target/disco-to-proto3-converter-app.jar \
+  -jar target/target/discovery-converter-app.jar \
   --discovery_doc_path=src/test/resources/google/cloud/compute/v1/compute.v1.json \
-  --output_file_path=google/cloud/compute/v1/compute.- \
+  --output_file_path=google/cloud/compute/v1/compute \
   --input_config_path=src/test/resources/google/cloud/compute/v1/compute.v1.config.input.json \
   --output_config_path=google/cloud/compute/v1/compute.v1.config.output.json \
   --enums_as_strings=True
 ```
 
-Note the `.-` suffix in the value of `--output_file_path`. This causes all three
-generated files (the proto and the config files) to be generated together. Check
-the `google/cloud/compute/v1` directory for the resulting `compute.proto`,
+Check the `google/cloud/compute/v1` directory for the resulting `compute.proto`,
 `compute_grpc_service_config.json`, and `compute_gapic.yaml` files.
 
 #### (Alternative) Generate each file individually
@@ -107,7 +106,7 @@ You can package the converter in a Docker image and run it as follows:
    ```sh
    docker run -v $(pwd):/apis converter:test \
      --discovery_doc_path=/apis/src/test/resources/google/cloud/compute/v1/compute.v1.json \
-     --output_file_path=/apis/google/cloud/compute/v1/compute.- \
+     --output_file_path=/apis/google/cloud/compute/v1/compute \
      --input_config_path=/apis/src/test/resources/google/cloud/compute/v1/compute.v1.config.input.json \
      --output_config_path=/apis/google/cloud/compute/v1/compute.v1.config.output.json  \
      --enums_as_strings=True
