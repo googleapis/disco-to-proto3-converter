@@ -69,37 +69,146 @@
 
   <build>
     <plugins>
-      <!-- Maven Assembly Plugin -->
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <version>3.6.0</version>
-        <configuration>
-          <!-- get all project dependencies -->
-          <descriptorRefs>
-            <descriptorRef>jar-with-dependencies</descriptorRef>
-          </descriptorRefs>
-          <!-- MainClass in mainfest make a executable jar -->
-          <archive>
-            <manifest>
-              <mainClass>
-                com.google.cloud.discotoproto3converter.DiscoToProto3ConverterApp
-              </mainClass>
-            </manifest>
-          </archive>
-
-        </configuration>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.6.0</version> <!-- Use a recent version -->
         <executions>
+
+          <!-- TODO: Get rid of executions 1, 2, and 3, only retaining
+               4. Not doing that yet as we want this config to remain
+               relatively parallel to the Bazel BUILD rules for
+               now. -->
+
+          <!-- Execution #1: DiscoToProto3ConverterApp -->
           <execution>
-            <id>make-assembly</id>
-            <!-- bind to the packaging phase -->
+            <id>shade-proto3-generator</id>
             <phase>package</phase>
             <goals>
-              <goal>single</goal>
+              <goal>shade</goal>
             </goals>
+            <configuration>
+              <!-- The final name for the first binary -->
+              <finalName>disco-to-proto3-converter-app</finalName>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <!-- The main class for the first binary -->
+                  <mainClass>com.google.cloud.discotoproto3converter.DiscoToProto3ConverterApp</mainClass>
+                </transformer>
+                <!-- This transformer is good practice for merging service files -->
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              </transformers>
+              <!-- This helps avoid a security warning with signed JARs -->
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+            </configuration>
           </execution>
+
+          <!-- Execution #2: ServiceConfigGeneratorApp -->
+          <execution>
+            <id>shade-service-config-generator</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <!-- The final name for the second binary -->
+              <finalName>service-config-generator-app</finalName>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <!-- The main class for the second binary -->
+                  <mainClass>com.google.cloud.discotoproto3converter.ServiceConfigGeneratorApp</mainClass>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              </transformers>
+              <filters>
+                <!-- Same filter as above -->
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+            </configuration>
+          </execution>
+
+          <!-- Execution #3: GapicYamlGeneratorApp -->
+          <execution>
+            <id>shade-gapic-yaml-generator</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <!-- The final name for the third binary -->
+              <finalName>gapic-yaml-generator-app</finalName>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <!-- The main class for the third binary -->
+                  <mainClass>com.google.cloud.discotoproto3converter.GapicYamlGeneratorApp</mainClass>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              </transformers>
+              <filters>
+                <!-- Same filter as above -->
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+            </configuration>
+          </execution>
+
+          <!-- Execution #4: DiscoveryConverterApp -->
+          <execution>
+            <id>shade-discovery-converter</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <!-- The final name for the fourth binary -->
+              <finalName>discovery-converter-app</finalName>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <!-- The main class for the fourth binary -->
+                  <mainClass>com.google.cloud.discotoproto3converter.DiscoveryConverterApp</mainClass>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              </transformers>
+              <filters>
+                <!-- Same filter as above -->
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+            </configuration>
+          </execution>
+
         </executions>
       </plugin>
+
       <plugin>
         <groupId>pl.project13.maven</groupId>
         <artifactId>git-commit-id-plugin</artifactId>
@@ -123,8 +232,8 @@
         <configuration>
           <dotGitDirectory>${project.basedir}/.git</dotGitDirectory>
         </configuration>
-      </plugin> 
-      
+      </plugin>
+
 
     </plugins>
   </build>
