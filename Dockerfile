@@ -29,7 +29,7 @@ RUN test -d /repo/.git || (echo "ERROR: .git is not a directory. Build from a fu
 
 RUN mvn package
 
-FROM eclipse-temurin:21
+FROM eclipse-temurin:25
 WORKDIR /app
 
 # Copy the built JAR from the builder stage.
