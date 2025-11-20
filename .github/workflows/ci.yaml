@@ -16,7 +16,7 @@ jobs:
     # 'Cache Bazel files' - unfortunately it cannot accept variables at this
     # time.
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
 
     - name: Cache Bazel files
       id: cache-bazel
