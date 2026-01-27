@@ -125,7 +125,7 @@ public abstract class Method implements Comparable<Method>, Node {
   }
 
     public static String allowSlashedParent(String path, String flatPath) {
-	// This is temporary, special-case code to accept `parentName` in an RFC6570 Level 2-compliant style, i.e. `{+parentName}`. If `path` contains exactly one instance, `path` is returned with the pattern substituted by `{parentName=**}`. If there is more than one instance, or `{+` appears in some other context, returns an error. Otherwise, returns `flatPath`.
+	// This is temporary, special-case code to accept `parentName` in an RFC6570 Level 2-compliant style, i.e. `{+parentName}`. If `path` contains exactly one instance, `path` is returned with the pattern substituted with `{parent_name=**}`. If there is more than one instance, or `{+` appears in some other context, returns an error. Otherwise, returns `flatPath`.
 	if (path == null) {
 	    return flatPath; 
 	}
@@ -155,7 +155,11 @@ public abstract class Method implements Comparable<Method>, Node {
 
 	// Case 3: Substring appears exactly once
 	// Since we verified there is only one occurrence, .replace() is safe here.
-	return path.replace("{+parentName}", "{parentName=**}");
+	//
+	// TODO: Investigate why we need to provide the proper protobuf casing here. The fields
+	//   `path` and `flatPath` in Discovery files are not protobuf cased, so why does the
+	//   conversion not apply here?
+	return path.replace("{+parentName}", "{parent_name=**}");
     }
 
   @Override
