@@ -53,6 +53,8 @@ public abstract class Method implements Comparable<Method>, Node {
     Map<String, Schema> queryParams = new LinkedHashMap<>();
     Map<String, Schema> pathParams = new LinkedHashMap<>();
 
+    flatPath = allowSlashedParent(path, flatPath);
+
     for (String name : root.getObject("parameters").getFieldNames()) {
       Schema schema = Schema.from(parametersNode.getObject(name), name, null);
       // TODO: Remove these checks once we're sure that parameters can't be objects/arrays.
@@ -121,6 +123,40 @@ public abstract class Method implements Comparable<Method>, Node {
     }
     return thisMethod;
   }
+
+    public static String allowSlashedParent(String path, String flatPath) {
+	// This is temporary, special-case code to accept `parentName` in an RFC6570 Level 2-compliant style, i.e. `{+parentName}`. If `path` contains exactly one instance, `path` is returned with the `+` removed. If there is more than one instance, or `{+` appears in some other context, returns an error. Otherwise, returns `flatPath`.
+	if (path == null) {
+	    return flatPath; 
+	}
+
+	int firstIndex = path.indexOf("{+");
+
+	// Case 1: Prefix not found
+	if (firstIndex == -1) {
+	    return flatPath;
+	}
+
+	// Check for a second occurrence
+	int lastIndex = path.lastIndexOf("{+");
+
+	// Case 2: Prefix appears more than once
+	if (firstIndex != lastIndex) {
+	    throw new IllegalArgumentException("The substring '{+' appears multiple times in path.");
+	}
+
+	// Check for full special-case substring
+	int parentIndex = path.lastIndexOf("{+parentName}");
+
+	// Case 3: Check that the prefix is part of the special-case substring.
+	if (parentIndex == -1) {
+	    throw new IllegalArgumentException("The substring '{+' is not part of '{+parentName}'.");
+	}
+
+	// Case 3: Substring appears exactly once
+	// Since we verified there is only one occurrence, .replace() is safe here.
+	return path.replace("{+parentName}", "{parentName}");
+    }
 
   @Override
   public int compareTo(Method other) {
