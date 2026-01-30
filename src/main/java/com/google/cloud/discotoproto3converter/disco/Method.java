@@ -23,6 +23,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 
 /**
  * Adapted from its counterpart in gapic-generator.
@@ -45,13 +48,14 @@ public abstract class Method implements Comparable<Method>, Node {
     String httpMethod = root.getString("httpMethod");
     String id = root.getString("id");
     String path = root.getString("path");
-    String flatPath = root.has("flatPath") ? root.getString("flatPath") : path;
+    String flatPath = normalizePath(path, root.has("flatPath") ? root.getString("flatPath") : path);
     String apiVersion = root.getString("apiVersion");
 
     DiscoveryNode parametersNode = root.getObject("parameters");
     Map<String, Schema> parameters = new LinkedHashMap<>();
     Map<String, Schema> queryParams = new LinkedHashMap<>();
     Map<String, Schema> pathParams = new LinkedHashMap<>();
+
 
     for (String name : root.getObject("parameters").getFieldNames()) {
       Schema schema = Schema.from(parametersNode.getObject(name), name, null);
@@ -121,6 +125,66 @@ public abstract class Method implements Comparable<Method>, Node {
     }
     return thisMethod;
   }
+
+    /**
+     * Normalizes a flatPath based on the structure of a template path.
+     *
+     * @param path     The template path containing the {+FOO} token.
+     * @param flatPath The actual path string to be processed.
+     * @return The processed string.
+     * @throws IllegalArgumentException If path has multiple tokens or flatPath doesn't match prefix/suffix.
+     */
+    public static String normalizePath(String path, String flatPath) {
+        // Regex to find {+FOO}, where FOO is alphanumeric.
+        // We escape the braces and the plus sign.
+        Pattern tokenPattern = Pattern.compile("\\{\\+[a-zA-Z0-9]+\\}");
+        Matcher matcher = tokenPattern.matcher(path);
+
+        int matchCount = 0;
+        while (matcher.find()) {
+            matchCount++;
+        }
+
+        // Logic Branch 1: No instances of {+FOO}
+        if (matchCount == 0) {
+            return flatPath;
+        }
+
+        // Logic Branch 2: More than one instance
+        if (matchCount > 1) {
+            throw new IllegalArgumentException("Error: 'path' contains multiple instances of variable expansion tokens.");
+        }
+
+        // Logic Branch 3: Exactly one instance
+        matcher.reset(); // Reset matcher to retrieve positions
+        matcher.find();
+
+        // Extract Prefix and Suffix from 'path'
+        String prefix = path.substring(0, matcher.start());
+        String suffix = path.substring(matcher.end());
+
+        // Validate 'flatPath' against prefix and suffix
+        // We must also check that the total length is sufficient to contain both without overlap
+        if (!flatPath.startsWith(prefix) || 
+            !flatPath.endsWith(suffix) || 
+            flatPath.length() < (prefix.length() + suffix.length())) {
+            throw new IllegalArgumentException("Error: 'flatPath' does not match the structure defined by 'path'.");
+        }
+
+        // Extract subresource
+        // This is the content between the prefix and the suffix in flatPath
+        int subresourceStart = prefix.length();
+        int subresourceEnd = flatPath.length() - suffix.length();
+        String subresource = flatPath.substring(subresourceStart, subresourceEnd);
+
+        // Modify subresource
+        // Regex: Opening brace {, followed by any character that is NOT a closing brace, followed by }
+        // This ensures we stop at the *next* closing brace.
+        String modifiedSubresource = subresource.replaceAll("\\{[^}]*\\}", "*");
+
+        // Reconstruct and return
+        return prefix + modifiedSubresource + suffix;
+    }    
 
   @Override
   public int compareTo(Method other) {
