@@ -93,6 +93,12 @@ public class MethodTest {
   }
 
   @Test
+  public void normalizePath_camelCaseToken() {
+    // camelCase token should be converted to snake_case
+    assertEquals("projects/{my_project=foo}/zones", Method.normalizePath("projects/{+myProject}/zones", "projects/foo/zones"));
+  }
+
+  @Test
   public void normalizePath_noMatchDueToHyphen() {
     // {+foo-bar} does not match {+[a-zA-Z0-9]+}
     assertEquals("projects/{+foo-bar}/zones", Method.normalizePath("projects/{+foo-bar}/zones", "projects/{+foo-bar}/zones"));

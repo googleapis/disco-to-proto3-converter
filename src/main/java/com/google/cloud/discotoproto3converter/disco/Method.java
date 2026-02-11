@@ -155,13 +155,14 @@ public abstract class Method implements Comparable<Method>, Node {
                 throw new IllegalArgumentException("Error: 'path' contains multiple instances of variable expansion tokens.");
             }
     
-            // Logic Branch 3: Exactly one instance
-            matcher.reset(); // Reset matcher to retrieve positions
-            matcher.find();
-    
-            String tokenName = matcher.group(1);
-    
-            // Extract Prefix and Suffix from 'path'
+                    // Logic Branch 3: Exactly one instance
+                    matcher.reset(); // Reset matcher to retrieve positions
+                    matcher.find();
+            
+                    String tokenName = Name.anyCamel(matcher.group(1)).toLowerUnderscore();
+            
+                    // Extract Prefix and Suffix from 'path'
+            
             String prefix = path.substring(0, matcher.start());
             String suffix = path.substring(matcher.end());
     
@@ -179,13 +180,14 @@ public abstract class Method implements Comparable<Method>, Node {
             int subresourceEnd = flatPath.length() - suffix.length();
             String subresource = flatPath.substring(subresourceStart, subresourceEnd);
     
-            // Modify subresource
-            // Regex: Opening brace {, followed by any character that is NOT a closing brace, followed by }
-            // This ensures we stop at the *next* closing brace.
-            String modifiedSubresource = subresource.replaceAll("\\{[^}]*\\}", "*");
-    
-            // Reconstruct and return
-            return prefix + "{" + tokenName + "=" + modifiedSubresource + "}" + suffix;
+                    // Modify subresource
+                    // Regex: Opening brace {, followed by any character that is NOT a closing brace, followed by }
+                    // This ensures we stop at the *next* closing brace.
+                    String modifiedSubresource = subresource.replaceAll("\\{[^}]*\\}", "*");
+            
+                    // Reconstruct and return
+                    return prefix + "{" + tokenName + "=" + modifiedSubresource + "}" + suffix;
+            
         }
       @Override
   public int compareTo(Method other) {
