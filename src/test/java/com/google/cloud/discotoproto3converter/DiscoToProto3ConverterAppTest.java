@@ -833,6 +833,59 @@ public class DiscoToProto3ConverterAppTest {
                 "true"));
   }
 
+  @Test
+  public void convertSubresources() throws IOException {
+    // In this test we check for the correct conversion of a method
+    // whose HTTP bindings include sub-resources, which manifests in
+    // the Discovery file as a `{+someField}` in `path` and a
+    // `flatPath` that includes an embedded template for
+    // `someField`. This embedded template refers to fields that do
+    // not exist in this request, but are rather fields of the message
+    // defining `someField`.
+    DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
+    Path prefix = Paths.get("google", "cloud", "compute", "v1small");
+    Path discoveryDocPath =
+        Paths.get(
+            "src",
+            "test",
+            "resources",
+            prefix.toString(),
+            "compute.v1small.subresource.json");
+    Path generatedFilePath =
+        Paths.get(
+            outputDir.toString(), prefix.toString(), "compute.subresource.proto");
+    Path baselineFilePath =
+        Paths.get(
+            "src",
+            "test",
+            "resources",
+            prefix.toString(),
+            "compute.subresource.proto.baseline");
+    System.out.printf(
+        "*** @Test: convertSubresources():\n"
+            + "    Discovery path: %s\n"
+            + "    Generated file: %s\n"
+            + "    Baseline file: %s\n",
+        discoveryDocPath.toAbsolutePath(),
+        generatedFilePath.toAbsolutePath(),
+        baselineFilePath.toAbsolutePath());
+
+    app.convert(
+        discoveryDocPath.toString(),
+        null,
+        generatedFilePath.toString(),
+        "",
+        "",
+        "https://cloud.google.com",
+        "true",
+        "true");
+
+    String actualBody = readFile(generatedFilePath);
+    String baselineBody = readFile(baselineFilePath);
+    assertEquals(baselineBody, actualBody);
+  }
+
+
   private static String readFile(Path path) throws IOException {
     return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
   }
