@@ -134,59 +134,60 @@ public abstract class Method implements Comparable<Method>, Node {
      * @return The processed string.
      * @throws IllegalArgumentException If path has multiple tokens or flatPath doesn't match prefix/suffix.
      */
-    public static String normalizePath(String path, String flatPath) {
-        // Regex to find {+FOO}, where FOO is alphanumeric.
-        // We escape the braces and the plus sign.
-        Pattern tokenPattern = Pattern.compile("\\{\\+[a-zA-Z0-9]+\\}");
-        Matcher matcher = tokenPattern.matcher(path);
-
-        int matchCount = 0;
-        while (matcher.find()) {
-            matchCount++;
+        public static String normalizePath(String path, String flatPath) {
+            // Regex to find {+FOO}, where FOO is alphanumeric.
+            // We escape the braces and the plus sign. We capture FOO.
+            Pattern tokenPattern = Pattern.compile("\\{\\+([a-zA-Z0-9]+)\\}");
+            Matcher matcher = tokenPattern.matcher(path);
+    
+            int matchCount = 0;
+            while (matcher.find()) {
+                matchCount++;
+            }
+    
+            // Logic Branch 1: No instances of {+FOO}
+            if (matchCount == 0) {
+                return flatPath;
+            }
+    
+            // Logic Branch 2: More than one instance
+            if (matchCount > 1) {
+                throw new IllegalArgumentException("Error: 'path' contains multiple instances of variable expansion tokens.");
+            }
+    
+            // Logic Branch 3: Exactly one instance
+            matcher.reset(); // Reset matcher to retrieve positions
+            matcher.find();
+    
+            String tokenName = matcher.group(1);
+    
+            // Extract Prefix and Suffix from 'path'
+            String prefix = path.substring(0, matcher.start());
+            String suffix = path.substring(matcher.end());
+    
+            // Validate 'flatPath' against prefix and suffix
+            // We must also check that the total length is sufficient to contain both without overlap
+            if (!flatPath.startsWith(prefix) || 
+                !flatPath.endsWith(suffix) || 
+                flatPath.length() < (prefix.length() + suffix.length())) {
+                throw new IllegalArgumentException("Error: 'flatPath' does not match the structure defined by 'path'.");
+            }
+    
+            // Extract subresource
+            // This is the content between the prefix and the suffix in flatPath
+            int subresourceStart = prefix.length();
+            int subresourceEnd = flatPath.length() - suffix.length();
+            String subresource = flatPath.substring(subresourceStart, subresourceEnd);
+    
+            // Modify subresource
+            // Regex: Opening brace {, followed by any character that is NOT a closing brace, followed by }
+            // This ensures we stop at the *next* closing brace.
+            String modifiedSubresource = subresource.replaceAll("\\{[^}]*\\}", "*");
+    
+            // Reconstruct and return
+            return prefix + "{" + tokenName + "=" + modifiedSubresource + "}" + suffix;
         }
-
-        // Logic Branch 1: No instances of {+FOO}
-        if (matchCount == 0) {
-            return flatPath;
-        }
-
-        // Logic Branch 2: More than one instance
-        if (matchCount > 1) {
-            throw new IllegalArgumentException("Error: 'path' contains multiple instances of variable expansion tokens.");
-        }
-
-        // Logic Branch 3: Exactly one instance
-        matcher.reset(); // Reset matcher to retrieve positions
-        matcher.find();
-
-        // Extract Prefix and Suffix from 'path'
-        String prefix = path.substring(0, matcher.start());
-        String suffix = path.substring(matcher.end());
-
-        // Validate 'flatPath' against prefix and suffix
-        // We must also check that the total length is sufficient to contain both without overlap
-        if (!flatPath.startsWith(prefix) || 
-            !flatPath.endsWith(suffix) || 
-            flatPath.length() < (prefix.length() + suffix.length())) {
-            throw new IllegalArgumentException("Error: 'flatPath' does not match the structure defined by 'path'.");
-        }
-
-        // Extract subresource
-        // This is the content between the prefix and the suffix in flatPath
-        int subresourceStart = prefix.length();
-        int subresourceEnd = flatPath.length() - suffix.length();
-        String subresource = flatPath.substring(subresourceStart, subresourceEnd);
-
-        // Modify subresource
-        // Regex: Opening brace {, followed by any character that is NOT a closing brace, followed by }
-        // This ensures we stop at the *next* closing brace.
-        String modifiedSubresource = subresource.replaceAll("\\{[^}]*\\}", "*");
-
-        // Reconstruct and return
-        return prefix + modifiedSubresource + suffix;
-    }    
-
-  @Override
+      @Override
   public int compareTo(Method other) {
     return id().compareTo(other.id());
   }

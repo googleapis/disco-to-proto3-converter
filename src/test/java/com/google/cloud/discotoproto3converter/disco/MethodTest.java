@@ -59,37 +59,37 @@ public class MethodTest {
   @Test
   public void normalizePath_standard() {
     // Normal variable expansion
-    assertEquals("projects/my-project/zones", Method.normalizePath("projects/{+project}/zones", "projects/my-project/zones"));
+    assertEquals("projects/{project=my-project}/zones", Method.normalizePath("projects/{+project}/zones", "projects/my-project/zones"));
   }
 
   @Test
   public void normalizePath_withSubresourceBraces() {
     // Subresource in flatPath contains {foo} tokens which should be replaced by *
-    assertEquals("projects/*/zones", Method.normalizePath("projects/{+project}/zones", "projects/{project}/zones"));
+    assertEquals("projects/{project=*}/zones", Method.normalizePath("projects/{+project}/zones", "projects/{project}/zones"));
   }
 
   @Test
   public void normalizePath_complexSubresource() {
     // Multiple {} tokens in subresource
-    assertEquals("a*c*e", Method.normalizePath("{+name}", "a{b}c{d}e"));
+    assertEquals("{name=a*c*e}", Method.normalizePath("{+name}", "a{b}c{d}e"));
   }
 
   @Test
   public void normalizePath_emptyPrefixSuffix() {
     // Path is just the token
-    assertEquals("foo/bar", Method.normalizePath("{+name}", "foo/bar"));
+    assertEquals("{name=foo/bar}", Method.normalizePath("{+name}", "foo/bar"));
   }
 
   @Test
   public void normalizePath_multipleSubresourceBraces() {
     // Mix of literal and {} in subresource
-    assertEquals("prefix/a*c*e/suffix", Method.normalizePath("prefix/{+name}/suffix", "prefix/a{b}c{d}e/suffix"));
+    assertEquals("prefix/{name=a*c*e}/suffix", Method.normalizePath("prefix/{+name}/suffix", "prefix/a{b}c{d}e/suffix"));
   }
 
   @Test
   public void normalizePath_tokenWithNumbers() {
     // Alphanumeric token
-    assertEquals("v1/val/v2", Method.normalizePath("v1/{+var123}/v2", "v1/val/v2"));
+    assertEquals("v1/{var123=val}/v2", Method.normalizePath("v1/{+var123}/v2", "v1/val/v2"));
   }
 
   @Test
