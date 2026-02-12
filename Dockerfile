@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM maven:3.9.11-eclipse-temurin-21 AS builder
+FROM maven:3.9.12-eclipse-temurin-21 AS builder
 WORKDIR /repo
 
 # --- Optimized Caching Strategy ---
