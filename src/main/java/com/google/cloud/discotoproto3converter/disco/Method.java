@@ -202,13 +202,16 @@ public abstract class Method implements Comparable<Method>, Node {
             int subresourceEnd = flatPath.length() - suffix.length();
             String subresource = flatPath.substring(subresourceStart, subresourceEnd);
     
-                    // Modify subresource
-                    // Regex: Opening brace {, followed by any character that is NOT a closing brace, followed by }
-                    // This ensures we stop at the *next* closing brace.
-                    String modifiedSubresource = subresource.replaceAll("\\{[^}]*\\}", "*");
-            
-                    // Reconstruct and return
-                    return prefix + "{" + tokenName + "=" + modifiedSubresource + "}" + suffix;
+	    // Modify subresource
+	    // Regex: Opening brace {, followed by any character that is NOT a closing brace, followed by }
+	    // This ensures we stop at the *next* closing brace.	   
+	    // Note that any subresource's empty placeholders `{}` are
+	    // not replaced; this anomalous condition will generate an
+	    // error downstream in generators or GAPICs.
+	    String modifiedSubresource = subresource.replaceAll("\\{[^}]+\\}", "*");
+
+	    // Reconstruct and return
+	    return prefix + "{" + tokenName + "=" + modifiedSubresource + "}" + suffix;
             
         }
     

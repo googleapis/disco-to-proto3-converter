@@ -48,6 +48,7 @@ public class MethodTest {
     assertThrows(IllegalArgumentException.class, () -> Method.accomodatePathSubresources("projects/{+project}/zones", "projects/p1/other"));
   }
 
+
   @Test
   public void accomodatePathSubresources_flatPathTooShort() {
     // path matches once, but flatPath length < prefix + suffix
@@ -66,6 +67,14 @@ public class MethodTest {
   public void accomodatePathSubresources_withSubresourceBraces() {
     // Subresource in flatPath contains {foo} tokens which should be replaced by *
     assertEquals("projects/{project=*}/zones", Method.accomodatePathSubresources("projects/{+project}/zones", "projects/{project}/zones"));
+  }
+
+  @Test
+  public void accomodatePathSubresources_emptyPlaceholders() {
+    // Subresource in flatPath contains empty tokens {} which will not
+    // be replaced. This will lead to errors mainstream in the
+    // generators or GAPICs.
+    assertEquals("projects/{project=foo/{}/bar}/zones", Method.accomodatePathSubresources("projects/{+project}/zones", "projects/foo/{}/bar/zones"));
   }
 
   @Test
