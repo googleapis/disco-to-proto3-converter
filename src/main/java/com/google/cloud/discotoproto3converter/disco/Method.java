@@ -37,6 +37,9 @@ import java.util.regex.Pattern;
 @AutoValue
 public abstract class Method implements Comparable<Method>, Node {
 
+    /** Regex for finding the lone subresource pattern `{+FOO}` in a Discovery `path` field.*/
+  private static Pattern PATH_SUBRESOURCE_PATTERN = Pattern.compile("\\{\\+([a-zA-Z0-9]+)\\}");
+
   /**
    * Returns a method constructed from root.
    *
@@ -157,8 +160,7 @@ public abstract class Method implements Comparable<Method>, Node {
         public static String accomodatePathSubresources(String path, String flatPath) {
             // Regex to find {+FOO}, where FOO is alphanumeric.
             // We escape the braces and the plus sign. We capture FOO.
-            Pattern tokenPattern = Pattern.compile("\\{\\+([a-zA-Z0-9]+)\\}");
-            Matcher matcher = tokenPattern.matcher(path);
+            Matcher matcher = PATH_SUBRESOURCE_PATTERN.matcher(path);
     
             int matchCount = 0;
             while (matcher.find()) {
