@@ -84,6 +84,14 @@ public class MethodTest {
   }
 
   @Test
+  public void accomodatePathSubresources_structuredSubresource() {
+    // Multiple path segments subresource
+      assertEquals("before/{this}/{name=a/*/c/*/e}/after/{that}/goes",
+		 Method.accomodatePathSubresources("before/{this}/{+name}/after/{that}/goes",
+						   "before/{this}/a/{b}/c/{d}/e/after/{that}/goes"));
+  }
+
+  @Test
   public void accomodatePathSubresources_emptyPrefixSuffix() {
     // Path is just the token
     assertEquals("{name=foo/bar}", Method.accomodatePathSubresources("{+name}", "foo/bar"));
