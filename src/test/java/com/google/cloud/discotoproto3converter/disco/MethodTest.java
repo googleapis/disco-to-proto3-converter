@@ -24,83 +24,83 @@ import org.junit.Test;
 public class MethodTest {
 
   @Test
-  public void normalizePath_noToken() {
+  public void accomodatePathSubresources_noToken() {
     // path does not match regex
-    assertEquals("projects/p1/zones/z1", Method.normalizePath("projects/p1/zones/z1", "projects/p1/zones/z1"));
-    assertEquals("anything", Method.normalizePath("no-token", "anything"));
+    assertEquals("projects/p1/zones/z1", Method.accomodatePathSubresources("projects/p1/zones/z1", "projects/p1/zones/z1"));
+    assertEquals("anything", Method.accomodatePathSubresources("no-token", "anything"));
   }
 
   @Test
-  public void normalizePath_multipleTokens() {
+  public void accomodatePathSubresources_multipleTokens() {
     // path matches regex more than once
-    assertThrows(IllegalArgumentException.class, () -> Method.normalizePath("projects/{+project}/zones/{+zone}", "projects/p1/zones/z1"));
+    assertThrows(IllegalArgumentException.class, () -> Method.accomodatePathSubresources("projects/{+project}/zones/{+zone}", "projects/p1/zones/z1"));
   }
 
   @Test
-  public void normalizePath_invalidFlatPathPrefix() {
+  public void accomodatePathSubresources_invalidFlatPathPrefix() {
     // path matches once, but flatPath doesn't match prefix
-    assertThrows(IllegalArgumentException.class, () -> Method.normalizePath("projects/{+project}/zones", "other/p1/zones"));
+    assertThrows(IllegalArgumentException.class, () -> Method.accomodatePathSubresources("projects/{+project}/zones", "other/p1/zones"));
   }
 
   @Test
-  public void normalizePath_invalidFlatPathSuffix() {
+  public void accomodatePathSubresources_invalidFlatPathSuffix() {
     // path matches once, but flatPath doesn't match suffix
-    assertThrows(IllegalArgumentException.class, () -> Method.normalizePath("projects/{+project}/zones", "projects/p1/other"));
+    assertThrows(IllegalArgumentException.class, () -> Method.accomodatePathSubresources("projects/{+project}/zones", "projects/p1/other"));
   }
 
   @Test
-  public void normalizePath_flatPathTooShort() {
+  public void accomodatePathSubresources_flatPathTooShort() {
     // path matches once, but flatPath length < prefix + suffix
     // prefix="prefix/", suffix="/suffix", combined length = 7 + 7 = 14
     // flatPath="prefix/suffix" has length 13.
-    assertThrows(IllegalArgumentException.class, () -> Method.normalizePath("prefix/{+name}/suffix", "prefix/suffix"));
+    assertThrows(IllegalArgumentException.class, () -> Method.accomodatePathSubresources("prefix/{+name}/suffix", "prefix/suffix"));
   }
 
   @Test
-  public void normalizePath_standard() {
+  public void accomodatePathSubresources_standard() {
     // Normal variable expansion
-    assertEquals("projects/{project=my-project}/zones", Method.normalizePath("projects/{+project}/zones", "projects/my-project/zones"));
+    assertEquals("projects/{project=my-project}/zones", Method.accomodatePathSubresources("projects/{+project}/zones", "projects/my-project/zones"));
   }
 
   @Test
-  public void normalizePath_withSubresourceBraces() {
+  public void accomodatePathSubresources_withSubresourceBraces() {
     // Subresource in flatPath contains {foo} tokens which should be replaced by *
-    assertEquals("projects/{project=*}/zones", Method.normalizePath("projects/{+project}/zones", "projects/{project}/zones"));
+    assertEquals("projects/{project=*}/zones", Method.accomodatePathSubresources("projects/{+project}/zones", "projects/{project}/zones"));
   }
 
   @Test
-  public void normalizePath_complexSubresource() {
+  public void accomodatePathSubresources_complexSubresource() {
     // Multiple {} tokens in subresource
-    assertEquals("{name=a*c*e}", Method.normalizePath("{+name}", "a{b}c{d}e"));
+    assertEquals("{name=a*c*e}", Method.accomodatePathSubresources("{+name}", "a{b}c{d}e"));
   }
 
   @Test
-  public void normalizePath_emptyPrefixSuffix() {
+  public void accomodatePathSubresources_emptyPrefixSuffix() {
     // Path is just the token
-    assertEquals("{name=foo/bar}", Method.normalizePath("{+name}", "foo/bar"));
+    assertEquals("{name=foo/bar}", Method.accomodatePathSubresources("{+name}", "foo/bar"));
   }
 
   @Test
-  public void normalizePath_multipleSubresourceBraces() {
+  public void accomodatePathSubresources_multipleSubresourceBraces() {
     // Mix of literal and {} in subresource
-    assertEquals("prefix/{name=a*c*e}/suffix", Method.normalizePath("prefix/{+name}/suffix", "prefix/a{b}c{d}e/suffix"));
+    assertEquals("prefix/{name=a*c*e}/suffix", Method.accomodatePathSubresources("prefix/{+name}/suffix", "prefix/a{b}c{d}e/suffix"));
   }
 
   @Test
-  public void normalizePath_tokenWithNumbers() {
+  public void accomodatePathSubresources_tokenWithNumbers() {
     // Alphanumeric token
-    assertEquals("v1/{var123=val}/v2", Method.normalizePath("v1/{+var123}/v2", "v1/val/v2"));
+    assertEquals("v1/{var123=val}/v2", Method.accomodatePathSubresources("v1/{+var123}/v2", "v1/val/v2"));
   }
 
   @Test
-  public void normalizePath_camelCaseToken() {
+  public void accomodatePathSubresources_camelCaseToken() {
     // camelCase token should be converted to snake_case
-    assertEquals("projects/{my_project=foo}/zones", Method.normalizePath("projects/{+myProject}/zones", "projects/foo/zones"));
+    assertEquals("projects/{my_project=foo}/zones", Method.accomodatePathSubresources("projects/{+myProject}/zones", "projects/foo/zones"));
   }
 
   @Test
-  public void normalizePath_noMatchDueToHyphen() {
+  public void accomodatePathSubresources_noMatchDueToHyphen() {
     // {+foo-bar} does not match {+[a-zA-Z0-9]+}
-    assertEquals("projects/{+foo-bar}/zones", Method.normalizePath("projects/{+foo-bar}/zones", "projects/{+foo-bar}/zones"));
+    assertEquals("projects/{+foo-bar}/zones", Method.accomodatePathSubresources("projects/{+foo-bar}/zones", "projects/{+foo-bar}/zones"));
   }
 }

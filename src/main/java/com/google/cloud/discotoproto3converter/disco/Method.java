@@ -48,7 +48,7 @@ public abstract class Method implements Comparable<Method>, Node {
     String httpMethod = root.getString("httpMethod");
     String id = root.getString("id");
     String path = root.getString("path");
-    String flatPath = normalizePath(path, root.has("flatPath") ? root.getString("flatPath") : path);
+    String flatPath = accomodatePathSubresources(path, root.has("flatPath") ? root.getString("flatPath") : path);
     String apiVersion = root.getString("apiVersion");
 
     DiscoveryNode parametersNode = root.getObject("parameters");
@@ -127,14 +127,34 @@ public abstract class Method implements Comparable<Method>, Node {
   }
 
     /**
-     * Normalizes a flatPath based on the structure of a template path.
+     * Expands subresource templates in a flatPath using wildcards instead of subresource-field references.
      *
-     * @param path     The template path containing the {+FOO} token.
-     * @param flatPath The actual path string to be processed.
+     * If path contains a segment like {+FOO}, that indicates that
+     * `FOO` is structured and refers to a sub-resource. In that case,
+     * the corresponding `flatPath` is presented in Discovery as the
+     * full template expansion of the subresource, which could itself
+     * refer to fields from the subresource message but not from the
+     * request where `flatPath` appears. For example, if the Discovery
+     * files contains
+     *
+     * "path": "something/{+foo}/random"
+     * "flatPath": "something/galaxy/{galaxyId}/system/{systemId}/planet/{planetId}/random"
+     *
+     * then this function wildcards the subresource-field references,
+     * so that flatPath behaves as though it had been specified this
+     * way (the Discovery file would have asterisks * instead of the
+     * star ✴ used below because this documentation is in a Java
+     * comment):
+     *
+     * "flatPath": "something/galaxy/✴/system/✴/planet/✴/random"
+     *
+     *
+     * @param path     The template path containing the {+FOO} token denoting a subresource. Only one such subresource is allowed.	 
+     * @param flatPath The flattened path whose field references inside the subresource segement will be wildcarded.
      * @return The processed string.
      * @throws IllegalArgumentException If path has multiple tokens or flatPath doesn't match prefix/suffix.
      */
-        public static String normalizePath(String path, String flatPath) {
+        public static String accomodatePathSubresources(String path, String flatPath) {
             // Regex to find {+FOO}, where FOO is alphanumeric.
             // We escape the braces and the plus sign. We capture FOO.
             Pattern tokenPattern = Pattern.compile("\\{\\+([a-zA-Z0-9]+)\\}");
@@ -189,7 +209,8 @@ public abstract class Method implements Comparable<Method>, Node {
                     return prefix + "{" + tokenName + "=" + modifiedSubresource + "}" + suffix;
             
         }
-      @Override
+    
+  @Override
   public int compareTo(Method other) {
     return id().compareTo(other.id());
   }
