@@ -139,17 +139,14 @@ public abstract class Method implements Comparable<Method>, Node {
      * refer to fields from the subresource message but not from the
      * request where `flatPath` appears. For example, if the Discovery
      * files contains
-     *
-     * "path": "something/{+foo}/random"
-     * "flatPath": "something/galaxy/{galaxyId}/system/{systemId}/planet/{planetId}/random"
-     *
+     *   "path": "something/{+foo}/random"
+     *   "flatPath": "something/galaxy/{galaxyId}/system/{systemId}/planet/{planetId}/random"
      * then this function wildcards the subresource-field references,
      * so that flatPath behaves as though it had been specified this
      * way (the Discovery file would have asterisks * instead of the
      * star ✴ used below because this documentation is in a Java
      * comment):
-     *
-     * "flatPath": "something/galaxy/✴/system/✴/planet/✴/random"
+     *   "flatPath": "something/galaxy/✴/system/✴/planet/✴/random"
      *
      *
      * @param path     The template path containing the {+FOO} token denoting a subresource. Only one such subresource is allowed.	 
