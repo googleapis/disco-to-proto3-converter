@@ -846,21 +846,12 @@ public class DiscoToProto3ConverterAppTest {
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
     Path discoveryDocPath =
         Paths.get(
-            "src",
-            "test",
-            "resources",
-            prefix.toString(),
-            "compute.v1small.subresource.json");
+            "src", "test", "resources", prefix.toString(), "compute.v1small.subresource.json");
     Path generatedFilePath =
-        Paths.get(
-            outputDir.toString(), prefix.toString(), "compute.subresource.proto");
+        Paths.get(outputDir.toString(), prefix.toString(), "compute.subresource.proto");
     Path baselineFilePath =
         Paths.get(
-            "src",
-            "test",
-            "resources",
-            prefix.toString(),
-            "compute.subresource.proto.baseline");
+            "src", "test", "resources", prefix.toString(), "compute.subresource.proto.baseline");
     System.out.printf(
         "*** @Test: convertSubresources():\n"
             + "    Discovery path: %s\n"
@@ -884,7 +875,6 @@ public class DiscoToProto3ConverterAppTest {
     String baselineBody = readFile(baselineFilePath);
     assertEquals(baselineBody, actualBody);
   }
-
 
   private static String readFile(Path path) throws IOException {
     return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);

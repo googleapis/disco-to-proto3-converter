@@ -21,11 +21,10 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * Adapted from its counterpart in gapic-generator.
@@ -37,7 +36,7 @@ import java.util.regex.Pattern;
 @AutoValue
 public abstract class Method implements Comparable<Method>, Node {
 
-    /** Regex for finding the lone subresource pattern `{+FOO}` in a Discovery `path` field.*/
+  /** Regex for finding the lone subresource pattern `{+FOO}` in a Discovery `path` field. */
   private static Pattern PATH_SUBRESOURCE_PATTERN = Pattern.compile("\\{\\+([a-zA-Z0-9]+)\\}");
 
   /**
@@ -51,14 +50,14 @@ public abstract class Method implements Comparable<Method>, Node {
     String httpMethod = root.getString("httpMethod");
     String id = root.getString("id");
     String path = root.getString("path");
-    String flatPath = accomodatePathSubresources(path, root.has("flatPath") ? root.getString("flatPath") : path);
+    String flatPath =
+        accomodatePathSubresources(path, root.has("flatPath") ? root.getString("flatPath") : path);
     String apiVersion = root.getString("apiVersion");
 
     DiscoveryNode parametersNode = root.getObject("parameters");
     Map<String, Schema> parameters = new LinkedHashMap<>();
     Map<String, Schema> queryParams = new LinkedHashMap<>();
     Map<String, Schema> pathParams = new LinkedHashMap<>();
-
 
     for (String name : root.getObject("parameters").getFieldNames()) {
       Schema schema = Schema.from(parametersNode.getObject(name), name, null);
@@ -129,89 +128,88 @@ public abstract class Method implements Comparable<Method>, Node {
     return thisMethod;
   }
 
-    /**
-     * Expands subresource templates in a flatPath using wildcards instead of subresource-field references.
-     *
-     * If path contains a segment like {+FOO}, that indicates that
-     * `FOO` is structured and refers to a sub-resource. In that case,
-     * the corresponding `flatPath` is presented in Discovery as the
-     * full template expansion of the subresource, which could itself
-     * refer to fields from the subresource message but not from the
-     * request where `flatPath` appears. For example, if the Discovery
-     * files contains
-     *   "path": "something/{+foo}/random"
-     *   "flatPath": "something/galaxy/{galaxyId}/system/{systemId}/planet/{planetId}/random"
-     * then this function wildcards the subresource-field references,
-     * so that flatPath behaves as though it had been specified this
-     * way (the Discovery file would have asterisks * instead of the
-     * star ✴ used below because this documentation is in a Java
-     * comment):
-     *   "flatPath": "something/galaxy/✴/system/✴/planet/✴/random"
-     *
-     *
-     * @param path     The template path containing the {+FOO} token denoting a subresource. Only one such subresource is allowed.	 
-     * @param flatPath The flattened path whose field references inside the subresource segement will be wildcarded.
-     * @return The processed string.
-     * @throws IllegalArgumentException If path has multiple tokens or flatPath doesn't match prefix/suffix.
-     */
-        public static String accomodatePathSubresources(String path, String flatPath) {
-            // Regex to find {+FOO}, where FOO is alphanumeric.
-            // We escape the braces and the plus sign. We capture FOO.
-            Matcher matcher = PATH_SUBRESOURCE_PATTERN.matcher(path);
-    
-            int matchCount = 0;
-            while (matcher.find()) {
-                matchCount++;
-            }
-    
-            // Logic Branch 1: No instances of {+FOO}
-            if (matchCount == 0) {
-                return flatPath;
-            }
-    
-            // Logic Branch 2: More than one instance
-            if (matchCount > 1) {
-                throw new IllegalArgumentException("Error: 'path' contains multiple instances of variable expansion tokens.");
-            }
-    
-                    // Logic Branch 3: Exactly one instance
-                    matcher.reset(); // Reset matcher to retrieve positions
-                    matcher.find();
-            
-                    String tokenName = Name.anyCamel(matcher.group(1)).toLowerUnderscore();
-            
-                    // Extract Prefix and Suffix from 'path'
-            
-            String prefix = path.substring(0, matcher.start());
-            String suffix = path.substring(matcher.end());
-    
-            // Validate 'flatPath' against prefix and suffix
-            // We must also check that the total length is sufficient to contain both without overlap
-            if (!flatPath.startsWith(prefix) || 
-                !flatPath.endsWith(suffix) || 
-                flatPath.length() < (prefix.length() + suffix.length())) {
-                throw new IllegalArgumentException("Error: 'flatPath' does not match the structure defined by 'path'.");
-            }
-    
-            // Extract subresource
-            // This is the content between the prefix and the suffix in flatPath
-            int subresourceStart = prefix.length();
-            int subresourceEnd = flatPath.length() - suffix.length();
-            String subresource = flatPath.substring(subresourceStart, subresourceEnd);
-    
-	    // Modify subresource
-	    // Regex: Opening brace {, followed by any character that is NOT a closing brace, followed by }
-	    // This ensures we stop at the *next* closing brace.	   
-	    // Note that any subresource's empty placeholders `{}` are
-	    // not replaced; this anomalous condition will generate an
-	    // error downstream in generators or GAPICs.
-	    String modifiedSubresource = subresource.replaceAll("\\{[^}]+\\}", "*");
+  /**
+   * Expands subresource templates in a flatPath using wildcards instead of subresource-field
+   * references.
+   *
+   * <p>If path contains a segment like {+FOO}, that indicates that `FOO` is structured and refers
+   * to a sub-resource. In that case, the corresponding `flatPath` is presented in Discovery as the
+   * full template expansion of the subresource, which could itself refer to fields from the
+   * subresource message but not from the request where `flatPath` appears. For example, if the
+   * Discovery files contains "path": "something/{+foo}/random" "flatPath":
+   * "something/galaxy/{galaxyId}/system/{systemId}/planet/{planetId}/random" then this function
+   * wildcards the subresource-field references, so that flatPath behaves as though it had been
+   * specified this way (the Discovery file would have asterisks * instead of the star ✴ used below
+   * because this documentation is in a Java comment): "flatPath":
+   * "something/galaxy/✴/system/✴/planet/✴/random"
+   *
+   * @param path The template path containing the {+FOO} token denoting a subresource. Only one such
+   *     subresource is allowed.
+   * @param flatPath The flattened path whose field references inside the subresource segement will
+   *     be wildcarded.
+   * @return The processed string.
+   * @throws IllegalArgumentException If path has multiple tokens or flatPath doesn't match
+   *     prefix/suffix.
+   */
+  public static String accomodatePathSubresources(String path, String flatPath) {
+    // Regex to find {+FOO}, where FOO is alphanumeric.
+    // We escape the braces and the plus sign. We capture FOO.
+    Matcher matcher = PATH_SUBRESOURCE_PATTERN.matcher(path);
 
-	    // Reconstruct and return
-	    return prefix + "{" + tokenName + "=" + modifiedSubresource + "}" + suffix;
-            
-        }
-    
+    int matchCount = 0;
+    while (matcher.find()) {
+      matchCount++;
+    }
+
+    // Logic Branch 1: No instances of {+FOO}
+    if (matchCount == 0) {
+      return flatPath;
+    }
+
+    // Logic Branch 2: More than one instance
+    if (matchCount > 1) {
+      throw new IllegalArgumentException(
+          "Error: 'path' contains multiple instances of variable expansion tokens.");
+    }
+
+    // Logic Branch 3: Exactly one instance
+    matcher.reset(); // Reset matcher to retrieve positions
+    matcher.find();
+
+    String tokenName = Name.anyCamel(matcher.group(1)).toLowerUnderscore();
+
+    // Extract Prefix and Suffix from 'path'
+
+    String prefix = path.substring(0, matcher.start());
+    String suffix = path.substring(matcher.end());
+
+    // Validate 'flatPath' against prefix and suffix
+    // We must also check that the total length is sufficient to contain both without overlap
+    if (!flatPath.startsWith(prefix)
+        || !flatPath.endsWith(suffix)
+        || flatPath.length() < (prefix.length() + suffix.length())) {
+      throw new IllegalArgumentException(
+          "Error: 'flatPath' does not match the structure defined by 'path'.");
+    }
+
+    // Extract subresource
+    // This is the content between the prefix and the suffix in flatPath
+    int subresourceStart = prefix.length();
+    int subresourceEnd = flatPath.length() - suffix.length();
+    String subresource = flatPath.substring(subresourceStart, subresourceEnd);
+
+    // Modify subresource
+    // Regex: Opening brace {, followed by any character that is NOT a closing brace, followed by }
+    // This ensures we stop at the *next* closing brace.
+    // Note that any subresource's empty placeholders `{}` are
+    // not replaced; this anomalous condition will generate an
+    // error downstream in generators or GAPICs.
+    String modifiedSubresource = subresource.replaceAll("\\{[^}]+\\}", "*");
+
+    // Reconstruct and return
+    return prefix + "{" + tokenName + "=" + modifiedSubresource + "}" + suffix;
+  }
+
   @Override
   public int compareTo(Method other) {
     return id().compareTo(other.id());
