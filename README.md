@@ -23,8 +23,13 @@ mvn test
 To automatically format the Java source files, use the following Bazel command:
 
 ```sh
-bazel run :google_java_format --enable_workspace
+bazelisk run :google_java_format --enable_workspace
 ```
+
+NOTE: This project is pinned to Bazel 7.x to ensure compatibility with
+its current build rules. A `.bazelversion` file is included in the
+root directory. When using `bazelisk`, it will automatically download
+and use the correct version.
 
 ### Run
 After performing the build, you obtain the API protocol buffer file and GAPIC
