@@ -39,6 +39,12 @@ public class Inflector {
     } else if (in.endsWith("zzes")) {
       return in.substring(0, in.length() - 2);
 
+    } else if (in.endsWith("xes")) {
+      return in.substring(0, in.length() - 2);
+
+    } else if (in.endsWith("ches")) {
+      return in.substring(0, in.length() - 2);
+
     } else if (in.endsWith("ses")) {
       return in.substring(0, in.length() - 1);
 
