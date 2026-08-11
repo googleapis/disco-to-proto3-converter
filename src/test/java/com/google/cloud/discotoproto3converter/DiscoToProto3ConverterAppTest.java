@@ -342,6 +342,7 @@ public class DiscoToProto3ConverterAppTest {
 
   @Test
   public void nameCollisionAvoidanceSuccessOneMessageOneService() throws IOException {
+    // A service that collides with a message is renamed with the "Service" suffix.
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
     Path discoveryDocPath =
@@ -381,6 +382,7 @@ public class DiscoToProto3ConverterAppTest {
 
   @Test
   public void nameCollisionAvoidanceFailureTwoMessagesOneService() throws IOException {
+    // Renaming the colliding service fails when a message already uses the suffixed name.
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
     Path discoveryDocPath =
@@ -412,6 +414,7 @@ public class DiscoToProto3ConverterAppTest {
 
   @Test
   public void nameCollisionAvoidanceFailureOneMessageTwoServices() throws IOException {
+    // Renaming the colliding service fails when another service already uses the suffixed name.
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
     Path discoveryDocPath =
@@ -443,6 +446,7 @@ public class DiscoToProto3ConverterAppTest {
 
   @Test
   public void convertAnyFieldInError() throws IOException {
+    // google.protobuf.Any fields are permitted when nested beneath an error.details field.
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
     Path discoveryDocPath =
@@ -513,6 +517,7 @@ public class DiscoToProto3ConverterAppTest {
 
   @Test
   public void convertAnyFieldOutsideError() throws IOException {
+    // google.protobuf.Any fields outside an error.details field are rejected.
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
     Path discoveryDocPath =
@@ -706,6 +711,7 @@ public class DiscoToProto3ConverterAppTest {
 
   @Test
   public void convertAnyFieldWithFormat() throws IOException {
+    // Explicit protobuf formats generate the corresponding Any, Struct, ListValue, and Value types.
     DiscoToProto3ConverterApp app = new DiscoToProto3ConverterApp();
     Path prefix = Paths.get("google", "cloud", "compute", "v1small");
     Path discoveryDocPath =
