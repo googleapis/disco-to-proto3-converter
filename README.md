@@ -1,5 +1,7 @@
 # Google Discovery Document to Proto3 Converter
 
+**Important:** This project is no longer being maintained and will no longer receive updates.
+
 ## Quick Start
 
 ### Requirements
