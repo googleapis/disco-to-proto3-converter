@@ -88,7 +88,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.6.1</version> <!-- Use a recent version -->
+        <version>3.6.2</version> <!-- Use a recent version -->
         <executions>
 
           <!-- TODO: Get rid of executions 1, 2, and 3, only retaining
